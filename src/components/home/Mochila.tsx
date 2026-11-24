@@ -29,6 +29,7 @@ import { isReduceChipKey } from '../../utils/shop';
 import { ITEM_ART } from '../../utils/itemArt';
 import { MaterialIcon } from '../MaterialIcon';
 import { EXE_SUFFIX, getFileName, getFoodDesc } from '../ItemsWindow';
+import { sm2Button } from '../form/FormKit';
 import { InfoTip } from '../ui/InfoTip';
 import { Icon } from '../ui/Icon';
 import { ModalFrame } from '../ui/ModalFrame';
@@ -480,7 +481,7 @@ export function Mochila({
                     {bloqueado
                       ? <p className="sm3-material-pop-texto" data-material-demo>{demoRefusalText(isPt)}</p>
                       : onGoToBuilding && (
-                        <button type="button" className="sm3-mochila-usar-btn" data-material-go={m.building}
+                        <button type="button" style={sm2Button('primary', false, 'sm')} data-material-go={m.building}
                           aria-label={isPt ? `Ir para ${lugar}` : `Go to ${lugar}`}
                           onClick={() => { setMatAberto(null); onClose(); onGoToBuilding(m.building); }}>
                           {isPt ? 'Ir lá' : 'Go there'}
@@ -503,7 +504,7 @@ export function Mochila({
               </div>
               <button
                 type="button"
-                className="sm3-mochila-usar-btn"
+                style={sm2Button('primary', false, 'sm')}
                 aria-label={isPt
                   ? `Usar ${getFileName(selecionadoVisivel, language)}`
                   : `Use ${getFileName(selecionadoVisivel, language)}`}

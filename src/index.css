@@ -6071,19 +6071,6 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 }
 .sm3-mochila-usar-nome { margin: 0; font-weight: 700; font-size: var(--sm2-text-sm); color: var(--sm2-ink); }
 .sm3-mochila-usar-desc { margin: 2px 0 0; font-size: var(--sm2-text-xs); color: var(--sm2-muted); }
-.sm3-mochila-usar-btn {
-  min-height: 44px;
-  padding: 0 18px;
-  border: 0;
-  border-radius: var(--sm2-radius-sm);
-  background-color: var(--sm2-primary-fill);
-  color: var(--sm2-on-primary);
-  font-family: var(--sm2-font-text);
-  font-size: var(--sm2-text-sm);
-  font-weight: 800;
-  cursor: pointer;
-}
-.sm3-mochila-usar-btn:focus-visible { outline: 3px solid var(--sm2-primary-ink); outline-offset: 2px; }
 .sm3-fantasma {
   position: fixed;
   z-index: 130;
@@ -6874,13 +6861,6 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 .sm-lvup-hint { animation: sm-lvup-hint 2s ease-in-out 1s infinite; }
 
 /* Cartão de confirmação das ações propostas pelo chat (ChatActionCard). */
-.sm2-chat-action-btn {
-  min-height: 44px; padding: 0 14px; border-radius: 10px; cursor: pointer;
-  border: 1px solid var(--sm2-line); background: transparent; color: var(--sm2-ink);
-  font: inherit;
-}
-.sm2-chat-action-btn:disabled { opacity: .5; cursor: default; }
-.sm2-chat-action-primary { background: var(--sm2-primary-soft); border-color: var(--sm2-primary-ink); color: var(--sm2-primary-ink); }
 .sm2-chat-action-card { box-shadow: 0 6px 20px rgba(0, 0, 0, .18); }
 
 /* Selo DEMO: canto superior direito, só na demo; não captura toque. */
