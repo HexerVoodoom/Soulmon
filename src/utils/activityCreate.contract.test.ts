@@ -182,6 +182,11 @@ function nomesDoTetoEfetivo(sf: ts.SourceFile): Set<string> {
     if (ts.isCallExpression(e) && ts.isIdentifier(e.expression)) {
       return e.expression.text === 'activityCapFor';
     }
+    // 24/11/2026: o teto DURO da UI é `demo ? activityCapFor('demo', …) : Infinity` (pagante sem teto duro). O ramo do demo ainda
+    // TEM de vir de `activityCapFor`; um número escrito à mão no lugar dele continua reprovando.
+    if (ts.isConditionalExpression(e)) {
+      return veioDoTeto(e.whenTrue) && ts.isIdentifier(e.whenFalse) && e.whenFalse.text === 'Infinity';
+    }
     return ts.isIdentifier(e) && nomes.has(e.text);
   };
   const anda = (n: No): void => {
@@ -282,11 +287,35 @@ describe('todo caminho de criação passa pelo mesmo portão (guard de elo, no A
     const agendado = { id: 'a', schedule: { kind: 'weekdays', days: [1, 3] }, weekDays: [1, 3] };
     const novo = [{ id: 'n', schedule: { kind: 'daily' } }];
     const cheio = Array.from({ length: 2 }, (_, i) => ({ ...diario, id: `d${i}` }));
-    const antes = fitHabitCreates({ activities: cheio, maxActivityCap: 2 }, novo, 'paid');
-    const depois = fitHabitCreates({ activities: [cheio[0], { ...agendado, id: 'd1' }], maxActivityCap: 2 }, novo, 'paid');
+    const antes = fitHabitCreates({ activities: cheio, maxActivityCap: 2 }, novo, 'demo');
+    const depois = fitHabitCreates({ activities: [cheio[0], { ...agendado, id: 'd1' }], maxActivityCap: 2 }, novo, 'demo');
     expect(cheio.length).toBe(2);
     expect(antes).toHaveLength(0);
     expect(depois).toHaveLength(1);
+  });
+
+  /**
+   * 24/11/2026 (opção A): o portão ÚNICO também é quem PERGUNTA ao pagante que passa do número do estágio. A pergunta é de
+   * `habitOverRecommended` (habitCreate.ts), a confirmação reentra no MESMO portão (`confirmed`), e o modal é só UI transitória.
+   */
+  it('o portão de hábito pergunta (sugestão) antes de escrever, e a confirmação reentra pelo mesmo portão', () => {
+    const sf = fonte();
+    const corpo = corpoDe(sf, 'commitHabitCreate')!;
+    expect(corpo, 'o portão não pergunta mais ao pagante acima do recomendado').toMatch(/habitOverRecommended\s*\(/);
+    expect(corpo).toMatch(/confirmed/);
+    const app = readFileSync(path.join(SRC, APP), 'utf8');
+    expect(app, 'o modal de sugestão sumiu do App.tsx').toMatch(/<HabitOverRecommendedPopup/);
+    expect(app, 'confirmar tem de reentrar por commitHabitCreate (portão único), nunca escrever por fora')
+      .toMatch(/commitHabitCreate\(pedido\.novos, pedido\.createPath, \{ confirmed: true/);
+    const hc = fonteDe(path.join(SRC, 'utils', 'habitCreate.ts')).getFullText();
+    expect(hc).toMatch(/habitCreateDecision/);
+  });
+
+  it('o demo continua com teto DURO e o pagante nunca é truncado pelo portão', () => {
+    const cheio = Array.from({ length: 8 }, (_, i) => ({ id: `d${i}`, schedule: { kind: 'daily' } }));
+    const novo = [{ id: 'n', schedule: { kind: 'daily' } }];
+    expect(fitHabitCreates({ activities: cheio, maxActivityCap: 8 }, novo, 'demo')).toHaveLength(0);
+    expect(fitHabitCreates({ activities: cheio, maxActivityCap: 8 }, novo, 'paid')).toHaveLength(1);
   });
 
   it('o portão CONTA: `activity_create` ao criar, `demo_cap_hit` ao recusar', () => {

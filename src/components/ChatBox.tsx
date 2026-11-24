@@ -39,8 +39,8 @@ interface ChatBoxProps {
     /** Humor do dia normalizado para 0..4 (a `MoodValue` é 1..5). */
     moodToday?: number;
   };
-  /** Criação proposta pelo chat e CONFIRMADA no cartão. `'cap'` = o teto do plano recusou. */
-  onChatCreate?: (action: CreateAction) => 'ok' | 'cap' | Promise<'ok' | 'cap'>;
+  /** Criação proposta pelo chat e CONFIRMADA no cartão. `'cap'` = o teto do plano recusou; `'declined'` = a pessoa respondeu "Você tem razão" ao modal de sugestão de limite (sem aviso). */
+  onChatCreate?: (action: CreateAction) => 'ok' | 'cap' | 'declined' | Promise<'ok' | 'cap' | 'declined'>;
   /** Resumo agregado do comportamento recente. Lido SÓ quando a pessoa pergunta
    *  como está indo (ou no feedback proativo opt-in) — nunca a cada mensagem. */
   getBehavior?: () => BehaviorSummary | Promise<BehaviorSummary>;
@@ -391,7 +391,7 @@ export function ChatBox({
     if (r === 'ok') {
       setPending(prev => prev.slice(1));
       toast.success(isPt ? 'Criado.' : 'Created.');
-    } else {
+    } else if (r !== 'declined') {
       toast.warning(isPt
         ? 'Não coube no seu plano agora. Dá para trocar por algo que já existe.'
         : "That doesn't fit your plan right now. You can swap it for something you already have.");

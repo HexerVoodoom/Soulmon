@@ -191,7 +191,7 @@ import {
   REROLL_COST_CREDITS,
   type CreditPack, type AccountTier,
 } from './utils/monetization';
-import { fitHabitCreates, habitCapPartialText } from './utils/habitCreate';
+import { fitHabitCreates, habitCapPartialText, habitOverRecommended } from './utils/habitCreate';
 import { focusCheckTarget, focusTasksFor } from './utils/focusOrigin';
 import type { Ice } from './utils/iceScore';
 import { contaCotaDeHabitos } from './utils/atividadesLista';
@@ -604,6 +604,7 @@ import { duelInviteCount, duelInviteExchangeRefusal, duelInvitesPerEnergy, excha
 import type { CreateAction } from './utils/chatActions';
 import { WakeToEnterProvider } from './components/WakeToEnter';
 import { CreateChoicePopup } from './components/CreateChoicePopup';
+import { HabitOverRecommendedPopup } from './components/HabitOverRecommendedPopup';
 const EvoBanner = lazy(() => import('./components/EvoBanner'));
 const getGuildWarReplay = (...a: Parameters<typeof import('./utils/community').getGuildWarReplay>) => import('./utils/community').then(m => m.getGuildWarReplay(...a));
 const fetchEvoFeed = () => import('./utils/community').then(m => m.getEvoFeed());
@@ -2031,6 +2032,9 @@ export default function App() {
    * atividade inteira para o Salvar recusar no fim.
    */
   const activityCap = activityCapFor(tierForRules, gameState.maxActivityCap);
+  /** O teto DURO que a UI mostra/aplica: só o demo tem (24/11/2026). Pagante = sem teto (`Infinity`): o número do estágio é só
+   *  sugestão (`HabitOverRecommendedPopup`), então nenhum texto de "limite" aparece para quem paga. Deriva de `activityCapFor`. */
+  const hardHabitCap = tierForRules === 'demo' ? activityCapFor('demo', gameState.maxActivityCap) : Infinity;
 
   /**
    * O PORTÃO DE CRIAÇÃO DE HÁBITO — ponto ÚNICO de escrita em `activities`.
@@ -2057,7 +2061,26 @@ export default function App() {
    * estágio do pagante. Nada disso quebrava o TypeScript.
    */
   const [stepGoalAsk, setStepGoalAsk] = useState(false);
-  const commitHabitCreate = useCallback((novos: Activity[], createPath: number): number => {
+  /**
+   * SUGESTÃO DE LIMITE (dono, 24/11/2026, opção A): só o DEMO tem teto duro. O pagante que tenta passar do número do estágio
+   * (`maxActivityCap`) cai neste estado de UI TRANSITÓRIO (nada vai ao save): o modal pergunta e, só se confirmar, o lote
+   * entra pelo MESMO portão (`commitHabitCreate` com `confirmed`). `onSettled` devolve quantos entraram a quem precisa saber
+   * (o chat). Uma pergunta por tentativa, nunca por hábito do lote.
+   */
+  const [habitOverAsk, setHabitOverAsk] = useState<{ novos: Activity[]; createPath: number; recommended: number; onSettled?: (n: number) => void } | null>(null);
+  const commitHabitCreate = useCallback((novos: Activity[], createPath: number, opts?: { confirmed?: boolean; onSettled?: (n: number) => void }): number => {
+    if (!opts?.confirmed) {
+      const acima = habitOverRecommended(
+        { activities: gameState.activities, maxActivityCap: gameState.maxActivityCap },
+        novos,
+        tierForRules,
+      );
+      if (acima) {
+        // Pergunta ANTES de escrever; devolve o pedido como "aceito" para o chamador não mostrar aviso de limite (o pagante não tem).
+        setHabitOverAsk({ novos, createPath, recommended: acima.recommended, onSettled: opts?.onSettled });
+        return novos.length;
+      }
+    }
     const cabem = fitHabitCreates(
       { activities: gameState.activities, maxActivityCap: gameState.maxActivityCap },
       novos,
@@ -2070,6 +2093,7 @@ export default function App() {
       // dele não está encontrando uma fronteira de monetização, e somar os dois
       // daria a média de duas populações que nunca se encontram.
       if (tierForRules === 'demo') track('demo_cap_hit', { path: createPath });
+      opts?.onSettled?.(0);
       return 0;
     }
     // §371: o carimbo de nascimento (`createdAt`) — é ele que deixa o hábito criado ANTES da reafirmação do dia aparecer na hora.
@@ -2094,6 +2118,7 @@ export default function App() {
     setMessageTrigger(prev => prev + 1);
     // REGISTRO §413: adotar o hábito de caminhar (recurso `steps`) abre o modalzinho da meta (3/5/7/10 mil).
     if (cabem.some(a => recursoDaAtividade(a) === 'steps')) setStepGoalAsk(true);
+    opts?.onSettled?.(cabem.length);
     return cabem.length;
     // QA r4: a dependência é a LISTA, não o tamanho. Trocar um hábito de "todo dia" para dias específicos muda a cota sem mudar o
     // `length`; com `.length` o catálogo seguia com o closure velho e recusava calado (ou ficava aberto sem aviso).
@@ -3280,15 +3305,20 @@ export default function App() {
    */
   // `chatActions`/`chatBehavior` saem do chunk de entrada (orçamento de bytes, release/beta-1):
   // só carregam quando a pessoa confirma um cartão do chat ou pergunta "como estou indo?".
-  const handleChatCreate = useCallback(async (action: CreateAction): Promise<'ok' | 'cap'> => {
+  const handleChatCreate = useCallback(async (action: CreateAction): Promise<'ok' | 'cap' | 'declined'> => {
     const { buildHabit, buildTask } = await import('./utils/chatActions');
     if (action.type === 'create_habit') {
       const habit = buildHabit(action, CATEGORY_ICONS[action.habit.category], weekDaysForSchedule);
-      return commitHabitCreate([habit], TELEMETRY_CREATE_PATH.ai_chat) > 0 ? 'ok' : 'cap';
+      // Pagante acima do recomendado: espera a resposta do modal de sugestão ("Você tem razão" = `declined`, sem aviso de limite).
+      return new Promise<'ok' | 'cap' | 'declined'>(resolve => {
+        commitHabitCreate([habit], TELEMETRY_CREATE_PATH.ai_chat, {
+          onSettled: n => resolve(n > 0 ? 'ok' : (tierForRules === 'demo' ? 'cap' : 'declined')),
+        });
+      });
     }
     const task = buildTask(action, CATEGORY_ICONS[action.task.category]);
     return commitTaskCreate(task, TELEMETRY_CREATE_PATH.ai_chat, 'topo') ? 'ok' : 'cap';
-  }, [commitHabitCreate, commitTaskCreate]);
+  }, [commitHabitCreate, commitTaskCreate, tierForRules]);
 
   /** Lido só quando a pessoa pergunta "como estou indo?" (ver `chatBehavior.ts`). */
   const getChatBehavior = useCallback(
@@ -9900,7 +9930,7 @@ export default function App() {
         existingActivities={gameState.activities as ReadonlyArray<{ catalogId?: string | null }>}
         /* §376: o item do catálogo é hábito de todo dia e ocupa a cota; com ela cheia o catálogo AVISA em vez de fechar calado. */
         habitsCount={contaCotaDeHabitos(gameState.activities)}
-        habitsCap={activityCap}
+        habitsCap={hardHabitCap}
         capIsDemoBoundary={gameState.accountTier === 'demo' && !demo}
         /* §385: conta grátis no limite = o MESMO convite do CreateModal. */
         onUnlock={() => { setCatalogBrowserOpen(false); setUnlockReason('task-limit'); }}
@@ -9957,6 +9987,18 @@ export default function App() {
         onCommit={dayPlanActive && uncommittedNow.length > 0 ? () => { setCreateChoiceOpen(false); setCommitMoreOpen(true); } : undefined}
       />
 
+      <HabitOverRecommendedPopup
+        open={habitOverAsk !== null}
+        language={language}
+        recommended={habitOverAsk?.recommended ?? 0}
+        onDecline={() => { habitOverAsk?.onSettled?.(0); setHabitOverAsk(null); }}
+        onCommitAnyway={() => {
+          const pedido = habitOverAsk;
+          setHabitOverAsk(null);
+          if (pedido) commitHabitCreate(pedido.novos, pedido.createPath, { confirmed: true, onSettled: pedido.onSettled });
+        }}
+      />
+
       {commitMoreOpen && uncommittedNow.length > 0 && (
         <Suspense fallback={null}>
           <DayGoalsModal
@@ -9996,7 +10038,7 @@ export default function App() {
           onClose={() => setCreateModalOpen(false)}
           evolutionStage={gameState.evolutionStage}
           activitiesCount={contaCotaDeHabitos(gameState.activities)}
-          activitiesCap={activityCap}
+          activitiesCap={hardHabitCap}
           /* O convite de compra so faz sentido para quem PODE comprar, e so
              quando o teto que morde e o do modo gratis. Um pagante no teto do
              estagio dele nao esta encontrando uma fronteira de monetizacao. */

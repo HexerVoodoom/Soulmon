@@ -300,7 +300,7 @@ interface CompanionHUDProps {
   aiSettings?: any;
   /** Criação proposta pelo chat, já CONFIRMADA pela pessoa no cartão. Devolve
    *  `'cap'` quando o teto do plano recusou (o cartão avisa, sem culpa). */
-  onChatCreate?: (action: import('../utils/chatActions').CreateAction) => 'ok' | 'cap' | Promise<'ok' | 'cap'>;
+  onChatCreate?: (action: import('../utils/chatActions').CreateAction) => 'ok' | 'cap' | 'declined' | Promise<'ok' | 'cap' | 'declined'>;
   /** Resumo agregado do comportamento recente (só é lido quando a pessoa pergunta). */
   getBehavior?: () => import('../utils/chatBehavior').BehaviorSummary | Promise<import('../utils/chatBehavior').BehaviorSummary>;
   /** Uma mensagem foi enviada ao Soulmon no chat (qualquer uma): conta para a missão do dia "Conte como você está se sentindo". */
