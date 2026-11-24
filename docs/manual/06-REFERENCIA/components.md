@@ -386,6 +386,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx` (intersticial `groveMilestone`, depois de relatório e check-in e antes do sonho).
 **Régua:** `src/components/guild/GroveMilestoneCeremony.render.test.tsx`, `src/components/filaDeAvisos.contract.test.ts` (posição na fila).
 
+### `src/components/guild/GroveCasaArvore.tsx`
+**Dono de:** a árvore do clã (seiva Fagulha..Aurora) mostrada no Bosque: nome do estágio, linha, "perto" binário e InfoTip da regra, a partir da MESMA vista `guild.casa` e das mesmas chaves `guild.casa.*` da Casa. Só texto (não há arte da árvore da casa).
+**Props principais:** `language`, `casa` (`NonNullable<GuildView['casa']>`).
+**Exports:** `GroveCasaArvore(props)`.
+**Chamado por:** `guild/GuildSheet.tsx` (sala `grove`).
+**Régua:** `guild/GuildSheet.groveCuidado.render.test.tsx`.
+
 ### `src/components/guild/GroveCena.tsx`
 **Dono de:** a CENA do Bosque na ficha do Clã (D-49/D-55/D-56, 19/10/2026) — a janela do cenário ÚNICO do Bosque: o recorte do panorama pintado (`assets/bosque`) com os membros andando (`GroveWalkers`) e, no canto, a fileirinha de arte dos itens que os membros puseram na casa (sem nome nem número). Substitui o antigo `CasaVisor.tsx` (⚰️ SVG vetorial de cobre/turquesa com cristal em losango; o dono não sabia o que era).
 **Props principais:** `language`, `guild: Pick<GuildView, 'members' | 'casa'>`, `mySprite`, `reducedMotion`.
