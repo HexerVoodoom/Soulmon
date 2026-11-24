@@ -148,3 +148,20 @@ describe('PetPage headingLevel', () => {
     b.unmount();
   });
 });
+
+describe('Centro de Evolução — menu inline (P5)', () => {
+  it('o prédio abre a folha normal com 2 botões; poção abre INLINE (sem modal sobre modal)', () => {
+    expect(AREA_VIEW).toContain("data-lab-choice-evolution");
+    expect(AREA_VIEW).toContain("data-lab-choice-potion");
+    expect(AREA_VIEW).toContain('props.potionContent(() => setEvoSub(');
+    expect(AREA_VIEW).not.toContain('labChoice');
+    expect(APP).toMatch(/ElementPotionSheet[\s\S]{0,200}inline/);
+  });
+  it('CSS: menu, nome+cadeado e desfazer centrado com espaço usam tokens/inline-size (360/375/412)', () => {
+    const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf8');
+    for (const k of ['.sm2-lab-choice', '.sm2-evo-namerow', '.sm2-evo-lock', '.sm2-evo-revert']) expect(css).toContain(k);
+    expect(css).toMatch(/\.sm2-evo-revert \{[^}]*justify-content: center[^}]*margin-block-start: var\(--sm2-space-5\)/);
+    expect(css).toMatch(/\.sm2-evo-lock \{[^}]*min-inline-size: 44px/);
+  });
+});
+

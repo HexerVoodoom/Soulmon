@@ -30,11 +30,13 @@ export interface ElementPotionSheetProps {
   onCraft: (elementId: string) => void | boolean;
   /** Elementos desbloqueados na Biblioteca (`defeatedElements`). Bloqueado = "???" e não se cria. */
   unlocked?: readonly string[];
+  /** `true`: monta o conteúdo direto na folha do prédio (sem `ModalSheet` próprio) — o Centro de Evolução abre a poção no MESMO modal. */
+  inline?: boolean;
 }
 
 const PAGE = 30;
 
-export function ElementPotionSheet({ open, language, essences, inventory, pending, onBack, onCraft, unlocked }: ElementPotionSheetProps) {
+export function ElementPotionSheet({ open, language, essences, inventory, pending, onBack, onCraft, unlocked, inline = false }: ElementPotionSheetProps) {
   const isPt = language === 'pt-BR';
   const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
   const [shown, setShown] = useState(PAGE);
@@ -129,9 +131,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
     );
   };
 
-  return (
-    <ModalSheet open={open} title={t.title} onClose={onBack} onBack={back} language={language}
-      footer={sel ? (
+  const footerNode = sel ? (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           {/* §316c (13/11/2026, dono): folha de poção é modal branco, fica com o botão padrão do app (não o CTA do site). */}
           <button type="button" data-potion-confirm style={{ ...sm2Button('primary', confirmDisabled, 'md'), minWidth: 220 }} disabled={confirmDisabled}
@@ -139,7 +139,9 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
             <UiIcon name="auto_awesome" size={22} tone="inherit" /><span>{t.confirmBtn}</span><Icon id={sel} size={24} />
           </button>
         </div>
-      ) : undefined}>
+      ) : undefined;
+  const corpo = (
+    <>
       <div data-element-potion style={{ display: 'grid', gap: 12 }}>
         {pending && <p style={sm2Hint} data-potion-pending>{t.pending} <strong>{elName(pending, isPt)}</strong><br />{t.once}</p>}
         {done && <p role="status" style={sm2Text} data-potion-made>{t.made} ({elName(done, isPt)})</p>}
@@ -196,6 +198,12 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
         <ForgeResultModal language={language} title={t.resultTitle} name={t.potionOf(result)} effect={t.resultEffect}
           art={art(result, true)} closeLabel={t.close} onClose={() => setResult(null)} />
       )}
+    </>
+  );
+  if (inline) return open ? <div data-element-potion-inline style={{ display: 'grid', gap: 12 }}>{!sel && <button type="button" data-potion-menu-back onClick={onBack} style={{ ...sm2Button('quiet'), justifySelf: 'start' }}>{t.back}</button>}{corpo}{footerNode}</div> : null;
+  return (
+    <ModalSheet open={open} title={t.title} onClose={onBack} onBack={back} language={language} footer={footerNode}>
+      {corpo}
     </ModalSheet>
   );
 }
