@@ -6853,9 +6853,9 @@ Estado da `origin/main` ao reconciliar: o último § é o **§511** (Cristal Fun
 - **Exceção:** as folhas de baixo (`AreaSheet`/`SheetFrame`) MANTÊM a placa, porque ela está desenhada na própria arte. **Gatilho:** existir arte de topo sem placa para essas folhas (pendente em `ASSETS-A-GERAR.md`).
 - **Alternativa que perdeu:** placa de bronze em todos os modais (§515 foi o passo intermediário).
 
-## §526 — Passeio não abre sozinho no começo do dia (24/11/2026, dono; leitura adotada, aguarda confirmação)
+## §526 — Passeio não abre sozinho no começo do dia (24/11/2026, dono; CONFIRMADA pelo dono em 24/11/2026)
 
-- **Decisão (#1186):** o Passeio deixa de abrir sozinho; só abre por ação do jogador. Leitura adotada: sai a página "From Yesterday's Adventure" do `dailyReport`; o resumo de ontem fica. **Pendente de confirmação do dono** (se a leitura for outra, reverte o #1186).
+- **Decisão (#1186):** o Passeio deixa de abrir sozinho; só abre por ação do jogador. Leitura adotada: sai a página "From Yesterday's Adventure" do `dailyReport`; o resumo de ontem fica. **CONFIRMADA pelo dono em 24/11/2026: a leitura adotada era essa.**
 - **Alternativa que perdeu:** abertura automática no começo do dia. **Gatilho:** resposta do dono sobre a leitura.
 
 ## §527 — Evolution Center: arte final e menus (24/11/2026, dono)
