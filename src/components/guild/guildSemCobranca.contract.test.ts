@@ -287,7 +287,9 @@ describe('copy da Feira e do glossário (B2)', () => {
   const copySrc = fs.readFileSync(path.resolve(__dirname, '../../utils/guildCopy.ts'), 'utf8');
   const norm = (t: string) => t.replace(/[’']/g, "'");
   /** Chaves da B2 que NÃO estão no documento — cada uma tem de estar marcada PENDENTE em `guildCopy.ts`. */
-  const PENDENTES: string[] = []; // L3 (29/09): concha.* e cenarios.titulo entraram no documento
+  // 23/11/2026 (dono): 'guild.feira.recuou.curto' ainda não está no documento; 'guild.missao.investigar' e
+  // 'guild.missao.volteAmanha' não são do grupo guild.feira.* e ficam fora desta checagem.
+  const PENDENTES: string[] = ['guild.feira.recuou.curto']; // L3 (29/09): concha.* e cenarios.titulo entraram no documento
   const chavesB2 = entradas.filter(([k]) => /^guild\.(feira\.|help\.|guide\.|aria\.(feira|rodada)|concha\.|cenarios\.)/.test(k));
 
   it('toda chave da B2 está no documento com o MESMO texto (nada inventado), exceto as PENDENTES declaradas', () => {

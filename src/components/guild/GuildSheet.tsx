@@ -1282,6 +1282,9 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
   // A VOLTA GUARDADA (`utils/feiraVolta.ts`): conta como "voltou hoje" mesmo que a releitura da vista venha velha, e guarda o que ele achou até ser visto.
   const hojeJogador = playerDayKey(new Date(), tz);
   const [, relerVolta] = useState(0);
+  // Toque no CTA desabilitado: "Volte amanhã" (dono, 23/11/2026), some sozinho.
+  const [volteAmanha, setVolteAmanha] = useState(false);
+  useEffect(() => { if (!volteAmanha) return; const id = setTimeout(() => setVolteAmanha(false), 2500); return () => clearTimeout(id); }, [volteAmanha]);
   const voltaGuardada = missao ? feiraVoltaDoDia(readFeiraVolta(), hojeJogador) : null;
   // Desafio de hoje JÁ cumprido (luta, desafio ou "já bateu hoje" do servidor): a sala não oferece enfrentar de novo nem reabrir o
   // resultado (bug do dono, 16/11/2026: dois botões, "enfrentar" dava erro e "ver o que achou" entrava no combate e cancelava).
@@ -1314,6 +1317,11 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
     else if (passada) marca(`${semana}:passada:${passada}`, passada === 'dissipada' ? 1 : 2);
   }, [raid, semana, estado, passada]);
 
+  // O dia fechado (dono, 16/11/2026): desafio cumprido, ou a volta já vista. A fala do NPC mora no "i" (dono, 23/11/2026).
+  const desafioAbertoSala = !!feira && feira.resumo.state !== 'rest' && desafioSt === 'open';
+  const encerrado = !!missao && voltouHoje && !voltaPendente && (desafioFeito || (!!voltaGuardada && !desafioAbertoSala));
+  const fala = encerrado ? feiraNpcDia(language, voltaGuardada, feira?.resumo, nextPlayerDayStart(new Date(agora), tz).toLocaleTimeString(language === 'pt-BR' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' })) : null;
+
   if (!raid) {
     // O servidor não mandou a Feira (versão antiga): nada a desenhar, e nada a explicar.
     return <section className="sm2-guild-sec" aria-label={t('guild.feira.titulo')} data-guild-room="feira">{resgate}</section>;
@@ -1324,11 +1332,9 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
     <section className="sm2-guild-sec sm2-stats-card" aria-label={t('guild.feira.titulo')} data-guild-room="feira">
       {resgate}
       {misterioFim && <p className="sm2-lib-s" style={{ margin: 0 }} role="status" data-misterio-fim>{t(misterioFim.kind === 'honra' ? 'guild.misterio.fim.honra' : 'guild.misterio.fim.bits', { n: misterioFim.n })}</p>}
-      {/* O cartão do resgate já diz "se desfez diante da roda": dizer de novo, uma linha acima, é eco (QA L3 B2). */}
-      {!(dissipada && resgateAberto) && (
-        <p className="sm2-stats-t" style={{ margin: 0 }} data-feira-cabecalho>
-          {t(dissipada ? 'guild.feira.dissipado.mundo' : 'guild.feira.aberta.mundo')}
-        </p>
+      {/* Dissipada é ESTADO (a sala não tem botão): a frase curta fica à vista; o resto do texto mora no "i". */}
+      {dissipada && !resgateAberto && (
+        <p className="sm2-stats-t" style={{ margin: 0, textAlign: 'center' }} data-feira-cabecalho-vis>{t('guild.feira.dissipado.mundo')}</p>
       )}
       <FeiraVisor raid={raid} reducedMotion={reducedMotion} label={t(dissipada ? 'guild.aria.feira.dissipado' : raid.ferido ? 'guild.aria.feira.ferido' : 'guild.aria.feira', { nome })} />
       {/* I9 (02/10/2026): "não sei como a Feira funciona" — a explicação (e a linha sóbria da
@@ -1340,15 +1346,19 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           <span data-feira-legenda style={{ display: 'block', marginTop: missao ? 6 : 0 }}>{t('guild.feira.legenda')}</span>
           {!missao && <span data-feira-como style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.como')}</span>}
           <span data-feira-ganho style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.ganho')}</span>
+          <span data-feira-cabecalho style={{ display: 'block', marginTop: 6 }}>{t(dissipada ? 'guild.feira.dissipado.mundo' : 'guild.feira.aberta.mundo')}</span>
+          <span data-feira-linha style={{ display: 'block', marginTop: 6 }}>{t(`guild.feira.fenomeno.${raid.phenomenon}.linha`)}</span>
+          {!dissipada && raid.lastWeek && <span data-feira-semana-passada={raid.lastWeek} style={{ display: 'block', marginTop: 6 }}>{t(raid.lastWeek === 'dissipada' ? 'guild.feira.dissipado.mundo' : 'guild.feira.recuou.mundo')}</span>}
+          {missao && <span data-missao-historia style={{ display: 'block', marginTop: 6 }}>{t('guild.missao.historia')}</span>}
+          {missao && voltouHoje && fala && (<>
+            <span data-feira-npc-hoje style={{ display: 'block', marginTop: 6 }}>{fala.hoje}</span>
+            <span data-feira-npc-cla style={{ display: 'block', marginTop: 6 }}>{fala.cla}</span>
+            <span data-feira-npc-amanha style={{ display: 'block', marginTop: 6 }}>{fala.amanha}</span>
+          </>)}
+          {missao && voltouHoje && !fala && !desafioAtivo && !voltaPendente && <ProximaAcao t={t} language={language} tz={tz} agora={agora} />}
           <span style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.sobria', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR })}</span>
         </InfoTip>
       </div>
-      <p className="sm2-grove-line">{t(`guild.feira.fenomeno.${raid.phenomenon}.linha`)}</p>
-      {!dissipada && raid.lastWeek && !resgateAberto && (
-        <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-semana-passada={raid.lastWeek}>
-          {t(raid.lastWeek === 'dissipada' ? 'guild.feira.dissipado.mundo' : 'guild.feira.recuou.mundo')}
-        </p>
-      )}
       {!dissipada && !missao && !desafioAtivo && (
         <button
           type="button"
@@ -1377,33 +1387,31 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
         if (voltouHoje) {
           // O dia fechado (dono, 16/11/2026): desafio cumprido, ou o que a volta trouxe (mercador, Bits, nada) já visto. O mercador conta o
           // que o jogador achou, o que o clã achou (só o agregado) e que amanhã tem mais — só isso.
-          const desafioAberto = !!feira && feira.resumo.state !== 'rest' && desafioSt === 'open';
-          const encerrado = !voltaPendente && (desafioFeito || (!!voltaGuardada && !desafioAberto));
-          const fala = encerrado ? feiraNpcDia(language, voltaGuardada, feira?.resumo, nextPlayerDayStart(new Date(agora), tz).toLocaleTimeString(language === 'pt-BR' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' })) : null;
           return (
           <>
-          <div data-missao-feita style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {fala ? (
-              <>
-                <p className="sm2-stats-t" style={{ margin: 0 }} data-feira-npc-hoje>{fala.hoje}</p>
-                <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-npc-cla>{fala.cla}</p>
-                <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-npc-amanha>{fala.amanha}</p>
-              </>
-            ) : (
-              <>
-                <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.missao.volta.titulo')}</p>
-                <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-cla>{t('guild.missao.volta.cla')}</p>
-                <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-eu>{t('guild.missao.volta.eu', { nome })}</p>
-              </>
-            )}
-          </div>
           {voltaPendente && missao.onVerAchado && (
             <button type="button" data-missao-ver-achado onClick={() => { missao.onVerAchado?.(); relerVolta(n => n + 1); }} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
               <Icon name="search" size={20} />
               {t('guild.missao.verAchado')}
             </button>
           )}
-          {!desafioAtivo && !voltaPendente && !fala && <ProximaAcao t={t} language={language} tz={tz} agora={agora} />}
+          {!desafioAtivo && !voltaPendente && (
+            <div data-missao-feita style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <p className="sm2-stats-t" style={{ margin: 0, textAlign: 'center' }} data-feira-recuou-curto>{t('guild.feira.recuou.curto')}</p>
+              <button
+                type="button"
+                data-missao-mandar
+                aria-disabled="true"
+                onClick={() => setVolteAmanha(true)}
+                className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
+                style={{ opacity: 0.5 }}
+              >
+                <Icon name="search" size={20} />
+                {t('guild.missao.investigar')}
+              </button>
+              {volteAmanha && <p role="status" className="sm2-lib-s" style={{ margin: 0, textAlign: 'center' }} data-feira-volte-amanha>{t('guild.missao.volteAmanha')}</p>}
+            </div>
+          )}
           </>
           );
         }
@@ -1415,7 +1423,6 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
         return (
           <>
             {desafioSt === 'escaped' && <p className="sm2-stats-t" role="status" style={{ margin: 0 }} data-feira-escapou>{t('guild.missao.escapou')}</p>}
-            <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-historia>{t('guild.missao.historia')}</p>
             <button
               type="button"
               data-missao-mandar
@@ -1425,7 +1432,7 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
               className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
             >
               <Icon name="search" size={20} />
-              {t('guild.missao.mandar')}
+              {t('guild.missao.investigar')}
             </button>
           </>
         );

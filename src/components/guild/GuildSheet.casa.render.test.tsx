@@ -149,7 +149,7 @@ describe('a Missão na Feira (prédio da Feira do Hall)', () => {
   const comRaid = (casa: unknown) => ({ ...vista(casa), raid });
   const subir = (state: { day: string; returnAt: number } | null, onSend = vi.fn()) => ({ state, onSend });
 
-  it('sem ida: botão "Mandar investigar"; tocar chama onSend (e NÃO a rodada de um toque)', async () => {
+  it('sem ida: botão "Investigar"; tocar chama onSend (e NÃO a rodada de um toque)', async () => {
     globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ guild: comRaid(casaVista()), rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 })) as never;
     const onSend = vi.fn();
     const { container } = render(<GuildSheet {...base} room="feira" missao={subir(null, onSend)} />);
@@ -170,7 +170,11 @@ describe('a Missão na Feira (prédio da Feira do Hall)', () => {
   it('UM card, UMA ação: a história aparece, o Mistério não, e há um só botão de investigar', async () => {
     globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ guild: comRaid(casaVista()), rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 })) as never;
     const { container } = render(<GuildSheet {...base} room="feira" missao={subir(null)} />);
-    await waitFor(() => expect(container.querySelector('[data-missao-historia]')).not.toBeNull());
+    await waitFor(() => expect(container.querySelector('[data-missao-mandar]')).not.toBeNull());
+    // a história mora no "i" (dono, 23/11/2026): fora da tela até tocar
+    expect(container.querySelector('[data-missao-historia]')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Como funciona|How the/ }));
+    expect(document.querySelector('[data-missao-historia]')).not.toBeNull();
     expect(container.querySelector('[data-guild-card="misterio"]')).toBeNull();
     expect(container.querySelectorAll('button[data-missao-mandar], button[data-misterio-mandar]').length).toBe(1);
   });
@@ -179,12 +183,18 @@ describe('a Missão na Feira (prédio da Feira do Hall)', () => {
     globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ guild: { ...vista(casaVista()), raid: { ...raid, mine: { hitToday: true } } }, rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 })) as never;
     const { container } = render(<GuildSheet {...base} room="feira" missao={subir(null)} />);
     await waitFor(() => expect(container.querySelector('[data-missao-feita]')).not.toBeNull());
-    expect(container.querySelector('[data-missao-volta-cla]')).not.toBeNull();
-    expect(container.querySelector('[data-missao-volta-eu]')).not.toBeNull();
-    expect(container.querySelector('[data-missao-mandar]')).toBeNull();
+    // dia fechado (dono, 23/11/2026): só a frase curta e o CTA "Investigar" desabilitado — as linhas de contribuição saíram da tela
+    expect(container.querySelector('[data-missao-volta-cla]')).toBeNull();
+    expect(container.querySelector('[data-missao-volta-eu]')).toBeNull();
+    expect(container.querySelector('[data-feira-recuou-curto]')!.textContent).toBe('O fenômeno voltou para a névoa.');
+    const cta = container.querySelector('[data-missao-mandar]')!;
+    expect(cta.getAttribute('aria-disabled')).toBe('true');
+    expect(container.querySelectorAll('button[data-missao-mandar], button[data-misterio-mandar]').length).toBe(1);
     expect(container.querySelector('[data-missao-feita]')!.textContent).not.toMatch(/\d/);
-    // sem ação disponível: diz QUANDO a próxima libera (e nenhum botão)
-    expect(container.querySelector('[data-feira-proxima]')!.textContent).toMatch(/\d/);
+    // diz QUANDO a próxima libera, mas só no "i"
+    expect(container.querySelector('[data-feira-proxima]')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Como funciona|How the/ }));
+    expect(document.querySelector('[data-feira-proxima]')!.textContent).toMatch(/\d/);
   });
 });
 
@@ -209,7 +219,7 @@ describe('o Mistério encerrado (conversão da recompensa pendente)', () => {
     a.unmount();
     // 2ª abertura com o MESMO recibo: nada de novo
     const b = render(<GuildSheet {...base} room="feira" onClaimed={onClaimed} cla={{ onReward: vi.fn() }} missao={{ state: null, onSend: vi.fn() }} />);
-    await waitFor(() => expect(b.container.querySelector('[data-missao-historia]')).not.toBeNull());
+    await waitFor(() => expect(b.container.querySelector('[data-missao-mandar]')).not.toBeNull());
     await new Promise(r => setTimeout(r, 50));
     expect(b.container.querySelector('[data-misterio-fim]')).toBeNull();
     expect(onClaimed).toHaveBeenCalledTimes(1);
