@@ -4,8 +4,7 @@ import type { Language } from '../utils/i18n';
 import type { EvoRecap } from '../utils/evoRecap';
 import { sm2Button, sm2Hint } from './form/FormKit';
 import { RitualDialog, ritualLabel } from './ritual/RitualKit';
-import barra1x from '../assets/soulmon/evo/barra-evolucao-B.png';
-import barra2x from '../assets/soulmon/evo/barra-evolucao-B@2x.png';
+import { EvoBar } from './evolution/EvoBar';
 import lanterna1 from '../assets/soulmon/evo/lanterna-1.png';
 import lanterna2 from '../assets/soulmon/evo/lanterna-2.png';
 import lanterna3 from '../assets/soulmon/evo/lanterna-3.png';
@@ -49,26 +48,22 @@ export function EvoRecapModal({ recap, language, onClose }: { recap: EvoRecap; l
       </div>
       {/* A barra (30/10/2026, dono): barra B (480×128, @2x 960×256; canal interno MEDIDO no PNG: x 19–456, y 58–68 — 11 px, o desenho ocupa só y 51–76) e o preenchimento turquesa
           com glow dentro do canal. As porcentagens abaixo são as do canal medido na arte. */}
-      <div
+      <EvoBar
         role="progressbar"
         aria-label={headline}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={recap.afterPct}
         data-evo-recap-track
-        style={{ position: 'relative', width: '100%', aspectRatio: '480 / 128', margin: '-24px 0' }}
       >
-        <img src={barra1x} srcSet={`${barra1x} 1x, ${barra2x} 2x`} alt="" aria-hidden="true" data-evo-recap-moldura style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} />
-        <div aria-hidden="true" style={{ position: 'absolute', left: '3.96%', right: '4.9%', top: '45.3%', height: '8.6%', borderRadius: 2, overflow: 'visible' }}>
-          <div
-            aria-hidden="true"
-            data-evo-recap-fill
-            data-filled={filled ? 'true' : 'false'}
-            className={filled ? 'sm2-evo-recap-fill sm2-evo-recap-glow' : 'sm2-evo-recap-fill'}
-            style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${shown}%`, borderRadius: 2 }}
-          />
-        </div>
-      </div>
+        <div
+          aria-hidden="true"
+          data-evo-recap-fill
+          data-filled={filled ? 'true' : 'false'}
+          className={filled ? 'sm2-evo-recap-fill sm2-evo-recap-glow' : 'sm2-evo-recap-fill'}
+          style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${shown}%`, borderRadius: 2 }}
+        />
+      </EvoBar>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         <div style={cell}>
           <p style={ritualLabel}>{isPt ? 'Ontem' : 'Yesterday'}</p>

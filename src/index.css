@@ -7777,7 +7777,14 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 [data-quando] { display: flex; flex-direction: column; gap: var(--sm2-space-2); min-inline-size: 0; }
 [data-quando-controles] { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--sm2-space-4); min-inline-size: 0; }
 /* Arte final do Evolution Center (P5 evo-assets): conectores A, nó A, cadeado B. */
-.sm2-evo-conector { display: block; inline-size: 100%; block-size: auto; max-block-size: 28px; object-fit: contain; }
+.sm2-evo-ligacao { position: relative; inline-size: 100%; aspect-ratio: 300 / 28; }
+.sm2-evo-ligacao--join { transform: scaleY(-1); }
+.sm2-evo-conector { position: absolute; inset: 0; display: block; inline-size: 100%; block-size: 100%; object-fit: fill; overflow: visible; }
 .sm2-evo-lock-img { display: block; inline-size: 28px; block-size: 28px; }
 .sm2-evo-no-arte[data-busy="true"] { opacity: .75; }
 .sm2-evo-no-matiz { position: absolute; inset: 0; display: block; mix-blend-mode: color; opacity: .85; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; pointer-events: none; }
+
+/* Barra de evolução B (`evolution/EvoBar.tsx`): moldura 480×128 por largura do contêiner; canal medido no PNG (x 19–456, y 58–68). */
+.sm2-evo-barra { position: relative; inline-size: 100%; aspect-ratio: 480 / 128; margin-block: -5%; }
+.sm2-evo-barra__moldura { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; pointer-events: none; }
+.sm2-evo-barra__canal { position: absolute; inset-inline-start: 3.96%; inset-inline-end: 4.9%; inset-block-start: 45.3%; block-size: 8.6%; border-radius: 2px; overflow: visible; }

@@ -67,10 +67,15 @@ import { RitualDialog } from './ritual/RitualKit';
    `navigator.onLine` aqui seria a cópia do footgun 9 na sua forma mais boba. */
 import { useIsOnline } from './ui/OfflineSeal';
 import { Icon } from './ui/Icon';
-import conectorAtivo1x from '../assets/soulmon/evo/conector-evolucao-A-ativo.png';
-import conectorAtivo2x from '../assets/soulmon/evo/conector-evolucao-A-ativo@2x.png';
-import conectorInativo1x from '../assets/soulmon/evo/conector-evolucao-A-inativo.png';
-import conectorInativo2x from '../assets/soulmon/evo/conector-evolucao-A-inativo@2x.png';
+import { EvoBar } from './evolution/EvoBar';
+import curvaEsqAtivo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-ativo.png';
+import curvaEsqAtivo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-ativo@2x.png';
+import curvaEsqInativo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-inativo.png';
+import curvaEsqInativo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-inativo@2x.png';
+import curvaDirAtivo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-ativo.png';
+import curvaDirAtivo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-ativo@2x.png';
+import curvaDirInativo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-inativo.png';
+import curvaDirInativo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-inativo@2x.png';
 import cadeadoAberto from '../assets/soulmon/evo/cadeado-B-aberto.png';
 import cadeadoFechado from '../assets/soulmon/evo/cadeado-B-fechado.png';
 import { InfoTip, ModalInfo } from './ui/InfoTip';
@@ -209,28 +214,31 @@ const sectionLabel: CSSProperties = {
   textTransform: 'uppercase',
 };
 
-/** Conectores da árvore: o fio de cobre (arte A, dono) em 3 trilhos, um por ramo — aceso (`ativo`) no ramo atual, apagado (`inativo`) nos demais. `split` sai do rookie, `join` volta ao ultra. */
+const CURVAS = {
+  esq: { ativo: [curvaEsqAtivo1x, curvaEsqAtivo2x], inativo: [curvaEsqInativo1x, curvaEsqInativo2x] },
+  dir: { ativo: [curvaDirAtivo1x, curvaDirAtivo2x], inativo: [curvaDirInativo1x, curvaDirInativo2x] },
+} as const;
+
+/** Conectores da árvore: uma faixa 300×28 com as 3 colunas. As PONTAS (esq/dir) usam o fio de cobre curvo (arte A, dono): aceso no ramo atual, apagado nos demais.
+ *  O MEIO é a linha procedural de sempre (reta, cor do ramo). `split` sai do rookie; `join` é o espelho vertical (`.sm2-evo-ligacao--join`). */
 function TreeLinks({ mode, currentBranch }: { mode: 'split' | 'join'; currentBranch: Attr }) {
+  const meio = ATTR_ORDER[1];
   return (
     <div
       aria-hidden="true"
       data-testid={`sm-arvore-ligacao-${mode}`}
-      style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', alignItems: 'center', blockSize: 28 }}
+      className={mode === 'join' ? 'sm2-evo-ligacao sm2-evo-ligacao--join' : 'sm2-evo-ligacao'}
     >
-      {ATTR_ORDER.map(a => {
-        const ativo = a === currentBranch;
+      {([['esq', ATTR_ORDER[0]], ['dir', ATTR_ORDER[2]]] as const).map(([lado, a]) => {
+        const estado = a === currentBranch ? 'ativo' : 'inativo';
+        const [x1, x2] = CURVAS[lado][estado];
         return (
-          <img
-            key={a}
-            data-conector={ativo ? 'ativo' : 'inativo'}
-            data-conector-ramo={a}
-            src={ativo ? conectorAtivo1x : conectorInativo1x}
-            srcSet={ativo ? `${conectorAtivo1x} 1x, ${conectorAtivo2x} 2x` : `${conectorInativo1x} 1x, ${conectorInativo2x} 2x`}
-            alt=""
-            className="sm2-evo-conector"
-          />
+          <img key={a} data-conector={estado} data-conector-ramo={a} src={x1} srcSet={`${x1} 1x, ${x2} 2x`} alt="" className="sm2-evo-conector" />
         );
       })}
+      <svg viewBox="0 0 300 28" preserveAspectRatio="none" data-conector="procedural" data-conector-ramo={meio} className="sm2-evo-conector">
+        <path d="M150 0L150 28" fill="none" stroke={ATTR_COLOR[meio]} strokeWidth={4} strokeLinecap="round" vectorEffect="non-scaling-stroke" opacity={0.9} />
+      </svg>
     </div>
   );
 }
@@ -1178,26 +1186,24 @@ export function EvolutionPath({
           </div>
         )}
         {!naoEvolui && !ultraTravado && <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-          <div
-            className="sm2-kit-meter"
+          <EvoBar
             data-evo-meter
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={gaugeGoal}
             aria-valuenow={Math.min(evolutionPoints, gaugeGoal)}
             aria-label={fragmentBarLabel(false, language)}
-            style={{ height: 12, position: 'relative', ['--sm2-kit-tone' as string]: 'var(--sm2-primary-fill)' } as CSSProperties}
           >
             {/* A prévia de hoje: mais clara, atrás do creditado. Entra na virada. */}
             {ratioComHoje > ratio && (
               <div
                 data-evo-meter-today
                 aria-hidden="true"
-                style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.round(ratioComHoje * 100)}%`, background: 'var(--sm2-primary-soft)' }}
+                style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.round(ratioComHoje * 100)}%`, background: 'var(--sm2-primary-soft)', borderRadius: 2 }}
               />
             )}
-            <div className="sm2-kit-meter-fill" style={{ width: `${Math.round(ratio * 100)}%`, position: 'relative' }} />
-          </div>
+            <div className="sm2-evo-recap-fill" data-evo-meter-fill style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${Math.round(ratio * 100)}%`, borderRadius: 2 }} />
+          </EvoBar>
           {gaugeGoal > 0 && (
             <p data-evo-gauge-count style={{ ...sm2Hint, margin: 0, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
               <SoulFragmentIcon size={16} />
