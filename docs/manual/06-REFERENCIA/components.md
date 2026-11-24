@@ -2381,10 +2381,15 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 **Dono de:** o tutorial de primeira vez dos jogos do Ateliê da Mente: 4 passos curtos por jogo (EN+PT), demonstrações em CSS (quadro fixo com movimento reduzido), "Próximo"/"Pular"/"Entendi, jogar"; reabre sob demanda pelo "Ver o tutorial" do "Como se joga" sem gravar nada. Vive no chunk lazy de cada jogo. O modo desafio do Calabouço não o recebe.
 **Chamado por:** `EcoGame.tsx`, `ZipGame.tsx`, `PatchesGame.tsx`. **Régua:** `mindTutorial.render.test.tsx`.
 
+### `src/components/DriveAcordeao.tsx`
+**Dono de:** o accordion do Drive (extraído do `BestiaryCollection` em 23/11/2026): `Acordeao({ id, titulo, contagem?, aberto, onToggle })` (cabeçalho-botão com `aria-expanded`/`aria-controls`, corpo `hidden`) e `useAcordeaoFechados()` (ids fechados no storage). **Chamado por:** `BestiaryCollection.tsx`, `ElementDex.tsx`. **Régua:** `BestiaryCollection.acordeao.render.test.tsx`, `ElementDex.drive.render.test.tsx`.
+
 ### `src/components/ElementDex.tsx`
 **Dono de:** a aba "Elemento" da Biblioteca (27/10/2026): grade dos 20 base + 190 derivados; trancado = "?" sem nome, ícone nem id no DOM; destrancado abre uma `RitualDialog` com ícone grande, nome, composição (derivado) e forte/fraco contra (o que ainda está trancado ali aparece "?"). **Exports:** `ElementDex({ defeated, language })`, `dexElementName`. **Chamado por:** `LibraryPage.tsx`. **Régua:** `LibraryPage.abas.render.test.tsx`.
 
 **Sync 23/11/2026 (P5):** o modal de um elemento BASE mostra, acima da composição e das vantagens, o texto aprovado do dono (`[data-element-text]`, de `utils/elementoTextos.data.ts`); combinado e curado seguem sem texto. **Régua:** `src/components/ElementDex.textos.render.test.tsx`.
+
+**Sync 23/11/2026 (P5, accordion):** os chips de categoria saíram; Novo (CheckRow) e Base/Comb II/III/IV/Special viraram seções do MESMO accordion do Bestiário (`DriveAcordeao.tsx`: `Acordeao` + `useAcordeaoFechados`, estado em `DRIVE_ACORDEAO_FECHADOS`; ids `dex-novo`, `dex-base`…, cabeçalho com "destrancados / total"). Com filtro (Novo/bases) as seções vazias somem. **Régua:** `ElementDex.drive.render.test.tsx`.
 
 **Sync 23/11/2026 (P5/24):** a aba ganhou chips de categoria (`[data-element-cat]`: Base, Comb II, Comb III, Comb IV, Special; `utils/elementoCategoria.ts`) e a caixa "Novo" (`[data-element-only-new]`, só destrancados com selo); combinam em E com o filtro por bases. A ficha mora em `ElementModal.tsx` (`dexElementName` segue reexportado). O cabeçalho `X / Y` já existia (PT/EN iguais).
 
