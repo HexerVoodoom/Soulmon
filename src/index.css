@@ -6227,11 +6227,11 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   background-color: var(--sm2-viewport-bg); color: var(--sm2-viewport-ink);
   --sm2-moldura-pad-x: calc(var(--u) * 8.2); --sm2-moldura-pad-t: calc(var(--u) * 36.5); --sm2-moldura-pad-b: calc(var(--u) * 12.5);
 }
-.sm2-moldura-modal--ranking .sm2-moldura-modal__topo { top: calc(var(--u) * -0.83); height: calc(var(--u) * 35); background-image: url('./assets/soulmon/ui/ranking/ranking-topo.webp'); }
-.sm2-moldura-modal--ranking .sm2-moldura-modal__base { height: calc(var(--u) * 13.9); background-image: url('./assets/soulmon/ui/ranking/ranking-base.webp'); }
+html[data-ui="arte"] .sm2-moldura-modal--ranking .sm2-moldura-modal__topo { top: calc(var(--u) * -0.83); height: calc(var(--u) * 35); background-image: url('./assets/soulmon/ui/ranking/ranking-topo.webp'); }
+html[data-ui="arte"] .sm2-moldura-modal--ranking .sm2-moldura-modal__base { height: calc(var(--u) * 13.9); background-image: url('./assets/soulmon/ui/ranking/ranking-base.webp'); }
 .sm2-moldura-modal--ranking .sm2-moldura-modal__lado { top: calc(var(--u) * 6.5); width: calc(var(--u) * 5.56); } /* começam sob o topo: nenhuma barra acima do ornamento */
-.sm2-moldura-modal--ranking .sm2-moldura-modal__lado--e { background-image: url('./assets/soulmon/ui/ranking/ranking-lado-e.webp'); }
-.sm2-moldura-modal--ranking .sm2-moldura-modal__lado--d { background-image: url('./assets/soulmon/ui/ranking/ranking-lado-d.webp'); }
+html[data-ui="arte"] .sm2-moldura-modal--ranking .sm2-moldura-modal__lado--e { background-image: url('./assets/soulmon/ui/ranking/ranking-lado-e.webp'); }
+html[data-ui="arte"] .sm2-moldura-modal--ranking .sm2-moldura-modal__lado--d { background-image: url('./assets/soulmon/ui/ranking/ranking-lado-d.webp'); }
 /* Título na placa de bronze da arte (centro y 132 = 18,3u). */
 .sm2-moldura-modal--ranking .sm2-moldura-modal__placa { left: calc(var(--u) * 28); width: calc(var(--u) * 44); top: calc(var(--u) * 14.47); height: calc(var(--u) * 8); }
 .sm2-moldura-modal--ranking .sm2-moldura-modal__titulo { font-size: var(--sm2-text-sm); letter-spacing: .06em; text-transform: uppercase; color: #FBF1D2; }
@@ -6254,6 +6254,35 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   /* o miolo é escuro (viewport): a lista herda tinta clara, nunca a tinta do tema claro */
   --sm2-ink: var(--sm2-viewport-ink); --sm2-muted: color-mix(in srgb, var(--sm2-viewport-ink) 65%, transparent); color: var(--sm2-viewport-ink);
 }
+/* Pele 'minimal' (P7 fase 2-B): ranking = folha lisa. SEM arte de moldura e SEM borda; cabeça com ✕ (44 px) · título · "i" (44 px); o corpo rola por dentro. */
+.sm3-ranking--lisa {
+  display: flex; flex-direction: column; height: auto; max-height: 88dvh; min-height: min(60dvh, 520px); overflow: hidden;
+  background-color: var(--sm2-surface); color: var(--sm2-ink); border-radius: 20px 20px 0 0; box-shadow: var(--sm2-shadow-sheet, 0 -8px 32px rgba(4, 18, 20, .35));
+}
+.sm3-ranking-lisa__cabeca { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 8px 8px 0; }
+.sm3-ranking-lisa__titulo { flex: 1; min-width: 0; margin: 0; font-size: var(--sm2-text-md); letter-spacing: .06em; text-transform: uppercase; overflow-wrap: anywhere; }
+.sm3-ranking-lisa__fechar {
+  box-sizing: border-box; flex: none; width: 44px; height: 44px; padding: 0; margin: 0; display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 12px; background: transparent; color: var(--sm2-ink); cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.sm3-ranking-lisa__fechar:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+.sm3-ranking-lisa__info-vazio { flex: none; width: 44px; height: 44px; }
+.sm3-ranking-lisa__corpo {
+  flex: 1; min-height: 0; min-width: 0; overflow-y: auto; overflow-x: hidden; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: var(--sm2-space-3);
+  padding: 8px 18px calc(18px + env(safe-area-inset-bottom, 0px)); color: var(--sm2-ink);
+}
+/* Pele 'minimal': o CARD vira cartão liso (sem as 4 peças de arte); a arte no topo, nome e descrição em fluxo. */
+.sm2-moldura-card--lisa {
+  aspect-ratio: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px; text-align: center;
+  background-color: var(--sm2-surface); border-radius: 14px; --u: 1cqw;
+}
+.sm2-moldura-card--lisa .sm2-moldura-card__arte { position: relative; inset: auto; aspect-ratio: 4 / 3; width: 100%; border-radius: 10px; }
+.sm2-moldura-card--lisa .sm2-moldura-card__nome,
+.sm2-moldura-card--lisa .sm2-moldura-card__desc,
+.sm2-moldura-card--lisa .sm2-moldura-card__recompensa { position: static; transform: none; inset: auto; height: auto; left: auto; right: auto; bottom: auto; }
+.sm2-moldura-card--lisa .sm2-moldura-card__nome { color: var(--sm2-ink); text-shadow: none; font-family: var(--sm2-font-display); }
+.sm2-moldura-card--lisa .sm2-moldura-card__desc { color: var(--sm2-ink); }
+.sm2-moldura-card--lisa .sm2-moldura-card__recompensa { align-self: center; }
 /* ── MODAL FILES (18/11/2026) ────────────────────────────────────────────────
    Referência escolhida pelo dono: `E:/Soulmon-assets/referencias-files/ref3-cristal-chama-ESCOLHIDA.jpg` (pasta de computador minimalista).
    Moldura = a ARTE APROVADA de `assets/soulmon/ui/files/` (LEIA-ME) sobre o `ModalFrame`: `--u` = 1% da largura do modal; as medidas em `u` são
@@ -7682,11 +7711,11 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-card { position: relative; box-sizing: border-box; display: block; isolation: isolate; aspect-ratio: 100 / 126; /* não `min-height` em `--u`: o `cqw` do próprio contêiner resolveria contra o ancestral */ }
 .sm2-moldura-card__lado, .sm2-moldura-card__topo, .sm2-moldura-card__base { position: absolute; pointer-events: none; }
 .sm2-moldura-card__lado { top: 0; bottom: 0; width: calc(var(--u) * 6.7); z-index: 1; background-repeat: repeat-y; background-size: 100% auto; }
-.sm2-moldura-card__lado--e { left: 0; background-image: url('./assets/soulmon/ui/moldura/card-lado-e.webp'); }
-.sm2-moldura-card__lado--d { right: 0; background-image: url('./assets/soulmon/ui/moldura/card-lado-d.webp'); }
+html[data-ui="arte"] .sm2-moldura-card__lado--e { left: 0; background-image: url('./assets/soulmon/ui/moldura/card-lado-e.webp'); }
+html[data-ui="arte"] .sm2-moldura-card__lado--d { right: 0; background-image: url('./assets/soulmon/ui/moldura/card-lado-d.webp'); }
 .sm2-moldura-card__topo, .sm2-moldura-card__base { left: 0; right: 0; z-index: 2; background-repeat: no-repeat; background-size: 100% 100%; }
-.sm2-moldura-card__topo { top: 0; height: calc(var(--u) * 38.5); background-image: url('./assets/soulmon/ui/moldura/card-topo.webp'); }
-.sm2-moldura-card__base { bottom: 0; height: calc(var(--u) * 61.5); background-image: url('./assets/soulmon/ui/moldura/card-base.webp'); }
+html[data-ui="arte"] .sm2-moldura-card__topo { top: 0; height: calc(var(--u) * 38.5); background-image: url('./assets/soulmon/ui/moldura/card-topo.webp'); }
+html[data-ui="arte"] .sm2-moldura-card__base { bottom: 0; height: calc(var(--u) * 61.5); background-image: url('./assets/soulmon/ui/moldura/card-base.webp'); }
 .sm2-moldura-card__arte {
   position: absolute; z-index: 0; left: calc(var(--u) * 6); right: calc(var(--u) * 6); top: calc(var(--u) * 5); bottom: calc(var(--u) * 38.9);
   display: flex; align-items: center; justify-content: center; overflow: hidden; background: #1a2e2c;

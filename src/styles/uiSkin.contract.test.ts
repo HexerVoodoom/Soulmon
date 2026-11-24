@@ -62,10 +62,6 @@ const violacoes = () => [...new Set(regrasDeArte(css).filter(r => !noEscopo(r.ca
 /** Congelada em 24/11/2026. Só encolhe. */
 const FORA_DO_ESCOPO_HOJE: readonly string[] = [
   ".sm2-elem-carta => carta-elemento.webp",
-  ".sm2-moldura-modal--ranking .sm2-moldura-modal__topo => ranking/ranking-topo.webp",
-  ".sm2-moldura-modal--ranking .sm2-moldura-modal__base => ranking/ranking-base.webp",
-  ".sm2-moldura-modal--ranking .sm2-moldura-modal__lado--e => ranking/ranking-lado-e.webp",
-  ".sm2-moldura-modal--ranking .sm2-moldura-modal__lado--d => ranking/ranking-lado-d.webp",
   ".sm2-moldura-modal--files .sm2-moldura-modal__topo => files/files-topo.webp",
   ".sm2-moldura-modal--files .sm2-moldura-modal__base => files/files-base.webp",
   ".sm2-moldura-modal--files .sm2-moldura-modal__lado--e => files/files-lado-e.webp",
@@ -112,15 +108,11 @@ const FORA_DO_ESCOPO_HOJE: readonly string[] = [
   ".sm2-moldura-modal--dono .sm2-moldura-modal__lado--d => moldura/npc-lado-d.webp",
   ".sm2-moldura-modal--dono .sm2-moldura-modal__topo => moldura/npc-topo.webp",
   ".sm2-moldura-modal--dono .sm2-moldura-modal__base => moldura/npc-base.webp",
-  ".sm2-moldura-card__lado--e => moldura/card-lado-e.webp",
-  ".sm2-moldura-card__lado--d => moldura/card-lado-d.webp",
-  ".sm2-moldura-card__topo => moldura/card-topo.webp",
-  ".sm2-moldura-card__base => moldura/card-base.webp",
   ".sm2-moldura-modal--cristal .sm2-moldura-modal__placa => moldura-cristal/placa-titulo-meio.webp",
   ".sm2-moldura-modal--cristal .sm2-moldura-modal__placa::before => moldura-cristal/placa-titulo-esq.webp",
   ".sm2-moldura-modal--cristal .sm2-moldura-modal__placa::after => moldura-cristal/placa-titulo-dir.webp",
 ];
-const TETO = 58;
+const TETO = 50;
 
 describe('duas interfaces — arte só sob html[data-ui="arte"]', () => {
   it('AUTOVERIFICAÇÃO: o parser enxerga regras de arte e distingue o escopo', () => {
