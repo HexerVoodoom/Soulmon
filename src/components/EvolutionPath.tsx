@@ -47,7 +47,7 @@ import { gaugeTravadaPelasMegas } from '../utils/evolutionGauge';
 import { canSwitchLaterally } from '../utils/trocaLateral';
 import { forecastNodeId, stageLevelIndex } from '../utils/evolutionForecast';
 import { dailyGaugeCap } from '../utils/evolutionGauge';
-import { fragmentBarLabel, fragmentTodayHint, fragmentHowText, fragmentsGatheredLine } from '../utils/soulFragment';
+import { fragmentBarLabel, fragmentTodayHint, fragmentHowText } from '../utils/soulFragment';
 import { SoulFragmentIcon } from './ui/SoulFragmentIcon';
 import { ALIGN_TO_ATTR, ATTR_LABEL, ATTR_COLOR, ATTR_INK, ULTRA_COLOR } from '../types/attributes';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
@@ -236,7 +236,6 @@ export function EvolutionPath({
   onToggleEvolutionLock,
   onEvolveRequest,
   language = 'en-US',
-  carePattern,
   forecastBranch,
   spriteLibrary,
   spriteLibraryReal,
@@ -269,6 +268,7 @@ export function EvolutionPath({
   // reveal one (shown darkened) after confirming; this local set resets when
   // they leave the screen (the component unmounts on navigation).
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
+  const [fragInfoOpen, setFragInfoOpen] = useState(false); // texto das frações atrás do botão 'i'
   const [confirmReveal, setConfirmReveal] = useState<CreatureStage | null>(null);
   /** O modal da forma tocada (09/11/2026): `degenerar` (forma de nível abaixo), `equipar` (mesmo nível) ou `ver` (nível acima, só leitura). */
   const [opcoes, setOpcoes] = useState<{ evolution: CreatureStage; modo: 'degenerar' | 'equipar' | 'ver' } | null>(null);
@@ -517,15 +517,7 @@ export function EvolutionPath({
            padrão espera, não expira (nunca "não perca"). A 2ª oração continua
            ensinando o gesto: `evolucaoManual.contract.test.ts` exige. */
         : (isPt ? 'O padrão está pronto. Ele espera você encostar. Toque no seu Soulmon para evoluir.' : 'The pattern is ready. It waits for you to touch it. Tap your Soulmon to evolve.'))
-    : (
-        // "completo", não "perfeito" (P5). O docblock deste arquivo já dizia
-        // "Faltam 4 dias completos" — a renomeação passou pelo COMENTÁRIO e
-        // não pela string, no mesmo arquivo. É a frase que responde "quanto
-        // falta para meu bicho evoluir", ou seja, a mais lida da página.
-        // 🧬 11/10/2026: o gauge mede esforço, não dias; desde 20/10/2026 a moeda se
-        // chama Fragmento de Alma (REGISTRO §153). Descreve o que JÁ se juntou,
-        // nunca o que falta: sem "faltam", sem prazo.
-        fragmentsGatheredLine(evolutionPoints, language));
+    : '';
 
   /* O TOQUE no visor (V2): com a barra cheia e o cadeado aberto, evolui; nos
      outros casos alterna o cadeado. O rótulo diz qual dos dois vai acontecer
@@ -1177,7 +1169,7 @@ export function EvolutionPath({
               </span>
             </p>
           )}
-          <p style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{emphasizeSoulFragment(fraseProgresso)}</p>
+          {fraseProgresso && <p style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{emphasizeSoulFragment(fraseProgresso)}</p>}
           {/* 🌀 Buff do Glitchtama (10/11/2026): ativo = +10% nos pontos que entram; mostra até quando e que o próximo uso só depois. */}
           {glitchtamaBuffAte !== undefined && (
             <p data-glitchtama-buff style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
@@ -1195,7 +1187,19 @@ export function EvolutionPath({
               style={{ alignSelf: 'center', marginTop: 4 }}
             />
           )}
-          {!prontoParaEvoluir && gaugeGoal > 0 && (
+          {gaugeGoal > 0 && (
+            <button
+              type="button"
+              data-evo-gauge-info
+              aria-expanded={fragInfoOpen}
+              aria-label={isPt ? 'Sobre os Fragmentos de Alma' : 'About Soul Fragments'}
+              onClick={() => setFragInfoOpen(o => !o)}
+              style={{ ...sm2Button('outline', false, 'sm'), alignSelf: 'center', minWidth: 44, minHeight: 44, padding: 0 }}
+            >
+              <Icon name="info" size={24} tone="inherit" />
+            </button>
+          )}
+          {gaugeGoal > 0 && fragInfoOpen && (
             <p data-evo-gauge-unlock style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
               {emphasizeSoulFragment(fragmentHowText(language))}
             </p>
@@ -1215,17 +1219,14 @@ export function EvolutionPath({
             aria-pressed={evolutionLocked}
             style={{
               ...sm2Button('outline', false, 'sm'),
-              width: '100%', maxWidth: 240, marginTop: 4,
+              width: '100%', maxWidth: 240, marginTop: 4, flexDirection: 'column', gap: 2, height: 'auto', minHeight: 64,
               ...(evolutionLocked
                 ? { backgroundColor: 'var(--sm2-primary-soft)', color: 'var(--sm2-primary-ink)', border: '1px solid var(--sm2-primary-ink)' }
                 : null),
             }}
           >
-            {/* P7 (beta-2): o botão é a AÇÃO de segurar — cadeado FECHADO nos dois estados (o preenchido diz que já está segurado); `lock_open` lia como "solto". */}
-            <Icon name="lock" size={24} fill={evolutionLocked ? 1 : 0} tone="inherit" />
-            {evolutionLocked
-              ? (isPt ? 'Evolução segurada' : 'Evolution on hold')
-              : (isPt ? 'Segurar evolução' : 'Hold evolution')}
+            <Icon name={evolutionLocked ? 'lock' : 'lock_open'} size={24} fill={evolutionLocked ? 1 : 0} tone="inherit" />
+            <span>{isPt ? 'Segurar evolução' : 'Evolution hold'}</span>
           </button>
         )}
         {/* X4 (guarda 1c): segurar a forma NÃO protege da degeneração — e a
@@ -1331,20 +1332,6 @@ export function EvolutionPath({
           </p>
         )}
 
-        {/* Desfazer: o sprite próprio fica no save e pode ser sintonizado de
-            novo a qualquer momento — re-sintonizar NÃO chama geração, logo não
-            toca teto nenhum. Trocar o rosto do bicho sem saída é a versão
-            educada do mesmo erro. */}
-        {(estadoAtual === 'PROPRIO' || estadoAtual === 'NOVO') && onRevertVisor && (
-          <button
-            type="button"
-            onClick={() => onRevertVisor(currentStageId)}
-            style={{ ...sm2Button('outline', false, 'sm'), width: '100%', maxWidth: 240 }}
-          >
-            <Icon name="undo" size={24} tone="inherit" />
-            {spriteText('revert', language)}
-          </button>
-        )}
         {acervo.reverted.includes(currentStageId) && onTuneVisor && (
           <button
             type="button"
@@ -1371,38 +1358,7 @@ export function EvolutionPath({
                 : 'This Soulmon stays as it is. There are no other forms to wait for — just look after them.'}
           </p>
         </section>
-      ) : (
-      <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }} aria-label={isPt ? 'Para onde seu Soulmon está indo' : 'Where they are heading'} data-evo-heading>
-        <p style={sectionLabel}>{isPt ? 'Para onde seu Soulmon está indo' : 'Where they are heading'}</p>
-
-        {/* A FRASE vem antes dos números: é ela que responde à pergunta. O
-            galho previsto em `primary-ink` 500 dentro da frase — a resposta
-            da tela (PRINCÍPIOS §6), nunca a cor do atributo. */}
-        {forecastBranch ? (
-          <p style={{ ...sm2Text, margin: 0 }}>
-            {isPt ? 'Seguindo para ' : 'Heading toward '}
-            <strong style={{ fontWeight: 500, color: 'var(--sm2-primary-ink)' }}>{L(ATTR_LABEL[forecastBranch])}</strong>
-            {isTie
-              ? (carePattern
-                  ? (isPt
-                      ? ` — empate nos atributos, e o seu ritmo ${carePattern.namePt} desempata.`
-                      : ` — attributes are tied, and your ${carePattern.nameEn} rhythm breaks it.`)
-                  : (isPt
-                      ? ' — empate nos atributos; cumprir mais tarefas de uma categoria decide.'
-                      : ' — attributes are tied; completing more tasks of one category decides.'))
-              : (isPt
-                  ? '. Muda cumprindo mais tarefas de outra categoria.'
-                  : '. Change it by completing more tasks of another category.')}
-          </p>
-        ) : (
-          <p style={{ ...sm2Text, margin: 0 }}>
-            {isPt
-              ? 'Ainda não dá para dizer. Conclua tarefas e o galho aparece aqui.'
-              : 'Too early to tell. Finish tasks and the branch shows up here.'}
-          </p>
-        )}
-      </section>
-      )}
+      ) : null}
 
       {/* ─────────── A árvore ─────────── */}
       <section>
@@ -1480,6 +1436,20 @@ export function EvolutionPath({
             )}
             {!naoEvolui && ultra && <div style={{ display: 'flex', justifyContent: 'center' }}>{renderEvolutionCard(ultra)}</div>}
           </div>
+        )}
+        {/* Desfazer (movido para baixo da árvore): o sprite próprio fica no save e pode ser sintonizado de
+            novo a qualquer momento — re-sintonizar NÃO chama geração, logo não
+            toca teto nenhum. Trocar o rosto do bicho sem saída é a versão
+            educada do mesmo erro. */}
+        {(estadoAtual === 'PROPRIO' || estadoAtual === 'NOVO') && onRevertVisor && (
+          <button
+            type="button"
+            onClick={() => onRevertVisor(currentStageId)}
+            style={{ ...sm2Button('outline', false, 'sm'), width: '100%', maxWidth: 240 }}
+          >
+            <Icon name="undo" size={24} tone="inherit" />
+            {spriteText('revert', language)}
+          </button>
         )}
       </section>
     </div>

@@ -18,6 +18,7 @@ import { chefsOn, playerWeekday } from '../../utils/restaurant';
 import { restaurantNpcVoice } from '../../utils/restaurantCopy';
 import { lotIndicators } from '../../utils/lotIndicators';
 import { AreaSheet } from './AreaSheet';
+import { ModalSheet } from '../form/FormKit';
 import { mercadoLots, arenaLots, laboratorioLots, hallLots, type MercadoLotId, type LaboratorioLotId } from '../../utils/areaSheetCopy';
 import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, FORJA_LOT_ART, FORJA_BG, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART, HALL_BG, LABORATORIO_BG } from '../../assets/soulmon/areas';
 import { exploracaoLots, forjaLots, jogosLots } from '../../utils/playAreaLots';
@@ -323,6 +324,9 @@ export interface AreaViewProps {
   /** Cada construção do Laboratório escolhe a sub-aba (o `App` é dono do estado). */
   onLabTab: (tab: LabTab) => void;
   labContent: ReactNode;
+  /** Criar poção (saiu do Centro de Evolução): o `App` monta a folha; o prédio abre por esta escolha de 2 opções. */
+  potionContent?: ReactNode;
+  onOpenPotion?: () => void;
   /** Hall (F5, ex-PR #117): a `LibraryPage` embutida, montada no `App` — uma
    *  visão por construção (Biblioteca = diretório, Círculo de Amigos = amigos). */
   hallContent: (view: 'directory' | 'friends') => ReactNode;
@@ -421,6 +425,7 @@ export function AreaView(props: AreaViewProps) {
   const gsForIndicators = gsCtx?.gameState;
   /** O mapa de andares do Rift em tela cheia (REGISTRO §462). */
   const [riftMapOpen, setRiftMapOpen] = useState(false);
+  const [labChoice, setLabChoice] = useState(false); // Centro de Evolução: Evolution Center / Create Potion
   /** "Entrar no Rift" na folha: a descida larga SOZINHA do ponto onde parou, sem o lobby nem 2º toque (pedido do dono, 16/11/2026). */
   const [riftAuto, setRiftAuto] = useState(false);
   const lotFlags = useMemo(() => lotIndicators(gsForIndicators), [gsForIndicators]);
@@ -868,9 +873,22 @@ export function AreaView(props: AreaViewProps) {
         areaId={area}
         language={language}
         background={LABORATORIO_BG}
-        lots={gated(lots.map(l => ({ ...l, art: LABORATORIO_LOT_ART[l.id], onOpen: () => { const tab = tabOf[l.id]; if (tab) props.onLabTab(tab); enter(l.id); } } satisfies AreaLot)))}
+        lots={gated(lots.map(l => ({ ...l, art: LABORATORIO_LOT_ART[l.id], onOpen: () => { const tab = tabOf[l.id]; if (tab) props.onLabTab(tab); if (l.id === 'evolucao' && props.onOpenPotion) { setLabChoice(true); return; } enter(l.id); } } satisfies AreaLot)))}
         notice={lockNote} onNoticeClose={() => setLockNote(null)}
       >
+        <ModalSheet open={labChoice} title={language === 'pt-BR' ? 'Centro de Evolução' : 'Evolution Center'} onClose={() => setLabChoice(false)} language={language} placement="center" titulo="inline" sobreTelas maxWidth={380}>
+          <div data-lab-choice style={{ display: 'grid', gap: 8 }}>
+            <button type="button" className="sm2-kit-btn sm2-kit-btn-primary" data-lab-choice-evolution style={{ width: '100%' }}
+              onClick={() => { setLabChoice(false); enter('evolucao'); }}>
+              {language === 'pt-BR' ? 'Centro de Evolução' : 'Evolution Center'}
+            </button>
+            <button type="button" className="sm2-kit-btn" data-lab-choice-potion style={{ width: '100%' }}
+              onClick={() => { setLabChoice(false); props.onOpenPotion?.(); }}>
+              {language === 'pt-BR' ? 'Criar poção' : 'Create Potion'}
+            </button>
+          </div>
+        </ModalSheet>
+        {props.potionContent}
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
           {open?.id === 'biblioteca' ? (
             <Suspense fallback={<SheetLoading language={language} />}>
