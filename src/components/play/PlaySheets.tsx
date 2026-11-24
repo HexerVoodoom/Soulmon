@@ -6,10 +6,7 @@ import type { FunTicketStatus } from '../../utils/funTickets';
 import { TicketPanel } from './TicketFan';
 import { TicketBuyModal } from './TicketBuyModal';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { RankingPanel } from '../RankingPanel';
-import { RankingModal } from '../RankingModal';
 import { BotaoEspecial } from '../ui/BotaoEspecial';
-import { RIFT_GAME_ID } from '../../utils/endlessRift';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { clearBonus } from '../../utils/dungeonBase';
 import { riftCurrentLayer } from '../../utils/riftMap';
@@ -151,7 +148,7 @@ function DropItem({ label, value }: { label: string; value: string }) {
 
 // ── Masmorra ────────────────────────────────────────────────────────────────
 /** A Fenda Sem Fim: DOIS botões (pedido do dono, 16/11/2026): "Entrar no Rift" (retoma direto onde parou) e "Ver o mapa" (secundário, outline). Pedido de 17/11/2026: "Ranking" (outline, negrito sublinhado) à esquerda da linha do título (`headSlot`, o encaixe da moldura; sem ele, entra no topo da folha) e o "i" com o "Drop rate" (os itens e as chances, num tooltip) na frente do título; a nota "Pode cair" saiu do corpo. */
-export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId }: { language: Language; onStart: () => void; /** "Ver o mapa" (§462): abre o mapa de andares. Sem ele, a folha fica só com a entrada. */ onMap?: () => void; bitsToday?: number; /** Conta do jogador: sem ela não há ranking (o botão some). */ saveId?: string; }) {
+export function MasmorraSheet({ language, onStart, onMap, bitsToday }: { language: Language; onStart: () => void; /** "Ver o mapa" (§462): abre o mapa de andares. Sem ele, a folha fica só com a entrada. */ onMap?: () => void; bitsToday?: number }) {
   const isPt = language === 'pt-BR';
   // O recorde de profundidade mora no save (REGISTRO §31); o placar, no aparelho (`getDungeonBest`).
   const gs = useGameStateOptional()?.gameState;
@@ -159,19 +156,8 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId }: {
   const deepest = sanitizeDepthRecord(gs?.dungeonDepthRecord);
   const [best] = useState(() => getDungeonBest());
   const currentLayer = riftCurrentLayer(gs);
-  const [rankOpen, setRankOpen] = useState(false);
   return (
     <div data-masmorra style={{ display: 'flex', flexDirection: 'column', gap: 'min(12px, 1.1dvh)' }}>
-      {saveId && (
-        <BotaoEspecial variant="ranking" data-masmorra-ranking aria-haspopup="dialog" onClick={() => setRankOpen(true)}>
-          {isPt ? 'Ver ranking' : 'See ranking'}
-        </BotaoEspecial>
-      )}
-      <RankingModal open={rankOpen} onClose={() => setRankOpen(false)} language={language} title={isPt ? 'Ranking' : 'Leaderboard'}>
-        <div data-masmorra-ranking-panel>
-          <RankingPanel inline game={RIFT_GAME_ID} period="monthly" saveId={saveId} language={language} />
-        </div>
-      </RankingModal>
       <ModalInfo language={language} label="Drop rate">
         <b data-masmorra-drops-title style={{ display: 'block', fontSize: 'var(--sm2-text-xs)', fontWeight: 600, marginBottom: 4 }}>Drop rate</b>
         <ul data-masmorra-drops style={{ margin: 0, paddingLeft: 18, listStyle: 'disc' }}>
@@ -204,13 +190,13 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId }: {
           {best > 0 && <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />}
         </div>
       )}
-      <BotaoEspecial variant="rift" data-masmorra-start onClick={onStart}>
+      {onMap && <BotaoEspecial variant="rift-sec" data-masmorra-map onClick={onMap}>{isPt ? 'Ver o mapa' : 'See the map'}</BotaoEspecial>}
+      <RiftBitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} />
+      {/* 24/11/2026 (dono): "Entrar no Rift" na BASE da folha, bem afastado do "Ver o mapa" (zona de toque segura); o ranking mora no rodapé do mapa. */}
+      <BotaoEspecial variant="rift" data-masmorra-start onClick={onStart} style={{ marginTop: 'min(40px, 4dvh)' }}>
         {isPt ? 'Entrar no Rift' : 'Enter the Rift'}
         <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />
       </BotaoEspecial>
-      {onMap && <BotaoEspecial variant="rift-sec" data-masmorra-map onClick={onMap}>{isPt ? 'Ver o mapa' : 'See the map'}</BotaoEspecial>}
-      {/* 24/11/2026 (dono): as linhas de Bits ficam na BASE da folha (a parte de cima é só botões e recordes). */}
-      <RiftBitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} />
     </div>
   );
 }

@@ -12,13 +12,15 @@ import { CristalChama } from './ui/CristalChama';
  * Os discos do topo já vêm desenhados na arte: o X (fechar, à esquerda) e o "i" (`ModalFrame info`, à direita) são SÓ glifos, centrados nos discos,
  * com alvo de toque transparente ≥ 44 px e foco visível discreto (sem círculo por cima). Geometria em `.sm2-moldura-modal--ranking` (`index.css`).
  */
-export function RankingModal({ open, onClose, language, title, info, children }: {
+export function RankingModal({ open, onClose, language, title, info, sobreTelas = false, children }: {
   open: boolean;
   onClose: () => void;
   language: Language;
   title: string;
   /** Texto do "i" (opcional; sem ele o disco fica decorativo). */
   info?: string;
+  /** Abre ACIMA de telas cheias (o mapa do Rift, z 6000). */
+  sobreTelas?: boolean;
   children: ReactNode;
 }) {
   const isPt = language === 'pt-BR';
@@ -27,7 +29,7 @@ export function RankingModal({ open, onClose, language, title, info, children }:
   // No <body>: dentro de uma folha com `transform` (AreaSheet) o `position: fixed` vira relativo a ela e o modal ficava com largura/altura erradas (texto cortado).
   const tela = (
     <div
-      className="sm3-ranking-bg sm2-sheet-fade"
+      className={sobreTelas ? 'sm3-ranking-bg sm3-ranking-bg--sobre sm2-sheet-fade' : 'sm3-ranking-bg sm2-sheet-fade'}
       data-ranking-modal-bg=""
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
