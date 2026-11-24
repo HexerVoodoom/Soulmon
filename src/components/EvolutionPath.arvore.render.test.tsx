@@ -103,5 +103,19 @@ describe('árvore do Centro de Evolução', () => {
     expect(atual.style.boxShadow.toLowerCase()).toMatch(/0, 158, 216|#009ed8/);
     expect(readFileSync(resolve(__dirname, './EvolutionPath.tsx'), 'utf8')).toContain("benevolence: '#F2C230'");
   });
+
+  it('nome longo: o texto trunca com reticências no próprio span (min-inline-size 0, overflow hidden, nowrap) e o nome completo fica no title', () => {
+    const longos = stages.map(st => (st.stage === 'champion' && st.branch === 'poder' ? { ...st, name: 'Aurelion-champion-prime' } : st));
+    renderWithCss(<EvolutionPath {...props} stages={longos} />);
+    const span = screen.getByTestId('sm-nome-no-champion-power');
+    expect(span.textContent).toBe('Aurelion-champion-prime');
+    expect(span.getAttribute('title')).toBe('Aurelion-champion-prime');
+    expect(span.style.overflow).toBe('hidden');
+    expect(span.style.textOverflow).toBe('ellipsis');
+    expect(span.style.whiteSpace).toBe('nowrap');
+    const p = span.parentElement as HTMLElement;
+    expect(p.style.overflow).toBe('hidden');
+    expect(p.style.maxWidth).toBe('100%');
+  });
 });
 
