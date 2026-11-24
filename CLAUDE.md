@@ -217,6 +217,8 @@ Repositório: `HexerVoodoom/Soulmon`.
 - **Worktrees** só em `E:\Soulmon-wt` (junction de `node_modules` para `D:\nm-cache`),
   criados sob o lock `D:\locks\wt-add`; nunca `npm ci`/`npm install` em worktree com
   junction e `rmdir` da junction antes do `git worktree remove`. Ver REGISTRO §516.
+  **Nada de `git stash` em worktree** (lista compartilhada entre sessões) e solte a junction com
+  `[System.IO.Directory]::Delete` e CONFIRME antes do `worktree remove`. Ver REGISTRO §533.
   ⚠️ **Por isso `.env.production` é COMMITADO** (`.gitignore` tem `!.env.production`).
   As `VITE_*` são inlinadas em BUILD, não lidas em runtime; como o CI builda de
   novo a cada push sem o `.env` da máquina do dono, um deploy manual correto era
@@ -627,6 +629,7 @@ linhas Tapirmon/Veemon/Salamon) e vendia formas de evolução com nome de
 personagem registrado. **Saiu tudo** — ver `docs/Attributions.md`. As regras que
 ficam valendo:
 
+- **Assets-fonte fora do repo:** `E:\Soulmon-assets\{higgsfield-banco,out,entrada-dono}` foram MOVIDOS em 24/11/2026 para `D:\Soulmon-assets-mov\<nome>\` (ver `docs/INVENTARIO-ASSETS.md`).
 - **Toda arte vem de `src/assets/soulmon/`.** `getSpriteForStage` responde
   sempre com arte nossa; save antigo com id de espécie legada cai em
   `legacySpriteForStage`, que escolhe uma das nossas linhas por hash do id

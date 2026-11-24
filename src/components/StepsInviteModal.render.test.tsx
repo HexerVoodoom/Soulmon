@@ -54,4 +54,14 @@ describe('StepsInviteModal', () => {
     const t = (document.body.textContent ?? '').toLowerCase();
     for (const proibido of ['streak', 'penalt', 'you must', 'leaderboard', 'ranking']) expect(t).not.toContain(proibido);
   });
+
+  for (const w of [360, 375, 412]) {
+    it(`${w}px: monta com os dois botões e Ativar chama onAccept uma vez`, () => {
+      (window as any).innerWidth = w;
+      const { onAccept, onDecline } = montar('pt-BR');
+      fireEvent.click(document.querySelector('[data-steps-invite="accept"]')!);
+      expect(onAccept).toHaveBeenCalledTimes(1);
+      expect(onDecline).not.toHaveBeenCalled();
+    });
+  }
 });

@@ -227,7 +227,8 @@ export interface UseHabitScheduleProps {
  */
 export function useHabitSchedule({ isOpen, initial }: UseHabitScheduleProps) {
   const [kind, setKind] = useState<ScheduleKind>('weekdays');
-  const [weekDays, setWeekDays] = useState<number[]>(ALL_WEEK_DAYS);
+  // CRIAÇÃO (sem `initial`) começa SEM dia marcado; edição lê o item.
+  const [weekDays, setWeekDays] = useState<number[]>(initial ? ALL_WEEK_DAYS : []);
   const [timesPerWeek, setTimesPerWeek] = useState(3);
   const [everyN, setEveryN] = useState(3);
   const [fromCompletion, setFromCompletion] = useState(true);
@@ -243,7 +244,7 @@ export function useHabitSchedule({ isOpen, initial }: UseHabitScheduleProps) {
     const initial = initialRef.current;
     const s = normalizeSchedule({ schedule: initial?.schedule, weekDays: initial?.weekDays });
     setKind(s.kind);
-    setWeekDays(s.kind === 'weekdays' ? s.days : (initial?.weekDays ?? ALL_WEEK_DAYS));
+    setWeekDays(!initial ? [] : s.kind === 'weekdays' ? s.days : (initial.weekDays ?? ALL_WEEK_DAYS));
     setTimesPerWeek(s.kind === 'timesPerWeek' ? s.target : 3);
     setEveryN(s.kind === 'everyNDays' ? s.n : 3);
     // O padrão do "a cada N dias" é contar da CONCLUSÃO: é o único dos dois que

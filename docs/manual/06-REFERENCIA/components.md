@@ -1012,6 +1012,10 @@ Sobrepõe o `bitsCap` do `ResultExtrasContext` com o teto diário efetivo da Fen
 **Régua:** `src/components/evolucaoCristal.render.test.tsx` (6 tempos, reduced-motion, artes, cartão) e `EvolutionCeremony.fragmentos.render.test.tsx`.
 **Avisos do arquivo:** o botão de saída é "Seguimos juntos"/"We keep going together" desde `84ae4937` (21/09/2026, copy §3.2) — a MESMA saída relacional do `MilestoneCeremony`. ⚠️ o `CLAUDE.md` (seção "DUAS FILAS") registra que esta cerimônia (z-500) chegou a abrir junto do `EvolveTaskModal`, que reaparecia por baixo cobrando "crie mais atividades" quando ela fechava — achado na auditoria de 06/09/2026, corrigido pela fila de intersticiais declarada no `App.tsx`.
 
+### `src/components/evolution/EvoBar.tsx`
+
+**Dono de:** a barra de evolução na arte B (`barra-evolucao-B` 1x/2x, `aspect-ratio: 480/128`, canal medido x 19–456 / y 58–68) com o preenchimento desenhado em código dentro do canal; usada pelo `EvoRecapModal` e pela barra de fragmentos da `EvolutionPath` (mesma aparência em todas as barras de evolução). Mantém `role="progressbar"` e `aria-valuemin/max/now/label`. CSS `.sm2-evo-barra*` em `src/index.css`.
+
 ### `src/components/EvolutionRing.tsx`
 
 **Dono de:** o anel circular (SVG) de cada ramo de evolução na `EvolutionPath` (tarefa 23): preenchimento = pontos do ramo ÷ pontos do ramo líder, número ao centro, texto para leitor de tela; só visualiza dado existente, sem regra. Props: `value`, `max`, `color`, `label`. CSS `.sm2-evo-ring*` em `src/index.css`. Teste: `EvolutionRing.render.test.tsx`.

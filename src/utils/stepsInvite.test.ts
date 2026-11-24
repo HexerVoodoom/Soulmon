@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { shouldShowStepsInvite } from './stepsInvite';
+import { shouldShowStepsInvite, shouldShowStepsSettingsEntry } from './stepsInvite';
 
 describe('shouldShowStepsInvite — o convite curto dos passos (REGISTRO §283)', () => {
   const ok = { available: true as boolean | null, consent: undefined as 'granted' | 'declined' | undefined, onboarded: true };
@@ -20,5 +20,16 @@ describe('shouldShowStepsInvite — o convite curto dos passos (REGISTRO §283)'
 
   it('durante o onboarding não aparece', () => {
     expect(shouldShowStepsInvite({ ...ok, onboarded: false })).toBe(false);
+  });
+});
+
+describe('shouldShowStepsSettingsEntry — a porta do menu depois do "Agora não"', () => {
+  it('com contador no aparelho a entrada existe, mesmo para quem recusou o convite (convite não volta; cartão espera ser aberto)', () => {
+    expect(shouldShowStepsSettingsEntry(true)).toBe(true);
+    expect(shouldShowStepsInvite({ available: true, consent: 'declined', onboarded: true })).toBe(false);
+  });
+  it('web/PWA, sem sensor ou sondagem pendente: nenhuma entrada', () => {
+    expect(shouldShowStepsSettingsEntry(false)).toBe(false);
+    expect(shouldShowStepsSettingsEntry(null)).toBe(false);
   });
 });

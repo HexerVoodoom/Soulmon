@@ -897,7 +897,7 @@ export function AreaView(props: AreaViewProps) {
                   <button type="button" className="sm2-kit-btn sm2-kit-btn-primary" data-lab-choice-evolution onClick={() => setEvoSub('evolution')}>
                     {language === 'pt-BR' ? 'Centro de Evolução' : 'Evolution Center'}
                   </button>
-                  <button type="button" className="sm2-kit-btn" data-lab-choice-potion onClick={() => setEvoSub('potion')}>
+                  <button type="button" className="sm2-kit-btn sm2-kit-btn-primary" data-lab-choice-potion onClick={() => setEvoSub('potion')}>
                     {language === 'pt-BR' ? 'Criar poção' : 'Create Potion'}
                   </button>
                 </div>
