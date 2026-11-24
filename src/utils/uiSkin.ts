@@ -28,3 +28,8 @@ export function parseUiSkin(raw: unknown): UiSkin {
     ? (raw as UiSkin)
     : DEFAULT_UI_SKIN;
 }
+
+/** Esta pele desenha as molduras de arte (modais, folhas, telas)? Só a 'arte'; a 'minimal' é a folha lisa em CSS. */
+export function molduraDaPele(skin: UiSkin): boolean {
+  return skin === 'arte';
+}

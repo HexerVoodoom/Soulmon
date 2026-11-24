@@ -34,6 +34,7 @@ import { InfoTip } from '../ui/InfoTip';
 import { Icon } from '../ui/Icon';
 import { ModalFrame } from '../ui/ModalFrame';
 import { MOLDURA_MODAL } from '../nav/AreaSheet';
+import { useMolduraAtiva } from '../../contexts/UiSkinContext';
 import { CristalChama } from '../ui/CristalChama';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { isDemoBlockedLot, demoRefusalText } from '../../utils/demoMode';
@@ -140,6 +141,8 @@ export function Mochila({
   open, onClose, foodInventory, language, onUse, petTargetRef, onTargetChange, petName, materials, extras, onGoToBuilding, demo, arrastoDireto,
 }: MochilaProps) {
   const isPt = language === 'pt-BR';
+  // Moldura por PELE ('minimal' = a folha lisa de antes); `MOLDURA_MODAL` é o interruptor mestre.
+  const emoldurado = useMolduraAtiva() && MOLDURA_MODAL;
   const [aba, setAba] = useState<MochilaAbaVista>('comida');
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [fantasma, setFantasma] = useState<{ emoji: string; x: number; y: number; icone?: ReactNode } | null>(null);
@@ -320,8 +323,8 @@ export function Mochila({
   const corpo = (
     <>
       {/* O CRISTAL-CHAMA (arte aprovada, 18/11/2026) no encaixe do topo: o "puxador" da pasta. Decorativo. */}
-      {MOLDURA_MODAL && <CristalChama />}
-      {!MOLDURA_MODAL && <div className="sm3-mochila-alca" aria-hidden="true" />}
+      {emoldurado && <CristalChama />}
+      {!emoldurado && <div className="sm3-mochila-alca" aria-hidden="true" />}
       {/* Fechar (X redondo, alvo 44) à ESQUERDA + título no centro; o "i" mora no ornamento da moldura (`ModalFrame info`).
           Sem moldura (kill-switch), o "i" volta para a linha do título. */}
       <div className="sm3-mochila-head">
@@ -329,7 +332,7 @@ export function Mochila({
           <Icon name="close" size={20} tone="inherit" />
         </button>
         <h2 className="sm3-mochila-titulo">{isPt ? 'Arquivos' : 'Files'}</h2>
-        {!MOLDURA_MODAL && (
+        {!emoldurado && (
           <InfoTip language={language} label={infoLabel} align="right">{infoTexto}</InfoTip>
         )}
       </div>
@@ -540,7 +543,7 @@ export function Mochila({
     >
       {/* MODAL FILES (18/11/2026): a moldura é a ARTE APROVADA (`assets/soulmon/ui/files/`) sobre o `ModalFrame` (que dá o "i" no ornamento e o miolo
           das sub-folhas); a composição segue a referência ref3. `MOLDURA_MODAL` desligado = a folha lisa de antes. */}
-      {MOLDURA_MODAL ? (
+      {emoldurado ? (
         <ModalFrame
           {...dialogo}
           className="sm3-mochila sm3-files sm2-moldura-modal--files sm2-sheet-rise"

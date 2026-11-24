@@ -4,6 +4,7 @@ import { useId, useRef, useState, type CSSProperties, type ElementType, type Rea
 import { Icon } from '../ui/Icon';
 import { BackArrow } from '../ui/BackArrow';
 import { ModalFrame } from '../ui/ModalFrame';
+import { useMolduraAtiva } from '../../contexts/UiSkinContext';
 import { SheetFrame, MOLDURA_HOME_DIALOGOS, MOLDURA_HOME_FOLHAS } from '../ui/SheetFrame';
 import { InfoTip, ModalInfo, ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { resolveLanguage, type Language } from '../../utils/i18n';
@@ -470,7 +471,8 @@ export function ModalSheet({
   const area = useModalArea();
   const noMiolo = !!area && !sobreTelas;
   // A moldura própria da folha só vale fora do miolo de outra moldura (no miolo ela já está dentro do quadro do modal pai).
-  const framed = !noMiolo && (centered ? MOLDURA_HOME_DIALOGOS : MOLDURA_HOME_FOLHAS);
+  const peleComMoldura = useMolduraAtiva();
+  const framed = !noMiolo && peleComMoldura && (centered ? MOLDURA_HOME_DIALOGOS : MOLDURA_HOME_FOLHAS);
   const Casca: ElementType = framed ? (centered ? ModalFrame : SheetFrame) : 'div';
   const inline = framed && centered && titulo === 'inline';
   const donoSheet = !!framed && !centered && moldura === 'dono' && closeSide === 'start' && !onBack;

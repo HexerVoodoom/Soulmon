@@ -1,3 +1,4 @@
+import { useMolduraAtiva } from '../../contexts/UiSkinContext';
 import { fundoDaTela, type TelaMoldura as TelaId } from '../../assets/soulmon/ui/moldura/fundos';
 
 /** Liga/desliga a moldura das telas cheias (Fenda, Calabouço, mapa do Soulsmith, Arena livre). Fácil de desligar. */
@@ -9,7 +10,8 @@ export const MOLDURA_TELAS = true;
  * conteúdo (15%) e a moldura por cima. Cada raiz decide o espaço: `GameRoot` já soma o respiro (`moldura`), as demais telas têm o próprio HUD.
  */
 export function TelaMoldura({ tela, title, infoSlotRef }: { tela: TelaId; title?: string; /** Encaixe do botão de informação, sobre o ornamento "i" da arte (ver `ModalInfoSlotProvider`). */ infoSlotRef?: (el: HTMLElement | null) => void }) {
-  if (!MOLDURA_TELAS) return null;
+  const peleComMoldura = useMolduraAtiva();
+  if (!MOLDURA_TELAS || !peleComMoldura) return null;
   const fundo = fundoDaTela(tela);
   return (
     <span data-tela-moldura={tela} className="sm2-moldura-modal sm2-moldura-tela" style={{ ['--sm2-moldura-fundo' as string]: fundo ? `url("${fundo}")` : 'none', ['--sm2-moldura-fill-op' as string]: '0.15' }}>
