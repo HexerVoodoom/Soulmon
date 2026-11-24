@@ -335,7 +335,7 @@ describe('D-55/D-56/D-57: sem visor vetorial; um card por assunto; o Clan Hall �
     const casaProp = { bits: 500, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() };
     const ordem = (c: HTMLElement) => Array.from(c.querySelectorAll('[data-guild-card]')).map(e => e.getAttribute('data-guild-card'));
 
-    for (const [lang, ver, membros, buffs] of [['pt-BR', 'Ver a árvore no Bosque', 'Membros', 'Buffs do clã'], ['en', 'See the tree in the Grove', 'Members', 'Clan Buffs']] as const) {
+    for (const [lang, ver, membros, buffs] of [['pt-BR', 'Ver a árvore no Bosque', 'Membros', 'Buffs do clã'], ['en-US', 'See the tree in the Grove', 'Members', 'Clan Buffs']] as const) {
       it(`${lang}: clã, membros, árvore (porta) e buffs, nessa ordem; a árvore não está no Clan Hall`, async () => {
         mockServer(casaVista());
         const onAbrirBosque = vi.fn();
