@@ -6358,7 +6358,6 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm2-grove-chuva { position: absolute; inset: 0; z-index: 6; pointer-events: none; overflow: hidden; }
 .sm2-grove-chuva-gota { position: absolute; display: block; animation: shower-drop 1.1s linear var(--d, 0s) infinite; }
 .sm2-grove-chuva[data-reduced-motion="true"] .sm2-grove-chuva-gota { animation: none; opacity: 1; }
-@media (prefers-reduced-motion: reduce) { .sm2-grove-chuva-gota { animation: none; opacity: 1; } }
 /* A árvore do clã no Bosque: estágio da seiva (Fagulha .. Aurora), a linha e o "perto". */
 .sm2-grove-casa-arvore { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
 /* O PANORAMA DO BOSQUE (18/10/2026): tela cheia, ~3 telas de largura, rola para os lados. A arte nova é pixel art HD: quando a

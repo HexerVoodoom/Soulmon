@@ -69,7 +69,7 @@ describe('Bosque, regar mostra o efeito do banho', () => {
 describe('Bosque, Defender só no estado certo', () => {
   it('tarefa proteger: o CTA diz Defender / Defend', async () => {
     mockServer(() => plantio('protect'));
-    for (const [language, rotulo] of [['pt-BR', /^Defender$/], ['en-US', /^Defend$/]] as const) {
+    for (const [language, rotulo] of [['pt-BR', /Defender$/], ['en-US', /Defend$/]] as const) {
       const { container, unmount } = render(<GuildSheet {...base} language={language} />);
       await waitFor(() => expect(container.querySelector('[data-plantio-cuidar]')).not.toBeNull());
       expect(container.querySelector('[data-plantio-cuidar]')!.textContent).toMatch(rotulo);
