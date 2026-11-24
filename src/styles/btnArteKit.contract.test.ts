@@ -15,7 +15,7 @@ describe('arte nos botões por classe (.sm2-kit-btn)', () => {
   });
   it('ghost, quiet e -sm não ganham arte; a geometria do 9-slice vem de variáveis num lugar só', () => {
     expect(css).not.toMatch(/\.sm2-kit-btn-(ghost|quiet)[^{]*\{[^}]*--arte/);
-    expect(css).toMatch(/html\[data-ui="arte"\] \{[^}]*--sm2-btn-slice: 75;[^}]*--sm2-btn-art-h: 169;/);
+    expect(css).toMatch(/html\[data-ui="arte"\] \{[^}]*--sm2-btn-slice: 62;[^}]*--sm2-btn-art-h: 169;/);
     const bloco = css.slice(css.indexOf('Grupo A (fase 4)'), css.indexOf('Drop-down de categoria do CreateModal'));
     expect(bloco).toContain('var(--sm2-btn-slice)');
   });
