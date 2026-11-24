@@ -1,0 +1,1 @@
+import{eG as r,j as i,eH as o,eI as n}from"./index-DUD-r-Ls.js";function x({extraCap:t,children:e}){const s=r(),a=s&&t>0?{...s,bitsCap:n(t)}:s;return i.jsx(o.Provider,{value:a,children:e})}export{x as R};

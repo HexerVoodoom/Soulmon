@@ -230,7 +230,9 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // 24/11/2026 (dist em lote, re-medição): 1_062_299 -> 1_072_142 (+9,6 KB), build limpo da main @ 8881642e7. Crescimento JUSTIFICADO pelos pedidos do dono do dia:
   // moldura cristal nova + quinas, título inline sem placa em ~22 modais, Fundador (modal por prêmio/aviso), popups do Passeio/NPC, Evolution Center e pílulas.
   // O corte real segue sendo code-split / partir o `App.tsx` (gatilho do §380 acima). Teto e folga inalterados.
-  'index.js': 1_072_142,
+  // 24/11/2026 (dist em lote 2, re-medição): 1_072_142 -> 1_085_676 (+13,2 KB), build limpo da main @ d876934a4. Crescimento JUSTIFICADO pelos pedidos do dono:
+  // data-ui / duas interfaces (arte|minimal, fase 1) e os modais do dia. O corte real segue sendo code-split / partir o `App.tsx`. Teto e folga inalterados.
+  'index.js': 1_085_676,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
@@ -247,7 +249,9 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // 24/11/2026 (dist em lote, re-medição): 206_369 -> 220_610 (+13,9 KB), build limpo da main @ 8881642e7. Crescimento JUSTIFICADO pelos pedidos do dono do dia:
   // moldura cristal nova + quinas, título inline sem placa em ~22 modais, Fundador, popups do Passeio/NPC, Evolution Center e pílulas. O CSS é único, sem split.
   // O corte real segue sendo code-split / partir o `App.tsx`. Teto e folga inalterados.
-  'index.css': 220_610,
+  // 24/11/2026 (dist em lote 2, re-medição): 220_610 -> 231_756 (+10,9 KB), build limpo da main @ d876934a4. Crescimento JUSTIFICADO pelos pedidos do dono:
+  // data-ui / duas interfaces e os modais do dia. O CSS é único, sem split; o corte real segue sendo code-split / partir o `App.tsx`. Teto e folga inalterados.
+  'index.css': 231_756,
   // ⚰️ 'intro-parede.mp4' (4,3 MB) saiu em 04/11/2026: a intro virou 9 painéis ilustrados animados em CSS (~2,1 MB em webp).
   // ⚰️ 'bg-forja.webp' saiu em 05/11/2026: o fundo novo da Forja (main) mede 398 KB, dentro do teto.
   // ⚰️ 'evolution-bg.mp4' (3,7 MB) saiu em 31/10/2026: a cerimônia da evolução foi refeita em CSS (o cristal, REGISTRO §208) e o vídeo foi apagado.
