@@ -67,7 +67,7 @@ import { RitualDialog } from './ritual/RitualKit';
    `navigator.onLine` aqui seria a cópia do footgun 9 na sua forma mais boba. */
 import { useIsOnline } from './ui/OfflineSeal';
 import { Icon } from './ui/Icon';
-import { InfoTip } from './ui/InfoTip';
+import { InfoTip, ModalInfo } from './ui/InfoTip';
 import { playVisorTune } from '../utils/sounds';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 
@@ -269,7 +269,6 @@ export function EvolutionPath({
   // reveal one (shown darkened) after confirming; this local set resets when
   // they leave the screen (the component unmounts on navigation).
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
-  const [fragInfoOpen, setFragInfoOpen] = useState(false); // texto das frações atrás do botão 'i'
   const [confirmReveal, setConfirmReveal] = useState<CreatureStage | null>(null);
   /** O modal da forma tocada (09/11/2026): `degenerar` (forma de nível abaixo), `equipar` (mesmo nível) ou `ver` (nível acima, só leitura). */
   const [opcoes, setOpcoes] = useState<{ evolution: CreatureStage; modo: 'degenerar' | 'equipar' | 'ver' } | null>(null);
@@ -494,6 +493,9 @@ export function EvolutionPath({
   const ratioComHoje = gaugeGoal > 0
     ? Math.min(1, (evolutionPoints + todayGauge) / gaugeGoal)
     : 1;
+  const textoSegurada = isPt
+    ? 'Evolução segurada. O caminho continua somando, mas a evolução está segurada. Segurar a forma não protege os corações.'
+    : 'Evolution on hold. The path keeps adding up, but evolution is on hold. Holding the form doesn’t shield the hearts.';
   const fraseProgresso = prontoParaEvoluir && incubating
     /* INCUBAÇÃO (D-G8c). Vem ANTES do cadeado porque é o estado mais recente:
        a barra encheu agora e a forma está sendo feita. As três metades que o
@@ -1094,6 +1096,7 @@ export function EvolutionPath({
         )}
 
         {/* O nome da forma, Cinzel 20, fora do vidro (aparelho). */}
+        <div className="sm2-evo-namerow">
         <h2
           style={{
             fontFamily: 'var(--sm2-font-display)',
@@ -1107,6 +1110,21 @@ export function EvolutionPath({
         >
           {formaAtual?.name ?? (isPt ? 'Seu Soulmon' : 'Your Soulmon')}
         </h2>
+          {!naoEvolui && onToggleEvolutionLock && (
+            <button
+              type="button"
+              data-lock-button
+              className="sm2-evo-lock"
+              onClick={onToggleEvolutionLock}
+              aria-pressed={evolutionLocked}
+              aria-label={isPt ? 'Segurar evolução' : 'Evolution hold'}
+              title={evolutionLocked ? textoSegurada : (isPt ? 'Segurar evolução' : 'Evolution hold')}
+            >
+              <Icon name={evolutionLocked ? 'lock' : 'lock_open'} size={24} fill={evolutionLocked ? 1 : 0} tone="inherit" />
+            </button>
+          )}
+        </div>
+        <p role="status" style={soParaLeitor} data-evo-lock-status>{evolutionLocked ? textoSegurada : ''}</p>
 
         {/* OFFLINE (D9): a geração de sprite é a única superfície de rede
             desta página, e o card diz que ela espera — sem âmbar, sem
@@ -1189,60 +1207,11 @@ export function EvolutionPath({
             />
           )}
           {gaugeGoal > 0 && (
-            <button
-              type="button"
-              data-evo-gauge-info
-              aria-expanded={fragInfoOpen}
-              aria-label={isPt ? 'Sobre os Fragmentos de Alma' : 'About Soul Fragments'}
-              onClick={() => setFragInfoOpen(o => !o)}
-              style={{ ...sm2Button('outline', false, 'sm'), alignSelf: 'center', minWidth: 44, minHeight: 44, padding: 0 }}
-            >
-              <Icon name="info" size={24} tone="inherit" />
-            </button>
-          )}
-          {gaugeGoal > 0 && fragInfoOpen && (
-            <p data-evo-gauge-unlock style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
-              {emphasizeSoulFragment(fragmentHowText(language))}
-            </p>
+            <ModalInfo label={isPt ? 'Sobre os Fragmentos de Alma' : 'About Soul Fragments'} language={isPt ? 'pt-BR' : 'en-US'}>
+              <span data-evo-gauge-unlock>{emphasizeSoulFragment(fragmentHowText(language))}</span>
+            </ModalInfo>
           )}
         </div>}
-
-        {/* O cadeado fala a língua da SELEÇÃO, não a do bloqueio (D-E4):
-            aberto = `outline` 44 com `lock_open`; segurado = `primary-soft` +
-            `primary-ink` + anel 1px (o idioma da sub-aba ativa e do chip do
-            galho) com `lock` FILL 1. É o mesmo estado do visor, dito em
-            palavras, para quem não descobre o gesto. */}
-        {!naoEvolui && onToggleEvolutionLock && (
-          <button
-            type="button"
-            data-lock-button
-            onClick={onToggleEvolutionLock}
-            aria-pressed={evolutionLocked}
-            style={{
-              ...sm2Button('outline', false, 'sm'),
-              width: '100%', maxWidth: 240, marginTop: 4, flexDirection: 'column', gap: 2, height: 'auto', minHeight: 64,
-              ...(evolutionLocked
-                ? { backgroundColor: 'var(--sm2-primary-soft)', color: 'var(--sm2-primary-ink)', border: '1px solid var(--sm2-primary-ink)' }
-                : null),
-            }}
-          >
-            <Icon name={evolutionLocked ? 'lock' : 'lock_open'} size={24} fill={evolutionLocked ? 1 : 0} tone="inherit" />
-            <span>{isPt ? 'Segurar evolução' : 'Evolution hold'}</span>
-          </button>
-        )}
-        {/* X4 (guarda 1c): segurar a forma NÃO protege da degeneração — e a
-            superfície diz isso, em 12 `muted`, sem âmbar. Só no travado: o
-            destravado já tem a frase da barra ("tap your Soulmon to evolve"). */}
-        {evolutionLocked && (
-          <p style={{ ...sm2Hint, textAlign: 'center', maxWidth: 340 }}>
-            {/* Copy §3.3: a 2ª oração FICA (é regra que a pessoa precisa
-                para decidir, L10); o que saiu é "nos dias difíceis", a única
-                metade que avaliava o dia. */}
-            {isPt
-              ? 'O caminho continua somando, mas a evolução está segurada. Segurar a forma não protege os corações.'
-              : 'The path keeps adding up, but evolution is on hold. Holding the form doesn’t shield the hearts.'}
-          </p>
-        )}
 
         {/* ── A SINTONIA (spec §2.3.1) ──────────────────────────────────────
             A criatura ATUAL é o único objeto do jogo cuja troca sempre teve
@@ -1443,14 +1412,17 @@ export function EvolutionPath({
             toca teto nenhum. Trocar o rosto do bicho sem saída é a versão
             educada do mesmo erro. */}
         {(estadoAtual === 'PROPRIO' || estadoAtual === 'NOVO') && onRevertVisor && (
-          <button
-            type="button"
-            onClick={() => onRevertVisor(currentStageId)}
-            style={{ ...sm2Button('outline', false, 'sm'), width: '100%', maxWidth: 240 }}
-          >
-            <Icon name="undo" size={24} tone="inherit" />
-            {spriteText('revert', language)}
-          </button>
+          <div className="sm2-evo-revert">
+            <button
+              type="button"
+              data-evo-revert
+              onClick={() => onRevertVisor(currentStageId)}
+              style={{ ...sm2Button('outline', false, 'sm'), width: '100%', maxWidth: 240 }}
+            >
+              <Icon name="undo" size={24} tone="inherit" />
+              {spriteText('revert', language)}
+            </button>
+          </div>
         )}
       </section>
     </div>

@@ -667,7 +667,6 @@ export default function App() {
   }, [setGameState]);
   /** Sub-aba do Laboratório (Evolução / Soulmon / Estatísticas). */
   const [labTab, setLabTab] = useState<LabTab>('evolution');
-  const [potionOpen, setPotionOpen] = useState(false); // Poção de Elemento (Centro de Evolução)
   // Vesca oferece a poção quando a essência de um elemento BASE cruza o limiar (08/11/2026). Fila: um modal por vez; o 1º render só memoriza.
   const [vescaQueue, setVescaQueue] = useState<string[]>([]);
   const vescaPrevEssRef = useRef<Record<string, number> | undefined | null>(null);
@@ -7952,22 +7951,23 @@ export default function App() {
                 soulGoal: gameState.soulGoal,
               }}
             /></Suspense>);
-  const potionContent = (
-    potionOpen ? <Suspense fallback={null}><ElementPotionSheet
-            open={potionOpen}
+  const potionContent = (onBack: () => void) => (
+    <Suspense fallback={null}><ElementPotionSheet
+            open
+            inline
             language={language}
             essences={gameState.essences}
             inventory={gameState.foodInventory}
             pending={gameState.evolutionPotion}
             unlocked={gameState.defeatedElements}
-            onBack={() => setPotionOpen(false)}
+            onBack={onBack}
             onCraft={(id) => {
               // A regra (e a reconferência do saldo sobre o `prev`) mora em `utils/elementPotion.ts`; o toast é efeito, fora do updater.
               if (!isPotionUnlocked(id, gameState.defeatedElements) || !canAffordPotion(gameState.essences, id, gameState.foodInventory)) return false;
               setGameState(prev => craftPotion(prev, id));
               return true;
             }}
-          /></Suspense> : null
+          /></Suspense>
   );
   const labContent = (
     <>
@@ -8886,7 +8886,6 @@ export default function App() {
                 onLabTab={setLabTab}
                 labContent={labContent}
                 potionContent={potionContent}
-                onOpenPotion={() => setPotionOpen(true)}
                 hallContent={hallContent}
                 guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, pendentesDoDia, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend, onVerAchado: handleFeiraVoltaVer }, feira: { me: feiraMe, onCredit: handleFeiraCredit }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
               />
