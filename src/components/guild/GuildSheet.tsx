@@ -96,6 +96,7 @@ import { FeiraMisterio } from './FeiraMisterio';
 import type { FeiraCredit } from '../../utils/feiraCredit';
 import { SalaPraca } from './PracaVisor';
 import { SalaPlantio } from './PlantioVisor';
+import { GroveCasaArvore } from './GroveCasaArvore';
 import type { ClaOnReward } from './claUi';
 import type { Language } from '../../utils/i18n';
 import { emitFeat } from '../../utils/feats';
@@ -657,6 +658,12 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
                 <GroveFolha saveId={saveId} language={language} guild={g} mySprite={meuSprite} tz={tz.current} reducedMotion={reducedMotion} arvores={cla.arvores ?? {}} onPlantio={cla.onPlantio} onClose={() => setPanorama(false)} />
               </Suspense>
             )}
+          </div>
+        )}
+        {/* A árvore do clã (seiva Fagulha..Aurora) também aqui: a mesma vista `g.casa` da Casa, só ADICIONADA ao Bosque. */}
+        {g.casa && (
+          <div className="sm2-stats-card" data-guild-card="casa-arvore">
+            <GroveCasaArvore language={language} casa={g.casa} />
           </div>
         )}
       </>
