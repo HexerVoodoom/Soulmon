@@ -556,3 +556,6 @@ Notas: a cota do ChatGPT foi atingida em 23/11 (retoma ao liberar); arquivo novo
 
 ## P6 — botões sm2 sem as gemas das pontas (24/11/2026, dono)
 `ui/sm2/sm2-{primary,outline,danger}-{normal,pressed,disabled}.webp` refeitos por edição de pixel (gema e engaste removidos, ponta fechada com cobre/borda; 703×169, alfa real, mesmos nomes). Cortes novos: `esq`/`dir` 62 px (o CSS ainda usa `0 75` em `border-image`; a P5 troca). Originais e JSON: `E:\Soulmon-assets\p6-sm2-sem-gema\`.
+
+## P6 — discos voltar/fechar sem os cristais laterais (24/11/2026, dono)
+`ui/sm2/sm2-{voltar,voltar-press,fechar,fechar-press,fechar-disabled}.webp` refeitos por edição de pixel (cristais laterais removidos, aro de cobre liso; mesmos nomes e tamanhos 244/245×239, alfa real, seta/✕ intactos). Originais: `E:\Soulmon-assets\p6-sm2-sem-gema\disco\`.
