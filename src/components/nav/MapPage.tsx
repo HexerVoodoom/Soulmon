@@ -3,30 +3,14 @@ import type { Language } from '../../utils/i18n';
 import { AREAS, areaLabel, type AreaId } from '../../navigation';
 import { bitsStyle, emblemStyle, CREDIT_COLOR } from '../../utils/currencies';
 import { InfoTip } from '../ui/InfoTip';
-import { BitsAmount } from '../ui/BitsAmount';
 import { CreditIcon } from '../ui/CreditIcon';
+import { HonorIcon } from '../ui/HonorIcon';
+import { BitsIcon } from '../ui/BitsIcon';
 import { LockBadge, LockNotice, lockLabel } from '../ui/LockBadge';
 import { areaLockedAt, buildingLockLine } from '../../utils/gates';
 
 import bgMapa from '../../assets/soulmon/mapa/bg-mapa.png';
-import { CHIP_MOEDA_ART, CHIP_MOEDA_SLICE } from '../../assets/soulmon/icones-ui';
 import { MAPA_MUNDO_PINTADO, MAPA_PALCO_STYLE, MAPA_AJUSTE_ESCALA } from '../../utils/areaLotGeometry';
-
-/** A pílula de moeda: moldura `chip-moeda` em 9-slice. A arte tem 256×92 e é
- *  desenhada a 1/3 (tampas de 16px, bordas de 6px) — a altura final fica
- *  ~30px com uma linha de `text-sm`. `fill` pinta o miolo teal escuro. */
-const S = CHIP_MOEDA_SLICE;
-const CHIP: import('react').CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-  // `inline-flex` descarta o espaço entre o número e o rótulo (texto só de espaço vira nada num flex): o vão vem do gap (QA 23/11/2026, "0Honra").
-  gap: 'var(--sm2-space-1)',
-  minWidth: 88,
-  padding: '1px 4px',
-  borderStyle: 'solid',
-  borderWidth: `${S.top / 3}px ${S.right / 3}px ${S.bottom / 3}px ${S.left / 3}px`,
-  borderImage: `url(${CHIP_MOEDA_ART}) ${S.top} ${S.right} ${S.bottom} ${S.left} fill / ${S.top / 3}px ${S.right / 3}px ${S.bottom / 3}px ${S.left / 3}px stretch`,
-  lineHeight: 1.2,
-};
 
 /**
  * O MAPA — arte real (minimal-ui F3).
@@ -50,6 +34,9 @@ const CHIP: import('react').CSSProperties = {
 /** O cristal central pintado no mapa-mundo, em % da imagem. */
 const CRISTAL = [46, 30, 62, 43] as const;
 
+/** Lado do ícone das 3 moedas (px): um pouco maior que os 16 de antes. */
+const MOEDA_ICONE = 22;
+
 export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, credits, bondLevel }: {
   language: Language;
   /** O Vínculo do usuário: a área só trava se TODOS os prédios dela travam (`areaMinBond`). Sem ele, nada trava. */
@@ -62,6 +49,8 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
   credits: number;
 }) {
   const isPt = language === 'pt-BR';
+  const fmt = (n: number) => n.toLocaleString(language);
+  const [nBits, nEmblems, nCredits] = [fmt(bits), fmt(emblems), fmt(credits)];
   const [lockNote, setLockNote] = useState<string | null>(null);
   const segurando = useRef<ReturnType<typeof setTimeout> | null>(null);
   const soltar = () => { if (segurando.current) clearTimeout(segurando.current); segurando.current = null; };
@@ -94,31 +83,27 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
 
       {/* Saldo das 3 moedas — canto INFERIOR direito (espelho do link da
           Home, no esquerdo). ⚠️ Morava no canto superior direito e a arte do
-          "Jogos" pintava POR CIMA dele (fix1). Cada moeda é uma pílula com a
-          moldura `chip-moeda` do squad de arte (cobre + cristais, miolo teal
-          escuro opaco) em 9-slice via `border-image` — a pílula estica com o
-          texto sem deformar as tampas, e o miolo opaco segura o contraste
-          sobre qualquer trecho da arte. É moldura de TEXTO, não de ícone — a
-          regra "ícone nunca dentro de box" não se aplica. */}
+          "Jogos" pintava POR CIMA dele (fix1). As 3 pílulas são IGUAIS (QA 24/11/2026,
+          pílulas achatadas sobrepostas): ícone + valor, largura fixa, sem moldura (a
+          moldura nova vem do P6). Layout e largura em `.sm2-moeda*` no index.css. */}
       <div
         data-map-currencies
+        className="sm2-moeda-hud"
         style={{
           position: 'absolute',
           right: 'var(--sm2-space-3)',
           bottom: 'calc(var(--sm2-space-3) + env(safe-area-inset-bottom, 0px))',
           zIndex: 2,
-          display: 'flex', flexDirection: 'column', alignItems: 'flex-end',
-          gap: 4,
-          filter: 'drop-shadow(0 3px 6px rgba(0,0,0,.5))',
         }}
       >
         <InfoTip
           language={language}
           align="right"
           autoCloseMs={4000}
-          label={`${bits} Bits — ${isPt ? 'como conseguir' : 'how to earn'}`}
-          style={{ ...CHIP, ...bitsStyle, fontSize: 'var(--sm2-text-sm)', minHeight: 30 }}
-          trigger={<span data-map-chip><BitsAmount value={bits} size={16} /></span>}
+          label={`${nBits} Bits — ${isPt ? 'como conseguir' : 'how to earn'}`}
+          className="sm2-moeda"
+          style={{ ...bitsStyle, minHeight: 32 }}
+          trigger={<span data-map-chip className="sm2-moeda__in"><BitsIcon size={MOEDA_ICONE} /><span className="sm2-moeda__val">{nBits}</span></span>}
         >
           {isPt ? 'Bits: ganhe cumprindo o dia (tarefas e hábitos) e jogando minijogos, a Masmorra e a Arena. Gaste na loja.' : 'Bits: earn them by finishing your day (tasks and habits) and playing minigames, the Dungeon and the Arena. Spend them in the shop.'}
         </InfoTip>
@@ -126,13 +111,10 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
           language={language}
           align="right"
           autoCloseMs={4000}
-          label={isPt ? `${emblems} de Honra — como conseguir` : `${emblems} Honor — how to earn`}
-          style={{ ...CHIP, ...emblemStyle, fontSize: 'var(--sm2-text-sm)', minHeight: 30 }}
-          trigger={(
-            <span data-map-chip>
-              <span style={{ fontFamily: 'var(--sm2-font-text)', fontVariantNumeric: 'lining-nums tabular-nums' }}>{emblems}</span> {isPt ? 'Honra' : 'Honor'}
-            </span>
-          )}
+          label={isPt ? `${nEmblems} de Honra — como conseguir` : `${nEmblems} Honor — how to earn`}
+          className="sm2-moeda"
+          style={{ ...emblemStyle, minHeight: 32 }}
+          trigger={<span data-map-chip className="sm2-moeda__in"><HonorIcon size={MOEDA_ICONE} /><span className="sm2-moeda__val">{nEmblems}</span></span>}
         >
           {isPt ? 'Honra: ganhe em combates do Torneio, no treino e em missões da semana. Gaste na aba Honra das lojinhas.' : 'Honor: earn it in Tournament fights, sparring and weekly missions. Spend it in the Honor tab of the shops.'}
         </InfoTip>
@@ -140,14 +122,10 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
           language={language}
           align="right"
           autoCloseMs={4000}
-          label={isPt ? `${credits} Créditos — como conseguir` : `${credits} Credits — how to get`}
-          style={{ ...CHIP, color: CREDIT_COLOR, fontFamily: 'var(--sm2-font-text)', fontWeight: 700, fontSize: 'var(--sm2-text-sm)', fontVariantNumeric: 'tabular-nums', minHeight: 30 }}
-          trigger={(
-            <span data-map-chip>
-              <CreditIcon size={16} style={{ marginInlineEnd: 4 }} />
-              <span style={{ fontFamily: 'var(--sm2-font-text)', fontVariantNumeric: 'lining-nums tabular-nums' }}>{credits}</span> {isPt ? 'Créditos' : 'Credits'}
-            </span>
-          )}
+          label={isPt ? `${nCredits} Créditos — como conseguir` : `${nCredits} Credits — how to get`}
+          className="sm2-moeda"
+          style={{ color: CREDIT_COLOR, fontFamily: 'var(--sm2-font-text)', fontWeight: 700, minHeight: 32 }}
+          trigger={<span data-map-chip className="sm2-moeda__in"><CreditIcon size={MOEDA_ICONE} /><span className="sm2-moeda__val">{nCredits}</span></span>}
         >
           {isPt ? 'Créditos: só por compra com dinheiro real. Servem para pacotes de Bits e para sortear de novo.' : 'Credits: only by purchase with real money. Use them for Bits packs and rerolls.'}
         </InfoTip>

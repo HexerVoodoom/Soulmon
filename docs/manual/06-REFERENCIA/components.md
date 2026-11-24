@@ -2051,6 +2051,10 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 
 **Dono de:** o botão ESPECIAL de compra (18/11/2026, pedido do dono): placa dourada em pedra turquesa escura, 3-slice por `border-image` (pontas de 110 px na arte, 40 px na tela; miolo liso estica), um WebP por estado (`assets/soulmon/ui/btn-especial{,-press,-off}.webp`, 580x146, alfa real, sem texto, pintado no ChatGPT). **Exports:** `BotaoEspecial({ width?: 'full'|'auto', variant?: 'dourado'|'pve'|'pvp', ...button })` (variantes de 18/11/2026: `pve` = Aventura/Amistoso, `pvp` = PvP/Ranqueada; arte `btn-pve*.webp` e `btn-pvp*.webp`) (`forwardRef`; rótulo e `EnergyCost` vêm como `children`). Visual único em `.sm2-especial` (`index.css`; reduced-motion no bloco canônico). **Usos:** "Comprar 3 tickets" (`TicketPanel` do Salão e confirmação do `TicketBuyModal`) e "Comprar convites" (`ComprarConvites` do `DueloSheet`). A compra não mudou. Outras ações seguem `CtaButton`/`sm2-kit-btn`.
 
+### `src/components/ui/HonorIcon.tsx`
+
+**Dono de:** o ícone da HONRA (a medalha, `assets/soulmon/icones-ui/moeda-emblema.png`, alfa real): par do `CreditIcon` e do `BitsIcon` nas 3 pílulas iguais do HUD de moedas do Mapa (24/11/2026). **Exports:** `HonorIcon({ size = 20, label?, className?, style? })` (decorativo por padrão; com `label` vira imagem nomeada). **Quem usa:** `MapPage` (pílula de Honra). **Régua:** só a arte da medalha; largura, fundo e gap da pílula são do `index.css` (`.sm2-moeda*`), não do ícone.
+
 ### `src/components/ui/CreditIcon.tsx`
 
 **Dono de:** o ícone dos CRÉDITOS (a moeda premium, comprada com dinheiro de verdade; 18/11/2026, pedido do dono): o diamante turquesa lapidado com a chama da alma (`assets/soulmon/icones-ui/moeda-creditos.png`, 256², alfa real, pintado no ChatGPT). **Exports:** `CreditIcon({ size = 20, label?, className?, style? })` (decorativo por padrão; com `label` vira imagem nomeada). Substitui o glifo `diamond` em Conta, `CreditsModal`, Cambista/`ShopShelf`, `MercadoSheets` e no chip do Mapa; o glifo `diamond` segue para outros usos.

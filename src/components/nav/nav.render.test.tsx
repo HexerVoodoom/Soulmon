@@ -77,12 +77,15 @@ describe('MapPage', () => {
   it('menu discreto de moedas: as 3, com o saldo passado por prop', () => {
     const { container } = renderWithCss(<MapPage language="en-US" onOpenArea={() => {}} {...mapProps} />);
     const menu = container.querySelector('[data-map-currencies]')!;
+    // Só ícone + valor (24/11/2026): o nome da moeda vive no rótulo acessível de cada pílula.
     expect(menu.textContent).toContain('260');
-    expect(menu.textContent).toContain('Bits');
     expect(menu.textContent).toContain('12');
-    expect(menu.textContent).toContain('Honor');
     expect(menu.textContent).toContain('3');
-    expect(menu.textContent).toContain('Credits');
+    const nomes = Array.from(menu.querySelectorAll('[data-info-tip]')).map(b => b.getAttribute('aria-label') ?? '');
+    expect(nomes).toHaveLength(3);
+    expect(nomes[0]).toContain('Bits');
+    expect(nomes[1]).toContain('Honor');
+    expect(nomes[2]).toContain('Credits');
   });
 
   it('fundo isométrico real (imagem de cena, não placeholder de ícone)', () => {
