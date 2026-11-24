@@ -68,11 +68,24 @@
           } catch (e) {}
         })();
       </script>
-      <script type="module" crossorigin src="/assets/index-04rbJQXP.js"></script>
+      <script>
+        (function () {
+          try {
+            // Pele da interface (`data-ui`): mesma chave de `STORAGE_KEYS.UI_SKIN`
+            // (src/utils/storageKeys.ts). Padrão 'arte' — valor ausente ou
+            // inválido cai nele, então quem nunca mexeu não vê flash.
+            var skin = localStorage.getItem('soulmon-ui-skin');
+            document.documentElement.dataset.ui = skin === 'minimal' ? 'minimal' : 'arte';
+          } catch (e) {
+            document.documentElement.dataset.ui = 'arte';
+          }
+        })();
+      </script>
+      <script type="module" crossorigin src="/assets/index-DUD-r-Ls.js"></script>
       <link rel="modulepreload" crossorigin href="/assets/vendor-DDxydHEc.js">
       <link rel="modulepreload" crossorigin href="/assets/vendor-sonner-BFkWhx6y.js">
       <link rel="modulepreload" crossorigin href="/assets/vendor-capacitor-BLfbYhNv.js">
-      <link rel="stylesheet" crossorigin href="/assets/index-DRAyyPwv.css">
+      <link rel="stylesheet" crossorigin href="/assets/index-CPHid61G.css">
     </head>
 
     <!-- SPLASH — estática de propósito: aparece ANTES do bundle carregar (é
