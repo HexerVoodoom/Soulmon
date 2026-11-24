@@ -152,12 +152,12 @@ describe('Masmorra idle — HP persistente e recuperação', () => {
 });
 
 describe('Masmorra idle — o teto diário de Bits segue valendo, sem frustrar', () => {
-  it('com o teto batido a descida CONTINUA e a tela só avisa "Daily Bits cap reached" (sem cobrança)', async () => {
+  it('com o teto batido a descida CONTINUA e a tela NÃO mostra mais o aviso de teto (dono, 24/11/2026)', async () => {
     vi.useFakeTimers();
     montar({ save: { minigameBits: { day: playerDayKey(new Date(), undefined), earned: MINIGAME_BITS_PER_DAY } } });
     descer();
     expect(await ateCair()).toBe(true);
-    expect(document.querySelector('[data-dungeon-bits-cap]')!.textContent).toBe('Daily Bits cap reached — the descent goes on, just without Bits.');
+    expect(document.querySelector('[data-dungeon-bits-cap]')).toBeNull();
     await avancar(DUNGEON_AUTO_FIGHT_MS + 100);
     expect(document.querySelector('[data-battle-stage]')).not.toBeNull(); // segue descendo
   });

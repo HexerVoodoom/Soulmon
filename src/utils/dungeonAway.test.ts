@@ -12,7 +12,7 @@ import {
 } from './dungeonIdle';
 import { applyDungeonAway, dungeonWaveOf, awayPlayerCfg, playAutoFight } from './dungeonAway';
 import { soulCombatant } from './soulXP';
-import { MINIGAME_BITS_PER_DAY, minigameBitsToday } from './currencies';
+import { BITS_PER_CATEGORY_PER_DAY, MINIGAME_BITS_PER_DAY, minigameBitsCategoryToday, minigameBitsToday } from './currencies';
 import { playerDayKey } from './playerDay';
 import { bondLevelFor } from './bond';
 
@@ -137,6 +137,16 @@ describe('applyDungeonAway — o avanço de quem ficou fora', () => {
     expect(next.gamePoints).toBe(0);
     expect(next.energyPoints).toBe(6);
     expect(next.dungeonAway).toBeDefined();
+  });
+
+  it('o Rift de quem ficou fora conta na categoria "explorar": teto de 75 por atividade (24/11/2026)', () => {
+    const dia = playerDayKey(new Date(T0 + 8 * HORA), undefined);
+    const { next } = applyDungeonAway(estado({ energyPoints: 5000 }), T0 + 8 * HORA);
+    expect(minigameBitsCategoryToday(next, dia, 'explorar')).toBeLessThanOrEqual(BITS_PER_CATEGORY_PER_DAY);
+    expect(minigameBitsCategoryToday(next, dia, 'explorar')).toBe(minigameBitsToday(next, dia));
+    // categoria já cheia: não entra Bit nenhum, mesmo com o teto geral livre
+    const cheio = estado({ energyPoints: 5000, minigameBits: { day: dia, earned: BITS_PER_CATEGORY_PER_DAY, cat: { explorar: BITS_PER_CATEGORY_PER_DAY } } });
+    expect(applyDungeonAway(cheio, T0 + 2 * HORA).next.gamePoints).toBe(0);
   });
 
   it('os Bits passam pelo TETO DIÁRIO de minijogo (150) — o mesmo funil da tela', () => {
