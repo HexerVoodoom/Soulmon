@@ -43,7 +43,9 @@ describe('MapPage: as 3 pílulas de moeda são iguais (24/11/2026)', () => {
     const pill = bloco('.sm2-moeda');
     expect(pill).toMatch(/width:\s*var\(--sm2-moeda-w\)/);
     expect(pill).toMatch(/min-width:\s*var\(--sm2-moeda-w\)/);
-    expect(pill).toMatch(/flex:\s*0 0 var\(--sm2-moeda-w\)/);
+    // `flex-basis` NÃO pode ser a largura: num HUD em coluna o basis vira ALTURA (pílulas de 96px de altura).
+    expect(pill).toMatch(/flex:\s*0 0 auto/);
+    expect(pill).not.toMatch(/flex:[^;]*var\(--sm2-moeda-w\)/);
     expect(pill).toMatch(/tabular-nums/);
     expect(bloco('.sm2-moeda-hud')).toMatch(/gap:\s*var\(--sm2-space-3\)/);
     expect(bloco('.sm2-moeda__in')).toMatch(/gap:\s*var\(--sm2-space-1\)/);

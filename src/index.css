@@ -7650,7 +7650,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 }
 .sm2-moeda {
   box-sizing: border-box;
-  flex: 0 0 var(--sm2-moeda-w);
+  flex: 0 0 auto;
   width: var(--sm2-moeda-w);
   min-width: var(--sm2-moeda-w);
   padding: 0 var(--sm2-space-2);
