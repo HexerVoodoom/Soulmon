@@ -95,7 +95,7 @@ describe('MailboxSheet › carta de guerra de clã (22/11/2026)', () => {
     const { container, rerender } = render(<MailboxSheet {...base} mail={[guerra]} onWatchWar={onWatchWar} />);
     fireEvent.click(container.querySelector('[data-mail-letter] button')!);
     expect(container.querySelector('[data-mail-claim]')).toBeNull();
-    expect(container.querySelector('[data-mail-war-watch]')!.textContent).toBe('Assistir');
+    expect(container.querySelector('[data-mail-war-watch]')!.textContent).toBe('Assistir batalha');
     fireEvent.click(container.querySelector('[data-mail-war-watch]')!);
     expect(onWatchWar).toHaveBeenCalledTimes(1);
     rerender(<MailboxSheet {...base} mail={[guerra]} />);

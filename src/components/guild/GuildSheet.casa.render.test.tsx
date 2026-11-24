@@ -316,7 +316,7 @@ describe('D-55/D-56/D-57: sem visor vetorial; um card por assunto; o Clan Hall �
       if (action === 'guildRewards') return new Response(JSON.stringify({ rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 });
       return new Response(JSON.stringify({ guild: { ...vista(casaVista()), raid: { weekKey: '2026-W41', phenomenon: 'mare', state: 'aberta', ferido: false, lastWeek: null, mine: {} } } }), { status: 200 });
     }) as never;
-    const { container } = render(<GuildSheet {...base} onAbrirBosque={vi.fn()} />);
+    const { container } = render(<GuildSheet {...base} />);
     await waitFor(() => expect(container.querySelector('[data-guild-room="casa"]')).not.toBeNull());
     await new Promise(r => setTimeout(r, 30)); // a guerra só é perguntada no lote da Arena
     for (const sel of ['[data-guild-room="bosque"]', '[data-guild-room="feira"]', '[data-guild-room="guerra"]', '[data-guild-bosque-entrar]', '[data-grove-cena]', '[data-guild-card="bosque"]', '[data-guild-card="feira"]', '[data-guild-card="guerra"]']) {
@@ -324,26 +324,25 @@ describe('D-55/D-56/D-57: sem visor vetorial; um card por assunto; o Clan Hall �
     }
     const cards = Array.from(container.querySelectorAll<HTMLElement>('.sm2-stats-card'));
     const donoDe = (sel: string) => cards.filter(c => c.querySelector(sel));
-    for (const sel of ['[data-cla-info]', '[data-guild-room="casa"]', '[data-guild-room="roda"]', '[data-guild-room="mural"]']) expect(donoDe(sel), sel).toHaveLength(1);
+    for (const sel of ['[data-cla-info]', '[data-guild-room="casa"]', '[data-guild-room="roda"]']) expect(donoDe(sel), sel).toHaveLength(1);
+    expect(container.querySelector('[data-guild-room="mural"]'), 'o Mural mora no Grove (24/11/2026)').toBeNull();
     const [hall] = donoDe('[data-cla-info]');
     expect(hall.querySelector('[data-guild-room="roda"]')).toBeNull(); // membros: card próprio, fora do card do clã
     expect(hall.querySelector('[data-guild-room="casa"]')).not.toBeNull(); // tesouro/doação: dado do clã
     expect(hall.querySelector('[data-guild-room="mural"]')).toBeNull();
   });
 
-  describe('Clan Hall em 4 cards (23/11/2026)', () => {
+  describe('Clan Hall em 3 cards, sem árvore nem Mural (24/11/2026)', () => {
     const casaProp = { bits: 500, ownedFurniture: [], equippedDecor: {}, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() };
     const ordem = (c: HTMLElement) => Array.from(c.querySelectorAll('[data-guild-card]')).map(e => e.getAttribute('data-guild-card'));
 
-    for (const [lang, ver, membros, buffs] of [['pt-BR', 'Ver a árvore no Bosque', 'Membros', 'Buffs do clã'], ['en-US', 'See the tree in the Grove', 'Members', 'Clan Buffs']] as const) {
-      it(`${lang}: clã, membros, árvore (porta) e buffs, nessa ordem; a árvore não está no Clan Hall`, async () => {
+    for (const [lang, membros, buffs] of [['pt-BR', 'Membros', 'Buffs do clã'], ['en-US', 'Members', 'Clan Buffs']] as const) {
+      it(`${lang}: clã, membros e buffs, nessa ordem; nada de árvore, porta da árvore nem Mural`, async () => {
         mockServer(casaVista());
-        const onAbrirBosque = vi.fn();
-        const { container } = render(<GuildSheet {...base} language={lang} casa={casaProp} onAbrirBosque={onAbrirBosque} />);
+        const { container } = render(<GuildSheet {...base} language={lang} casa={casaProp} />);
         await waitFor(() => expect(container.querySelector('[data-guild-card="buffs"]')).not.toBeNull());
-        expect(ordem(container).slice(0, 4)).toEqual(['cla', 'membros', 'arvore', 'buffs']);
-        const [cla, mem, arv, buf] = ['cla', 'membros', 'arvore', 'buffs'].map(n => container.querySelector<HTMLElement>(`[data-guild-card="${n}"]`)!);
-        // (a) clã: ficha, tesouro e doação; (b) membros: só a lista; (d) buffs: só os buffs
+        expect(ordem(container).slice(0, 3)).toEqual(['cla', 'membros', 'buffs']);
+        const [cla, mem, buf] = ['cla', 'membros', 'buffs'].map(n => container.querySelector<HTMLElement>(`[data-guild-card="${n}"]`)!);
         expect(cla.querySelector('[data-cla-info]')).not.toBeNull();
         expect(cla.querySelector('[data-casa-bits-total]')).not.toBeNull();
         expect(cla.querySelector('[data-casa-doar]')).not.toBeNull();
@@ -353,22 +352,9 @@ describe('D-55/D-56/D-57: sem visor vetorial; um card por assunto; o Clan Hall �
         expect(buf.querySelector('[data-guild-room="buffs"]')).not.toBeNull();
         expect(buf.textContent).toContain(buffs);
         expect(buf.querySelector('[data-casa-doar]')).toBeNull();
-        // (c) árvore: nenhuma árvore aqui, só o CTA que abre o Grove
-        for (const sel of ['[data-grove-cena]', '[data-casa-nivel]', '[data-casa-perto]', '[data-grove-creature]']) expect(container.querySelector(sel), sel).toBeNull();
-        const cta = arv.querySelector<HTMLButtonElement>('[data-guild-arvore-ver]')!;
-        expect(cta.textContent).toBe(ver);
-        fireEvent.click(cta);
-        expect(onAbrirBosque).toHaveBeenCalledTimes(1);
+        for (const sel of ['[data-grove-cena]', '[data-casa-nivel]', '[data-casa-perto]', '[data-grove-creature]', '[data-guild-card="arvore"]', '[data-guild-arvore-ver]', '[data-guild-card="mural"]', '[data-guild-room="mural"]']) expect(container.querySelector(sel), sel).toBeNull();
       });
     }
-
-    it('sem quem abra o Bosque o card da árvore não é desenhado (nunca um botão morto)', async () => {
-      mockServer(casaVista());
-      const { container } = render(<GuildSheet {...base} casa={casaProp} />);
-      await waitFor(() => expect(container.querySelector('[data-guild-card="buffs"]')).not.toBeNull());
-      expect(container.querySelector('[data-guild-card="arvore"]')).toBeNull();
-      expect(ordem(container).slice(0, 3)).toEqual(['cla', 'membros', 'buffs']);
-    });
   });
 
   it('o antigo CasaVisor.tsx não existe mais', async () => {
