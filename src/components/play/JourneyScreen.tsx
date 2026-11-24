@@ -2,6 +2,7 @@
  * A JORNADA DO FOCO em tela cheia (§247). Posição = função do tempo de foco do SERVIDOR (`now` corrigido por `delta`); sair,
  * ir para o fundo ou recarregar não muda nada. Desenho em SVG, com arte provisória (gradiente + motivos) até a fila de geração.
  */
+import { EndSessionModal } from './EndSessionModal';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { sm2Hint, sm2Text } from '../form/FormKit';
@@ -190,15 +191,11 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, t
             : <button type="button" data-journey-pause onClick={onPause} disabled={active.pauses >= JOURNEY_MAX_PAUSES} aria-label={isPt ? 'Pausar' : 'Pause'} style={{ ...ROUND, opacity: active.pauses >= JOURNEY_MAX_PAUSES ? 0.4 : 1 }}>
               <svg {...SVG}><circle cx="12" cy="12" r="9" /><path d="M10 9v6M14 9v6" /></svg>
             </button>)}
-          {p < 1 && (!confirmEnd
-            ? <button type="button" data-journey-end onClick={() => setConfirmEnd(true)} aria-label={isPt ? 'Encerrar' : 'End'} style={ROUND}>
-              <svg {...SVG}><circle cx="12" cy="12" r="9" /><rect x="9" y="9" width="6" height="6" rx="0.8" fill="currentColor" /></svg>
-            </button>
-            : <button type="button" data-journey-end-confirm onClick={onEnd} aria-label={isPt ? 'Encerrar e voltar' : 'End and go back'} style={{ ...ROUND, background: 'var(--sm2-ink)', color: 'var(--sm2-surface)' }}>
-              <svg {...SVG}><circle cx="12" cy="12" r="9" /><rect x="9" y="9" width="6" height="6" rx="0.8" fill="currentColor" /></svg>
-            </button>)}
+          {p < 1 && <button type="button" data-journey-end onClick={() => setConfirmEnd(true)} aria-label={isPt ? 'Encerrar' : 'End'} aria-haspopup="dialog" style={ROUND}>
+            <svg {...SVG}><circle cx="12" cy="12" r="9" /><rect x="9" y="9" width="6" height="6" rx="0.8" fill="currentColor" /></svg>
+          </button>}
         </div>
-        {confirmEnd && p < 1 && <p role="status" style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{isPt ? 'Toque de novo para encerrar e voltar' : 'Tap again to end and go back'}</p>}
+        {confirmEnd && p < 1 && <EndSessionModal language={language} onYes={() => { setConfirmEnd(false); onEnd(); }} onNo={() => setConfirmEnd(false)} />}
         {p < 1 && !paused && active.pauses >= JOURNEY_MAX_PAUSES && <p style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{isPt ? 'Daqui até o fim, o Soulmon segue direto.' : 'From here to the end, your Soulmon keeps going.'}</p>}
         {tetoDia && p < 1 && <p data-journey-cap role="status" style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{isPt ? 'Teto do dia atingido: os próximos baús vêm vazios. Os itens voltam amanhã.' : "Daily cap reached: the next chests will be empty. Items are back tomorrow."}</p>}
       </section>

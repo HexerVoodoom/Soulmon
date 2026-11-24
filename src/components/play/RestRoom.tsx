@@ -1,3 +1,4 @@
+import { EndSessionModal } from './EndSessionModal';
 import { CtaButton, CtaTextButton } from '../ui/CtaButton';
 /**
  * A SALA DE DESCANSO (§301/§312, 12/11/2026, pedido do dono): o fim do trajeto troca o fundo do mapa, em tela cheia, por um oásis calmo (sem porta, sem moldura),
@@ -56,6 +57,7 @@ export function RestRoom({ language, rest, petSprite, cycles, now, onNext, onFin
   const art = OASIS_ART[rest.env];
   const bg = useRef<HTMLDivElement>(null);
   const [fadedIn, setFadedIn] = useState(false);
+  const [confirmFinish, setConfirmFinish] = useState(false);
   useEffect(() => {
     // Chegar pela porta: a sala aparece devagar (sem animação com movimento reduzido).
     const el = bg.current;
@@ -103,10 +105,11 @@ export function RestRoom({ language, rest, petSprite, cycles, now, onNext, onFin
         {/* CTA em coluna (§316b) + secundárias SÓ TEXTO (§316c, 13/11/2026, dono): Seguir em cima; Concluir a missão e Sair embaixo, sem fundo e sem borda. */}
         <div data-cta-stack style={{ display: 'grid', gap: 4, width: JOURNEY_CARD_WIDTH }}>
           <CtaButton data-rest-next onClick={onNext} disabled={!!busy}>{isPt ? 'Seguir' : 'Keep going'}</CtaButton>
-          <CtaTextButton data-rest-finish surface="escuro" onClick={onFinish} disabled={busy}>{isPt ? 'Concluir a missão' : 'Finish the mission'}</CtaTextButton>
+          <CtaTextButton data-rest-finish surface="escuro" onClick={() => setConfirmFinish(true)} disabled={busy} aria-haspopup="dialog">{isPt ? 'Concluir a missão' : 'Finish the mission'}</CtaTextButton>
           <CtaTextButton data-rest-close surface="escuro" onClick={onClose} aria-label={isPt ? 'Sair para a Oficina (o descanso continua)' : 'Leave to the Workshop (the break goes on)'}>{isPt ? 'Sair (o descanso continua)' : 'Leave (the break goes on)'}</CtaTextButton>
         </div>
       </div>
+      {confirmFinish && <EndSessionModal language={language} onYes={() => { setConfirmFinish(false); onFinish(); }} onNo={() => setConfirmFinish(false)} />}
     </div>,
     document.body,
   );
