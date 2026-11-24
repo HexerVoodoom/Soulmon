@@ -101,3 +101,33 @@ Palavras do dono: "Modal de pop up tá bem ruim. Precisa ter altura mínima maio
 **Rodada 5 (arte, 23/11): sprites do lote 5 aprovados.** O dono aprovou os 12 sprites (4 rookies + 4 champions + 4 ultimates) e os 8 nomes: Spectrel→Spectrane→Spectrarch (fantasma), Revenox→Revenoxar→Revenolord (morto-vivo), Hemolisk→Hemocarax→Hemocolossa (sangue), Furiosk→Furiozar→Furiotitan (fúria). Instalados em `novos-arquivo/combinados/` e `combinados-formas/`, registrados por `buildFormasLote5`; faltam só ícones, FX, poções/chips e cenários (P6). REGISTRO §510.
 
 **Rodada 5 (decisão, 23/11): besourinho de feedback.** O besourinho (`HomeFeedbackButton`) fica VISÍVEL no beta e é ocultado só na versão final. Flag de build `VITE_HIDE_FEEDBACK_BUTTON=1` (`src/utils/feedbackFlag.ts`; padrão = visível); só renderização, o save não muda. Teste: `HomeFeedbackButton.flag.render.test.tsx`.
+
+## Rodada 5 (cont.) e rodada 6 — 23 e 24/11/2026 (consolidação dos relatórios das sessões, 24/11)
+
+Estado de cada pedido (fonte: relatórios P2 a P7, site e marketing; "aberto" = PR ainda não mergeado em 24/11):
+
+| Pedido / decisão do dono | Estado |
+|---|---|
+| Popup do Passeio = modal do NPC da Feira; título inline, sem placa, ✕ glifo; selo FLED no lugar de DRAW na fuga; placa trocada por inline nos outros popups; respiro interno = ornamento + 10 px (REGISTRO §515) | #1149 mergeado; #1159 (Passeio/NPC, CI ok, conflito com main), #1168 (5 popups) e #1170 (respiro, 2 checks falhando) abertos |
+| Rift com botões de arte | branch `feat/p3-rift-botoes` sem PR; espera o #1148 (arte P6); Rift sem estado disabled (a folha não tem regra de energia) |
+| Arena 3 giros/hora e 3 convites/energia; temporada mensal UTC (§494) | feito (#1110 a #1115); falta confirmar ranking/histórico preservados na virada de temporada |
+| Pesadelo: `dot` do pet vira ataque extra (§495) | feito (#1124, inclui a animação do 2º golpe); #1126 mergeado |
+| Clan War: carta no Mensageiro + Assistir (§496) | carta feita (#1113); falta o botão Watch Battle e o teste do fluxo |
+| Voz da Feira, Grove e Clan Hall (§522) | Feira/Cidadela #1162 mergeado; Grove #1171 e Clan Hall #1173 abertos |
+| Soul Forge = ForgeCard ORIGINAL inline no modal da área com a Vitra (§513) | #1155 e #1163 mergeados |
+| Drive: "Novo" + categorias em accordion (§520) | #1169 mergeado |
+| Evolution Center (tira, cadeado, "traço antigo", modal de 2 opções); Bond (Ritmo vai ao Perfil, anéis) | #1177 e #1178 abertos |
+| Focus 15.3 aviso "Deseja encerrar a sessão?"; Focus 15.5 com 20 elementos em 6 cenários, essência por nº de elementos, dono mandou manter a tabela (§518) | #1181 e #1179 abertos |
+| Modal de resultado Hexsmith/Vesca; poções favoritas (localStorage); textos dos 20 elementos | #1160, #1172, #1134 mergeados |
+| Mochila não fecha ao usar; arrastar só após toque longo (300 ms) | #1127 mergeado |
+| Caderno: 5º campo, escrita livre, "Eu sou grato por"; hábito "refletir" liga ao Caderno | #1139, #1142, #1176 mergeados |
+| Besourinho de feedback visível no beta, oculto só na versão final | #1180 aberto |
+| Escolhedor Hábito/Tarefa + New task, seletor When (7 quadrados + Marcar todos + Uma vez), filtros da Home, convite do contador de passos, limite de atividades (demo x pago/beta) | fila/parado (P2) |
+| Cristal Fundador em qualquer chão (§511); Fundador PR2, aviso de prêmio | #1165 mergeado; #1166 aberto |
+| Migração dos botões locais para `sm2Button` (§517) | #1175, #1174, #1182, #1183 de 24/11; estado de merge não confirmado nos relatórios |
+| Popup central com moldura cristal (§515); pré-download no onboarding (§514) | #1135, #1136, #1145, #1150, #1161 e #1164 citados como feitos pela P7; estado de merge de cada um não confirmado |
+| Regra do `dist/` (§506) e regra de worktrees/lock/disco (§516) | em vigor |
+| Site D no ar como principal (§522) | PR #1157 mergeado em 23/11; worktree `E:\Projetos\wt-site-beta-b` ainda a remover |
+| Marketing: voz sintética (Kokoro), séries "criador" e "apresentando o mundo" | roteiros e amostras prontos; nada publicado; o dono escolhe a voz |
+
+**Perguntas em aberto ao dono (reunidas dos relatórios):** (1) o hábito "refletir" marca com qualquer entrada do Caderno ou só "importa"; (2) o onboarding exige toque longo para arrastar comida: ok; (3) o Mural (história do bosque) vai ao Grove; (4) o card "árvore" do Clan Hall, quase só um botão "Ver a árvore no Bosque", é aceitável (a arte da árvore da Casa não existe); (5) "Novo" no Drive é accordion com CheckRow "Só os novos" ou lista própria; (6) Hexsmith: ✕ no medalhão esquerdo e "i" no direito, conferir em tela; (7) gap de Play policy/age rating na bíblia; (8) FUGIU em PT (o `RESULT_BANNER` não escolhe idioma); (9) instalar as cenas do Focus como `soulmon/jornada/bloco-<cena>.webp` (1024x2048); (10) o `disabled` do `sm2Button` (surface-2/muted) é o visual desejado; (11) apagar `D:\nm-cache\node_modules.old`; (12) música CC BY de Kevin MacLeod para o Soulmon; (13) R$ 19,30 de mídia sem decisão; (14) perfil de teste `1-forja\trabalho\profile` aguarda OK para apagar.

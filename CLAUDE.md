@@ -214,6 +214,9 @@ Repositório: `HexerVoodoom/Soulmon`.
   Em PRs, `dist/` **NÃO entra por padrão**; um PR `chore(dist): rebuild` por lote,
   sob o lock `D:\locks\heavy`; exceção para PRs de bytes/performance; nunca
   resolver conflito de `dist/` na mão (reconstruir). Ver REGISTRO §506.
+- **Worktrees** só em `E:\Soulmon-wt` (junction de `node_modules` para `D:\nm-cache`),
+  criados sob o lock `D:\locks\wt-add`; nunca `npm ci`/`npm install` em worktree com
+  junction e `rmdir` da junction antes do `git worktree remove`. Ver REGISTRO §516.
   ⚠️ **Por isso `.env.production` é COMMITADO** (`.gitignore` tem `!.env.production`).
   As `VITE_*` são inlinadas em BUILD, não lidas em runtime; como o CI builda de
   novo a cada push sem o `.env` da máquina do dono, um deploy manual correto era

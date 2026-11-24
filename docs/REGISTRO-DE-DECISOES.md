@@ -6688,7 +6688,7 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Special = só Neutral:** não existe elemento Nightmare no dex (Pesadelo é modo de jogo). **Fora:** filtro "Novo" em Soulmons e ícone da criatura em outras telas (ficha, formas do pet).
 - **Rollback:** reverter o commit; nenhum dado de save mudou.
 
-## §506 — Soulsmith: modal com a Vitra e a Forja de Alma dentro, não tela cheia (23/11/2026, p5/soulforge-modal; número provisório, conferir colisão no merge)
+## §513 — Soulsmith: modal com a Vitra e a Forja de Alma dentro, não tela cheia (23/11/2026, p5/soulforge-modal; renumerado de §506 em 24/11 por colisão com a regra do `dist/`)
 
 - **Decisão do dono (testando o #1130):** o lote `ferreiro` abre a `AreaSheet` COM a Vitra (retrato + fala) e a `ForgeCard` em lista (`view="list"`, a tela de upar) rola DENTRO da folha, como a Hexsmith. Sem a folha intermediária antiga e sem tela cheia (`forgeFull` removido); o ✕ é o único, o da folha. Moldura padrão (só a Hexsmith usa `aco`); a Forja não tem sub-telas com Voltar (o modal de upgrade/reforjar é próprio da `ForgeCard`).
 - **Por que lista e não mapa:** o mapa de chakras (`view="map"`) é uma cena de tela cheia com a própria Vitra e barra; dentro da folha duplicaria a Vitra e não cabe na altura. O mapa fica no código, sem uso.
@@ -6709,7 +6709,7 @@ Decisão (cinco pedidos literais do dono, um commit por item):
 - **Botão Equipar/Desequipar (aprovado pelo dono em 23/11/2026):** um único botão alterna com texto que nomeia a ação (Equipar primário ⇄ Desequipar outline); "Equipado" vira selo aria-hidden ao lado do nome, cartão equipado com borda 2px `primary-ink`; sem modal (reversível), status sr-only "X: equipado/desequipado"; < 400 px botão em linha própria largura total 48 px, ≥ 400 px ao lado com 112 px fixos. **Alternativa que perdeu:** dois textos empilhados ("✓ Equipado" + "Desequipar") no mesmo botão (rótulo ambíguo). **Falsifica:** dois rótulos no botão, selo no cartão livre ou aria-label com "(Equipado)" (`HexsmithSheet.render.test.tsx`).
 - **Rollback:** reverter o commit; sem save/servidor.
 
-## §506 — `dist/` fora dos PRs por padrão; um PR de rebuild por lote sob lock (23/11/2026, decisão da sessão [soulmon] 20-11 com a orquestradora, por delegação do dono; número provisório, conferir colisão no merge)
+## §506 — `dist/` fora dos PRs por padrão; um PR de rebuild por lote sob lock (23/11/2026, decisão da sessão [soulmon] 20-11 com a orquestradora, por delegação do dono; número definitivo, o Soulsmith saiu para §513)
 
 **Regra única.**
 1. PR de feature/arte/fix **NÃO inclui `dist/`** por padrão (o Cloudflare builda no deploy).
@@ -6752,7 +6752,7 @@ O dono vê "Algo deu errado" ao abrir o APK da Play e a produção não reproduz
 - **Rollback:** reverter o commit; os 12 PNG saem e o lote 5 volta a usar o rookie do dominante.
 - **PR sem `dist/`** (§507): o orçamento de bytes lê o `dist` commitado; o rebuild do lote é outro PR.
 
-## §510 — Pré-download no onboarding: código lazy e artes baixam enquanto a pessoa responde o ritual (23/11/2026, decisão do dono em modal; número provisório, conferir colisão no merge)
+## §514 — Pré-download no onboarding: código lazy e artes baixam enquanto a pessoa responde o ritual (23/11/2026, decisão do dono em modal; renumerado de §510 em 24/11 por colisão com os sprites do lote 5)
 
 - **Regra:** ao entrar no onboarding (não no upgrade), `utils/prefetchOnboarding.ts` baixa em segundo plano o que seria baixado só ao abrir cada tela. **Wi-Fi/ethernet = tudo** (~170 MB); **4G/5G, economia de dados, 2G ou sem `navigator.connection` = essencial** (todo o código js/css/fontes + artes `lote/npc/frame/moldura/popup/placa/bg/btn/icon/chip/mapa`). Saiu do Wi-Fi no modo tudo: o resto da fila é cortado.
 - **Como:** a lista é `dist/prefetch-index.json`, gerado NO build (`scripts/gerar-prefetch-index.mjs`, encadeado em `npm run build`, servido no-store) a partir do que existe em `dist/assets` (só nomes com hash). O módulo apenas faz `fetch` (baixa prioridade, 2 por vez, cada um em `requestIdleCallback`): o SW atual já guarda `/assets/*` com hash no `ASSET_CACHE` (teto 6000, `semHtmlFalso` recusa HTML), então o módulo não escreve cache nem muda o `sw.js`. Sem SW controlando, sem índice (HTML do fallback SPA é ignorado) ou sem storage: não faz nada.
@@ -6771,4 +6771,51 @@ O dono vê "Algo deu errado" ao abrir o APK da Play e a produção não reproduz
 - **Alternativa descartada:** liberar cada item em vários espaços por `fits` (acoplado a cenário, não a espaço) ou duplicar o cristal por espaço.
 
 
-- **§506 (revisão 23/11/2026, dono testando o #1155):** a lista (`view="list"`) foi REJEITADA. A Soulsmith abre a ForgeCard ORIGINAL (mapa de chakras com a figura humanoide e os 3 pontos), mas embutida na `AreaSheet` com a Vitra no topo (`ForgeCard view="map" inline`), sem tela cheia; rola se preciso; ✕ único da folha.
+- **§513 (revisão 23/11/2026, dono testando o #1155; era §506):** a lista (`view="list"`) foi REJEITADA. A Soulsmith abre a ForgeCard ORIGINAL (mapa de chakras com a figura humanoide e os 3 pontos), mas embutida na `AreaSheet` com a Vitra no topo (`ForgeCard view="map" inline`), sem tela cheia; rola se preciso; ✕ único da folha.
+
+
+## Reconciliação de numeração (24/11/2026, PR de consolidação)
+
+Estado da `origin/main` ao reconciliar: o último § é o **§511** (Cristal Fundador em qualquer chão). O §495 e o §496 não têm cabeçalho próprio (estão como itens dentro do §494). Havia duplicatas: dois **§506** (dist e Soulsmith) e dois **§510** (sprites do lote 5 e pré-download); o **§487** duplicado é antigo (18/11) e foi mantido. Renumerados: Soulsmith **§506 para §513** e pré-download **§510 para §514** (manual `components.md` e `utils.md` acertados; comentários de código que citem o número antigo não foram tocados, esta consolidação não mexe em código). **Reservado, não usado aqui:** §512 pertence ao #1179 (Focus 15.5, aberto). **Colisão a resolver por quem mergear:** o PR #1166 (Fundador PR2, aberto) usa §511, que já existe na main. Números novos desta consolidação: §515 a §522.
+
+## §515 — Popup central: moldura cristal, título inline sem placa, ✕ só glifo (22–23/11/2026, dono)
+
+- **Decisão:** popups centrais (`ModalSheet placement="center"`) usam a moldura `cristal` (arte da P6, #1136: 1 cristal no centro embaixo, placa de bronze em 3 peças, fios e folhas, aprovada pelo dono em 23/11); altura mínima `min(70u, 80dvh)`, margem externa 24 px (#1135). Variante `titulo="inline"` (#1145, #1149): sem placa, ✕ no canto superior direito sem círculo (só o glifo, toque de 44 px), título abaixo, até 2 linhas. O popup do Passeio é o modal do NPC da Feira (Fanfare), com título inline e sem linhas explicativas do chefe; o selo FLED substitui DRAW na fuga; os outros popups trocam placa por inline (#1168, aberto). No `DungeonPotionsModal` o ✕, Esc e o véu só fecham; confirmar é só o botão. Respiro interno das molduras = ornamento + 10 px (#1170, aberto; o token `--sm2-moldura-pad-x-min` é PROPOSTO, ainda não existe).
+- **Alternativa que perdeu:** manter placa de bronze em todos os popups e a moldura padrão (teste A/B de 23/11). **Gatilho:** a auditoria da P7 mediu o rodapé do Passeio invadindo o ornamento (13-17 px) e o título inline invadindo o canto do cristal (16-19 px); medir os modais reais em 375/412 antes de generalizar.
+
+## §516 — Regra de worktrees, lock e disco (24/11/2026, orquestrador, após o incidente do disco)
+
+- **Decisão:** worktrees NOVOS só em `E:\Soulmon-wt` (junction `node_modules` para `D:\nm-cache`); no máximo 2 por sessão e 1 subagente por worktree; remover no merge (`rmdir` da junction ANTES do `git worktree remove`); `D:\locks\wt-add` serializa o `git worktree add`; preferir `--no-checkout` + sparse; nada em `D:` com menos de 3 GB livres; NUNCA `npm ci`/`npm install` em worktree com junction; vitest completo e build só sob `D:\locks\heavy`.
+- **Por quê:** em 23/11 o `D:` ficou 100% cheio e o `nm-cache` foi esvaziado/parcial (um `worktree remove` seguiu a junction e um `npm ci` falhou com ENOSPC); a P2 restaurou com `npm ci` em `D:\nm-new` + rename. **Alternativa que perdeu:** worktrees em `D:` com `node_modules` próprio. **Gatilho:** novo incidente de disco ou de `nm-cache` parcial.
+
+## §517 — Botões padrão de modal ganham arte; migração dos botões locais para `sm2Button` (23–24/11/2026, dono)
+
+- **Decisão:** o §316c (modais brancos com botão do app, sem arte) fica **REVOGADO** na parte dos botões padrão de modal: `sm2Button` ganha arte própria (P6; ainda não instalada). A P7 migra os botões locais para `sm2Button`: #1175 (Chat e Mochila), #1174 (Hexsmith, Forja, Talentos, Elementos), #1182 (Guilda; botões md para sm, 48 para 44 px), #1183 (OraclePage). Ficam: `sm2-hex-equip-btn`, `sm2-guild-invite-btn`.
+- **Pendências:** `App.tsx` `sm-btn` ×2, `sm3-ranking-fechar` e o `btnCls` do PixelizerCard não migrados; o visual do `disabled` do `sm2Button` (surface-2/muted) é dúvida aberta; verificação visual das migrações não feita. **Alternativa que perdeu:** manter o §316c e deixar o botão padrão só em CSS. **Gatilho:** a arte da P6 chegar (aí o componente e a regra de uso se ajustam).
+
+## §518 — Focus 15.5: 20 elementos nos 6 cenários e essência por número de elementos (23–24/11/2026, dono; implementação no #1179, aberto)
+
+- **Decisão:** os 20 elementos base se distribuem nos 6 cenários (Floresta: planta, vida, vigor, ar; Litoral: água, eletricidade, som; Caverna: terra, fogo, sombra, morte; Jardim: fada, luz, arcano; Oficina: industrial, marcial, vileza; Observatório: espaço, tempo, gravidade); sorteio UNIFORME; chance de essência por número de elementos (3 elementos = 20%, 4 = 25%, teto 8). O balanço sobe a essência por sessão de ~0,7 para ~1,76 e o dono mandou MANTER a tabela. Focus 15.3: aviso Sim/Não "Deseja encerrar a sessão?" (#1181, aberto).
+- **Alternativa que perdeu:** não registrada nos relatórios. **Gatilho:** inflação de essência na economia do beta. O § do #1179 (§512) descreve a implementação e fica com o PR.
+
+## §519 — Arte (P6): fontes, termos e regras de combate (22–24/11/2026, dono)
+
+- **Decisão:** ChatGPT liberado (salvar em `E:\Soulmon-assets\p6-*`); UI com alfa real pelo ChatGPT, sem Gemini nem codex-image (sem cota até 11/12); criatura/sprite só pela API do jogo (o dono NÃO quer Gemini no Soulmon). Termos vetados só suicídio, automutilação e abuso sexual (Morte liberada). Selo FLED só em EN. Combate dos 4 elementos novos: refs REAIS do jogo como âncora (o feedback "bom mas distoante, recrie com referências" era sobre os sprites de COMBATE/FX, não sobre os 12 sprites de Soulmon, aprovados e mergeados no #1158); cenários de combate com acento turquesa sutil. Bits: ícone real, 1º pacote só pilha de moedas. Instalar só com OK do dono; PRs de arte sem `dist/`; arquivo novo em `ui/` exige exceção no guard ZERO PNG (`assets.contract.test.ts`). O branco opaco do ícone de sangue foi limpo em 23/11.
+- **Alternativa que perdeu:** Gemini/codex-image para UI e as v1/v2 lisas. **Gatilho:** cota do ChatGPT (atingida em 23/11) ou nova decisão do dono sobre geradores.
+
+## §520 — Progressão e oficinas (P5, 23–24/11/2026, dono)
+
+- **Decisão:** Drive: filtro "Novo" e categorias em ACCORDION como Boss/Wild, pílulas rejeitadas (#1169). Evolution Center (#1177, aberto): tira "Você já juntou"/"Para onde vão", texto das frações no "i", cadeado aberto/fechado com "Evolution hold", "traço antigo" sob a árvore, entrada do prédio = modal de 2 opções (Centro / Criar poção). Bond (#1178, aberto): Ritmo vai para o Perfil, anéis circulares na evolução, Talentos e Jornada ficam. Modal de resultado Hexsmith/Vesca (#1160); favoritos de poção no Lab só no aparelho (#1172).
+- **Alternativa que perdeu:** lista de pílulas no Drive; Ritmo dentro do Bond. **Gatilho:** conferência em tela real (só jsdom até agora).
+
+## §521 — Home e produtividade (P2, 22–24/11/2026, dono)
+
+- **Decisão:** a Mochila NÃO fecha ao usar item; ARRASTAR só recolhe a folha após toque longo (300 ms) e rolar a lista nunca arrasta (#1127). Caderno com 5º campo "O que importa hoje", botão largo de escrita livre e prefixo turquesa "Eu sou grato por" (#1139); o hábito "refletir" liga ao Caderno (#1142, #1176: marcação automática idempotente, toast com o NOME da task). Foco = "Focus & Work / Foco e Trabalho" (id `foco` mantido). Besourinho de feedback visível no beta e oculto só na versão final (flag `VITE_HIDE_FEEDBACK_BUTTON=1`, padrão visível; #1180, aberto). Caixa Poder/Harmonia/Benevolência: zero discreto, positivo em negrito, +2 destacado (#1167); CreateModal com nome único e exemplos por categoria (#1111).
+- **Em aberto (dono):** o gatilho do #1176 é "qualquer entrada nova no Caderno" ou só o formato "importa"? O onboarding exige toque longo para arrastar comida (o botão Usar continua): ok? **Gatilho de revisão:** a confirmação do dono nessas duas.
+
+## §522 — Voz dos prédios do Clã, Site D e marketing (23/11/2026, dono)
+
+- **Voz (P4):** Feira, Grove e Clan Hall com textos no "i"; CTA Investigar desabilitado + "Volte amanhã"; imagem do chefe no lugar do HP (#1162, mergeado); Grove: regar = efeito do banho, defender, "volte amanhã" (#1171, aberto); Clan Hall em 4 cards e a árvore vai ao Grove (#1173, aberto, merge só depois do Grove). Revoga a regra "sem volte amanhã" do cabeçalho de SalaFeira.
+- **Site (no ar, PR #1157, 23/11):** a versão D (estrutura/visual da B + estratégia da C) vira a principal em `/beta/` e `/beta/en/`; B, C e D ficam em `/beta/b|c|d/`; backup na tag `backup/site-beta-antes-da-D`; H1 "Evolve your life. Evolve your game."; CTA "Get early access"; sem linha "50 spots".
+- **Marketing:** voz do dono reprovada; voz sintética gratuita (Kokoro, licença livre), sem clonar ninguém, amostras A/B/C aguardam escolha; Short 01 diz "every task I finish makes it stronger"; série "criador" com virada afirmativa e CTA alternado. Nada publicado nem pago sem o dono.
+- **Alternativa que perdeu:** a voz clonada do dono; as versões B e C do site como principal. **Gatilho:** escolha da voz pelo dono; a música CC BY de Kevin MacLeod exige crédito e só está aprovada para o canal T3.
