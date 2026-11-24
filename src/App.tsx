@@ -7942,6 +7942,23 @@ export default function App() {
                 soulGoal: gameState.soulGoal,
               }}
             /></Suspense>);
+  const potionContent = (
+    potionOpen ? <Suspense fallback={null}><ElementPotionSheet
+            open={potionOpen}
+            language={language}
+            essences={gameState.essences}
+            inventory={gameState.foodInventory}
+            pending={gameState.evolutionPotion}
+            unlocked={gameState.defeatedElements}
+            onBack={() => setPotionOpen(false)}
+            onCraft={(id) => {
+              // A regra (e a reconferência do saldo sobre o `prev`) mora em `utils/elementPotion.ts`; o toast é efeito, fora do updater.
+              if (!isPotionUnlocked(id, gameState.defeatedElements) || !canAffordPotion(gameState.essences, id, gameState.foodInventory)) return false;
+              setGameState(prev => craftPotion(prev, id));
+              return true;
+            }}
+          /></Suspense> : null
+  );
   const labContent = (
     <>
           {/* As antigas abas Evolução/Soulmon/Stats saíram (29/09/2026): cada
@@ -7971,30 +7988,6 @@ export default function App() {
             </div>
           )}
 
-          {labTab === 'evolution' && (
-            <div style={{ padding: '0 4px 10px' }}>
-              <CtaButton data-open-element-potion tone="acao"
-                aria-haspopup="dialog" onClick={() => setPotionOpen(true)}>
-                <Icon name="auto_awesome" size={20} />
-                {language === 'pt-BR' ? 'Criar poção' : 'Create potion'}
-              </CtaButton>
-            </div>
-          )}
-          {labTab === 'evolution' && potionOpen && <Suspense fallback={null}><ElementPotionSheet
-            open={labTab === 'evolution' && potionOpen}
-            language={language}
-            essences={gameState.essences}
-            inventory={gameState.foodInventory}
-            pending={gameState.evolutionPotion}
-            unlocked={gameState.defeatedElements}
-            onBack={() => setPotionOpen(false)}
-            onCraft={(id) => {
-              // A regra (e a reconferência do saldo sobre o `prev`) mora em `utils/elementPotion.ts`; o toast é efeito, fora do updater.
-              if (!isPotionUnlocked(id, gameState.defeatedElements) || !canAffordPotion(gameState.essences, id, gameState.foodInventory)) return false;
-              setGameState(prev => craftPotion(prev, id));
-              return true;
-            }}
-          /></Suspense>}
           {labTab === 'evolution' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><EvolutionPath
               currentStageId={gameState.evolutionStage}
@@ -8881,6 +8874,8 @@ export default function App() {
                 labTab={labTab}
                 onLabTab={setLabTab}
                 labContent={labContent}
+                potionContent={potionContent}
+                onOpenPotion={() => setPotionOpen(true)}
                 hallContent={hallContent}
                 guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, pendentesDoDia, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend, onVerAchado: handleFeiraVoltaVer }, feira: { me: feiraMe, onCredit: handleFeiraCredit }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
               />

@@ -34,10 +34,9 @@ describe('P6 — "Tap to continue" do level-up', () => {
 });
 
 describe('P7 — evolução', () => {
-  it('o botão "Hold evolution" usa o cadeado FECHADO nos dois estados e a faísca estática (pixels soltos) saiu', () => {
+  it('o botão "Evolution hold" mostra cadeado ABERTO/FECHADO (pedido do dono, Centro de Evolução) com o rótulo embaixo; a faísca estática (pixels soltos) saiu', () => {
     const fonte = src('./EvolutionPath.tsx');
-    expect(fonte).not.toMatch(/name="lock_open"|'lock_open'/);
-    expect(fonte).toMatch(/<Icon name="lock" size=\{24\} fill=\{evolutionLocked \? 1 : 0\}/);
+    expect(fonte).toMatch(/<Icon name=\{evolutionLocked \? 'lock' : 'lock_open'\} size=\{24\} fill=\{evolutionLocked \? 1 : 0\}/);
     expect(fonte).not.toContain('data-visor-spark');
   });
 });

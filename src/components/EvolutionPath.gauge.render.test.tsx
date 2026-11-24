@@ -5,7 +5,7 @@
  * desbloqueia. PT e EN.
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { screen, cleanup } from '@testing-library/react';
+import { screen, cleanup, fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { EvolutionPath } from './EvolutionPath';
 import type { CreatureStage } from '../utils/oracle';
@@ -36,13 +36,16 @@ describe('EvolutionPath — gauge', () => {
     expect(bar.getAttribute('aria-valuenow')).toBe('12');
     expect(document.querySelector('[data-evo-gauge-count]')?.textContent).toBe('12 / 30 · +3 from today join tomorrow');
     expect(document.querySelector('[data-evo-meter-today]')).toBeTruthy();
-    expect(screen.getByText(textoInteiro('You have gathered 12 soul fragments on the way to the next form.'))).toBeTruthy();
+    expect(screen.queryByText(textoInteiro('You have gathered 12 soul fragments on the way to the next form.'))).toBeNull();
+    expect(document.querySelector('[data-evo-gauge-unlock]')).toBeNull();
+    fireEvent.click(document.querySelector('[data-evo-gauge-info]') as Element);
     expect(document.querySelector('[data-evo-gauge-unlock]')?.textContent).toMatch(/Soul Fragments.*nothing here goes back/);
   });
 
-  it('PT: descreve o que já se juntou (sem "faltam") e o que desbloqueia', () => {
+  it('PT: sem a frase "Você já juntou"; o texto das frações vive atrás do "i"', () => {
     renderWithCss(<EvolutionPath {...base} language="pt-BR" />);
-    expect(screen.getByText(textoInteiro('Você já juntou 12 fragmentos de alma a caminho da próxima forma.'))).toBeTruthy();
+    expect(screen.queryByText(textoInteiro('Você já juntou 12 fragmentos de alma a caminho da próxima forma.'))).toBeNull();
+    fireEvent.click(document.querySelector('[data-evo-gauge-info]') as Element);
     expect(document.querySelector('[data-evo-gauge-unlock]')?.textContent).toMatch(/nada aqui volta atrás/);
   });
 
