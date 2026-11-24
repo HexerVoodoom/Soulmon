@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ModalSheet, sm2Button, sm2Text } from '../form/FormKit';
 import { BackCircleButton } from '../ui/BackCircleButton';
+import { BotaoEspecial } from '../ui/BotaoEspecial';
+import { RankingPanel } from '../RankingPanel';
+import { RankingModal } from '../RankingModal';
+import { RIFT_GAME_ID } from '../../utils/endlessRift';
 import { ElementIcon, elName } from '../ElementBaseSlots';
 import {
   RIFT_MAP_HEIGHT, RIFT_MAP_TILE_RATIO, riftCurrentLayer, riftPortalHere, riftPortalIsUnlocked, riftPortalLayer, riftPortalNodeIndex, riftPortalOfNode, riftTeleportRefusal, riftMapNode, riftNodeState, riftRewindRefusal, riftScrollTopFor, riftSegmentPath,
@@ -36,10 +40,12 @@ export interface RiftMapProps {
   onRewind: (index: number) => void;
   /** Tocou num portal liberado estando no nó de um portal: o dono do save aplica `teleportToPortal` (ordinal 1-based). */
   onTeleport?: (ordinal: number) => void;
+  /** Conta do jogador: sem ela não há ranking (o botão do rodapé some). */
+  saveId?: string;
   onClose: () => void;
 }
 
-export function RiftMap({ language, save, sprite, onRewind, onTeleport, onClose }: RiftMapProps) {
+export function RiftMap({ language, save, sprite, saveId, onRewind, onTeleport, onClose }: RiftMapProps) {
   const isPt = language === 'pt-BR';
   const t = riftMapCopy(isPt);
   const scroller = useRef<HTMLDivElement>(null);
@@ -49,6 +55,7 @@ export function RiftMap({ language, save, sprite, onRewind, onTeleport, onClose 
   const [note, setNote] = useState<string | null>(null);
   const [ask, setAsk] = useState<number | null>(null);
   const [sure, setSure] = useState<number | null>(null);
+  const [rankOpen, setRankOpen] = useState(false);
   // PORTAIS (REGISTRO §471): em que portal o jogador está (se está num nó de portal) e o nó logo abaixo dele ("Descer" sem usar o portal)
   const portalHere = riftPortalHere(save);
   const belowPortalIdx = portalHere === undefined ? undefined : riftPortalNodeIndex(portalHere) + 1;
@@ -193,7 +200,18 @@ export function RiftMap({ language, save, sprite, onRewind, onTeleport, onClose 
           })}
         </div>
       </div>
-      {note && <p role="status" data-rift-map-note style={{ ...sm2Text, position: 'absolute', left: 16, right: 16, bottom: 16, margin: 0, padding: '10px 14px', borderRadius: 12, background: 'rgba(8,18,20,.95)', border: '1px solid rgba(80,200,190,.35)', color: '#e6f4f1', textAlign: 'center' }}>{note}</p>}
+      {/* 24/11/2026 (dono): o "Ver ranking" mora FIXO no rodapé do mapa (saiu do topo da folha do Rift). */}
+      {saveId && (
+        <footer data-rift-map-footer style={{ flexShrink: 0, padding: '10px 16px calc(10px + env(safe-area-inset-bottom, 0px))', background: 'rgba(8,18,20,.92)', borderTop: '1px solid rgba(80,200,190,.25)' }}>
+          <BotaoEspecial variant="ranking" data-rift-map-ranking aria-haspopup="dialog" onClick={() => setRankOpen(true)}>{isPt ? 'Ver ranking' : 'See ranking'}</BotaoEspecial>
+          <RankingModal open={rankOpen} onClose={() => setRankOpen(false)} language={language} title={isPt ? 'Ranking' : 'Leaderboard'} sobreTelas>
+            <div data-rift-map-ranking-panel>
+              <RankingPanel inline game={RIFT_GAME_ID} period="monthly" saveId={saveId} language={language} />
+            </div>
+          </RankingModal>
+        </footer>
+      )}
+      {note && <p role="status" data-rift-map-note style={{ ...sm2Text, position: 'absolute', left: 16, right: 16, bottom: saveId ? 96 : 16, margin: 0, padding: '10px 14px', borderRadius: 12, background: 'rgba(8,18,20,.95)', border: '1px solid rgba(80,200,190,.35)', color: '#e6f4f1', textAlign: 'center' }}>{note}</p>}
       <ModalSheet open={askNode !== null} onClose={() => setAsk(null)} language={language} title={askNode && askNode.index === belowPortalIdx ? t.downTitle : t.askTitle} maxWidth={380} placement="center" titulo="inline"
         footer={askNode && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>

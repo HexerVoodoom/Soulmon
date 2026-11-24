@@ -747,7 +747,7 @@ export function AreaView(props: AreaViewProps) {
             {/* §247: a Oficina é o quadro de cards + a jornada (substitui o Preparar → chave → timer). */}
             {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onToggleStep={play.onToggleFocusStep ?? (() => {})} onSetIce={play.onSetFocusIce} onCreateTask={play.onCreateFocusTask} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={(taskId) => { props.onDailyEvent?.('foco'); play.onFocusSessionTask?.(taskId); }} />}
             {open?.id === 'caderno' && <CadernoSheet formatoInicial={cadernoFormatoIni} language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
-            {open?.id === 'fenda' && <MasmorraSheet language={language} saveId={props.guild.saveId} bitsToday={play.minigameBitsToday} onStart={() => { setRiftAuto(true); if (props.naMasmorra) { setSheet(null); setGame('masmorra'); } else start('masmorra'); }} onMap={() => { setSheet(null); setRiftMapOpen(true); }} />}
+            {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => { setRiftAuto(true); if (props.naMasmorra) { setSheet(null); setGame('masmorra'); } else start('masmorra'); }} onMap={() => { setSheet(null); setRiftMapOpen(true); }} />}
             {/* 23/11/2026 (dono): a folha do Soulsmith abre COM a Vitra (fala + retrato, como na Hexsmith) e a Forja de Alma (ForgeCard, lista de upar) mora DENTRO dela, rolável; o ✕ é o da folha. */}
             {open?.id === 'ferreiro' && <ForgeCard language={language} view="map" inline />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
@@ -760,7 +760,7 @@ export function AreaView(props: AreaViewProps) {
         </AreaSheet>
         {riftMapOpen && (
           <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
-            <RiftMap language={language} save={gsCtx?.gameState ?? {}} sprite={props.guild.mySprite} onClose={() => { setRiftMapOpen(false); setSheet('fenda'); }}
+            <RiftMap language={language} save={gsCtx?.gameState ?? {}} sprite={props.guild.mySprite} saveId={props.guild.saveId} onClose={() => { setRiftMapOpen(false); setSheet('fenda'); }}
               onRewind={(i) => gsCtx?.setGameState(prev => rewindToSet(prev, i))}
               onTeleport={(o) => gsCtx?.setGameState(prev => teleportToPortal(prev, o))} />
           </Suspense>

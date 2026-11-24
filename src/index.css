@@ -6169,6 +6169,7 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
    medidas em `u` = px do arquivo / 7,2. Topo 720×252 (6 px de margem transparente em cima; discos de X/"i" com centro em x 88 / 634, y 133; placa de bronze
    central); base 720×100; laterais 40 px (repeat-y). As laterais são pintadas ANTES do topo e da base (mesmo z): as pontas do topo/base cobrem as laterais. */
 .sm3-ranking-bg { position: fixed; inset: 0; z-index: 120; display: flex; align-items: flex-end; justify-content: center; padding: 0; box-sizing: border-box; background: rgba(4, 18, 20, .55); }
+.sm3-ranking-bg--sobre { z-index: 7000; } /* P3: o ranking aberto do rodapé do mapa do Rift (z 6000) */
 .sm3-ranking {
   /* Mesma altura dos modais de prédio (`AreaSheet`: 2/3 da tela, ancorado embaixo; o 1/3 de cima é da cena/NPC); o conteúdo rola DENTRO. */
   width: 100%; max-width: 520px; height: 66.6667dvh; min-height: 0; padding: 0; overflow: visible; border: 0; border-radius: 0;

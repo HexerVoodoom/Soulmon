@@ -178,7 +178,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     await achar(container, '[data-masmorra]');
     const folha = getByRole('dialog', { name: 'Fenda Sem Fim' });
-    expect(folha.querySelectorAll('[data-masmorra] button')).toHaveLength(3); // Ver ranking, Entrar no Rift, Ver o mapa
+    expect(folha.querySelectorAll('[data-masmorra] button')).toHaveLength(2); // Entrar no Rift, Ver o mapa (o ranking mora no rodapé do mapa, 24/11/2026)
     expect(folha.querySelector('[data-masmorra-start]')!.textContent).toContain('Entrar no Rift');
     expect(folha.querySelector('[data-masmorra-map]')!.textContent).toBe('Ver o mapa');
     expect(folha.querySelector('[data-masmorra-start]')!.getAttribute('data-especial-variant')).toBe('rift');
@@ -193,9 +193,9 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(folha.querySelector('[data-masmorra-drops]')).toBeNull();
     expect(folha.querySelector('[data-info-tip-panel]')).toBeNull();
     // "Ver ranking": o mesmo botão do Torneio (BotaoEspecial ranking), no corpo da folha; sem CSS próprio
-    const rank = folha.querySelector('[data-masmorra] [data-masmorra-ranking]') as HTMLButtonElement;
-    expect(rank.textContent).toBe('Ver ranking');
-    expect(rank.getAttribute('data-especial-variant')).toBe('ranking');
+    expect(folha.querySelector('[data-masmorra-ranking]')).toBeNull();
+    // "Entrar no Rift" na BASE, depois do "Ver o mapa" e das linhas de Bits
+    expect(folha.querySelector('[data-masmorra-map]')!.compareDocumentPosition(folha.querySelector('[data-masmorra-start]')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(folha.querySelector('[data-area-sheet-head-start]')).toBeNull();
   });
 
@@ -227,8 +227,10 @@ describe('Exploração — Zeph e a Masmorra', () => {
     const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ area: 'exploracao' })} />);
     fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     await achar(container, '[data-masmorra]');
-    fireEvent.click(getByRole('dialog', { name: 'Fenda Sem Fim' }).querySelector('[data-masmorra-ranking]')!);
-    await waitFor(() => expect(document.querySelector('[data-masmorra-ranking-panel]')).toBeTruthy());
+    fireEvent.click(getByRole('dialog', { name: 'Fenda Sem Fim' }).querySelector('[data-masmorra-map]')!);
+    await achar(container, '[data-rift-map-ranking]'); // o ranking mora FIXO no rodapé do mapa do Rift
+    fireEvent.click(container.querySelector('[data-rift-map-ranking]')!);
+    await waitFor(() => expect(document.querySelector('[data-rift-map-ranking-panel]')).toBeTruthy());
     expect(getByRole('dialog', { name: 'Ranking' })).toBeTruthy();
   });
 
@@ -298,7 +300,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     await achar(container, '[data-masmorra]');
     expect(container.querySelector('[data-masmorra-start]')!.textContent).toContain('Enter the Rift');
     expect(container.querySelector('[data-masmorra-map]')!.textContent).toBe('See the map');
-    expect(container.querySelector('[data-masmorra-ranking]')!.textContent).toBe('See ranking');
+    expect(container.querySelector('[data-masmorra-ranking]')).toBeNull(); // saiu da folha: vive no rodapé do mapa
     expect(container.querySelector('[data-masmorra]')!.textContent).not.toContain('Possible drops');
     fireEvent.click(container.querySelector('[data-moldura-info] [data-info-tip]')!);
     expect(document.querySelector('[data-masmorra-drops]')!.textContent).toContain('Glitchtama');
