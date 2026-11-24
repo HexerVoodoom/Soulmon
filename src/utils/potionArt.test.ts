@@ -4,10 +4,9 @@ import { ITEM_ART } from './itemArt';
 import { potionKey } from './elementPotion';
 import { resolveHexChipArt } from '../assets/soulmon/hex';
 import { CURATED_ELEMENT_IDS } from './elementosCurados';
-import { COMBINADOS_LOTE5_DATA } from './elementosLote5.data';
 
 /** Dívida de arte declarada (P5, 23/11/2026): os 4 trios do lote 5 ainda não têm poção nem chip (ver `docs/ASSETS-A-GERAR.md`); caem no ícone. Tire daqui quando a arte entrar. */
-const SEM_POCAO_AINDA: readonly string[] = COMBINADOS_LOTE5_DATA.map(r => r[1]);
+const SEM_POCAO_AINDA: readonly string[] = []; // 24/11/2026: poção e chip dos 4 trios do lote 5 instalados (P6)
 
 const BASES = 'fogo agua terra ar eletricidade arcano sombra luz vileza morte vida vigor marcial tempo som gravidade espaco fada industrial planta'.split(' ');
 
@@ -23,9 +22,9 @@ describe('arte das poções e chips de essência', () => {
     expect(potionArt('inexistente')).toBeUndefined();
     expect(resolveHexChipArt('inexistente')).toBeUndefined();
   });
-  it('os 59 compostos curados também têm poção e chip próprios (18/11/2026)', () => {
+  it('os 63 compostos curados (59 + 4 do lote 5) também têm poção e chip próprios (18/11/2026)', () => {
     const curados = CURATED_ELEMENT_IDS.filter(id => id !== 'neutro' && !SEM_POCAO_AINDA.includes(id));
-    expect(curados).toHaveLength(59);
+    expect(curados).toHaveLength(63);
     for (const id of curados) {
       expect(potionArt(id), id).toBeTruthy();
       expect(resolveHexChipArt(id), id).toBeTruthy();

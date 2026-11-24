@@ -61,7 +61,7 @@ describe('lote 5 dos elementos curados: 4 trios (nº 268-271, P5)', () => {
       expect(CURATED_ELEMENT_NAMES[slug].pt.length).toBeGreaterThan(2);
       expect(CURATED_ELEMENT_NAMES[slug].en.length).toBeGreaterThan(2);
       expect(curatedElementName(slug, true)).toBe(CURATED_ELEMENT_NAMES[slug].pt);
-      expect(elementIcon(slug), slug).toBe(elementIcon(e1)); // provisório: o ícone do 1º componente, até a arte própria
+      expect(elementIcon(slug), slug).toContain(`el-${slug}`); // 24/11/2026: ícone próprio instalado (P6); antes era o do 1º componente
       expect(IDS_DOS_CURADOS).toContain(slug);
       expect(ELEMENTOS_FICHA.has(slug)).toBe(true);
       expect(BASE_DO_PAR[slug]).toBe(e1);

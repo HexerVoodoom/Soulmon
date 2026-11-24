@@ -530,3 +530,8 @@ Notas: a cota do ChatGPT foi atingida em 23/11 (retoma ao liberar); arquivo novo
 
 ## P6 — moldura cristal com as quinas geradas (24/11/2026)
 `ui/moldura-cristal/popup-cristal-1024.webp` substituída (1024², `border-image-slice` 225, sem mudança de CSS): quinas de cobre + gema turquesa + vinha redesenhadas no ChatGPT pelo dono (alfa real) com a faixa turquesa lisa contínua entrando nelas, sem fio de bronze. Faixa um pouco mais grossa (~36 px nativos) que a anterior (20 px): o P7 confere o respiro. Originais: `E:\Soulmon-assets\p6-popup-cristal\quinas-v2\` (dono-transparente.png, popup-cristal-novo-1024.png).
+
+## P6 — lote 2 de arte aprovada (24/11/2026)
+- **4 elementos do lote 5 (fantasma, morto_vivo, sangue, furia)**: FX de ataque `fx-ataque/fx-<id>-{orb,slash,impact,cast,aura,aura-96,defended}.png` (128², aura-96 96²; refeitos com as FX reais como âncora, sem a pós-pixelação), ícone `elementos/el-<id>.png` (96²), poção `items/pocao-<id>.png` (128²), chip da Hexsmith `hex/chip-<id>.png` (128²). Testes ajustados: `attackFxArt` 1716→1740 / aura 286→290, `potionArt` (63 compostos, dívida do lote 5 zerada), `elementosLote5` (ícone próprio). Cenários de combate já entraram no #1188. Originais: `E:\Soulmon-assets\p6-elementos-novos\`.
+- **Luvas da Hexsmith** `hex/luva-{magia,ranged-slash,melee-smash,melee-slash}.png` (128², alfa real, sem consumidor: P5 liga).
+- **Cenas da jornada do Focus (top-down, aprovadas)** `jornada/bloco-{floresta,caverna,jardim,oficina,observatorio}.webp` (1024×2048). A COSTA (sem a ponte) segue em aprovação. Sem consumidor ainda. Originais: `E:\Soulmon-assets\p6-focus-cenas\`.
