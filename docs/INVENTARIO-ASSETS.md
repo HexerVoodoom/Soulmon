@@ -520,3 +520,6 @@ Notas: a cota do ChatGPT foi atingida em 23/11 (retoma ao liberar); arquivo novo
 ## P6 — botões do Rift (23/11/2026, aprovados pelo dono)
 
 `src/assets/soulmon/ui/btn-rift{,-press,-off}.webp` (Enter the Rift, primário) e `btn-rift-sec{,-press,-off}.webp` (See the map, secundário). 1080×232, WebP, alfa real, sem texto na arte. Mesma família do `btn-ranking` (pedra facetada teal, filete de bronze), mas sem medalhão dourado: Enter tem um cristal turquesa em cada ponta; Map tem pontas lisas. 9-slice só na horizontal: pontas 200 px (Enter) e 150 px (Map); altura em CSS 72–84, mínimo 48. Cortes e regras de contraste em `btn-rift.cortes.json`. Implementação: `BotaoEspecial variant='rift'` (P3). Originais, prompt e tags em `E:/Soulmon-assets/p6-rift-botoes/`.
+
+## P6 — moldura cristal: borda A (24/11/2026)
+`ui/moldura-cristal/popup-cristal-1024.webp` substituída (mesmas dimensões 1024², `border-image-slice` 225): as 4 quinas ficam idênticas e os lados longos viram a faixa turquesa lisa fina (20 px nativos), sem fio de bronze (escolha do dono, 24/11). A tubulação de cobre das quinas esmaece organicamente depois do colar. Original/guarda: `E:\Soulmon-assets\p6-popup-cristal\final\popup-cristal-1024.png`; nova: `...\propostas-v2\popup-cristal-A-final-1024.png`.
