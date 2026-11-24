@@ -4792,6 +4792,7 @@ button[style*="--sm2-btn: ghost"]:active {
 }
 
 /* ── Arte dos botões `sm2Button` (P6 aprovou 24/11/2026; P7 liga) ───────────
+   CHIP (dono 24/11): botão `sm` (inline pequeno, 44px) NÃO leva arte: `sm2Button` marca `--sm2-btn-chip` e o bloco o exclui; fica a bordinha do inline.
    ESCOPADO por `html[data-ui="arte"]` (fase 4, 24/11/2026): vale no app INTEIRO quando a pele é arte;
    na pele minimalista nada muda nos ~350 botões.
    `sm2Button()` grava `--sm2-btn-kind` (primary|outline|danger|quiet|ghost) e
@@ -4801,30 +4802,30 @@ button[style*="--sm2-btn: ghost"]:active {
    pressed no `:active`, disabled no `:disabled`). Texto claro em qualquer tema
    porque o miolo da arte é escuro/teal nos dois (contraste no PR #P7). */
 html[data-ui="arte"] { --sm2-btn-arte-ink: #FFFFFF; }
-html[data-ui="arte"] button[style*="--sm2-btn-kind:primary"],
-html[data-ui="arte"] button[style*="--sm2-btn-kind: primary"] { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-normal.webp'); }
-html[data-ui="arte"] button[style*="--sm2-btn-kind:primary"]:active:not(:disabled),
-html[data-ui="arte"] button[style*="--sm2-btn-kind: primary"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-pressed.webp'); }
-html[data-ui="arte"] button[style*="--sm2-btn-kind:primary"]:disabled,
-html[data-ui="arte"] button[style*="--sm2-btn-kind: primary"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-disabled.webp'); }
-html[data-ui="arte"] button[style*="--sm2-btn-kind:outline"],
-html[data-ui="arte"] button[style*="--sm2-btn-kind: outline"] { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-normal.webp'); }
-html[data-ui="arte"] button[style*="--sm2-btn-kind:outline"]:active:not(:disabled),
-html[data-ui="arte"] button[style*="--sm2-btn-kind: outline"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-pressed.webp'); }
-html[data-ui="arte"] button[style*="--sm2-btn-kind:outline"]:disabled,
-html[data-ui="arte"] button[style*="--sm2-btn-kind: outline"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-disabled.webp'); }
-html[data-ui="arte"] button[style*="--sm2-btn-kind:danger"],
-html[data-ui="arte"] button[style*="--sm2-btn-kind: danger"] { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-normal.webp'); }
-html[data-ui="arte"] button[style*="--sm2-btn-kind:danger"]:active:not(:disabled),
-html[data-ui="arte"] button[style*="--sm2-btn-kind: danger"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-pressed.webp'); }
-html[data-ui="arte"] button[style*="--sm2-btn-kind:danger"]:disabled,
-html[data-ui="arte"] button[style*="--sm2-btn-kind: danger"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-disabled.webp'); }
-html[data-ui="arte"] button[style*="--sm2-btn-kind: primary"],
-html[data-ui="arte"] button[style*="--sm2-btn-kind:primary"],
-html[data-ui="arte"] button[style*="--sm2-btn-kind: outline"],
-html[data-ui="arte"] button[style*="--sm2-btn-kind:outline"],
-html[data-ui="arte"] button[style*="--sm2-btn-kind: danger"],
-html[data-ui="arte"] button[style*="--sm2-btn-kind:danger"] {
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:primary"],
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: primary"] { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-normal.webp'); }
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:primary"]:active:not(:disabled),
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: primary"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-pressed.webp'); }
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:primary"]:disabled,
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: primary"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-disabled.webp'); }
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:outline"],
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: outline"] { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-normal.webp'); }
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:outline"]:active:not(:disabled),
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: outline"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-pressed.webp'); }
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:outline"]:disabled,
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: outline"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-disabled.webp'); }
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:danger"],
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: danger"] { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-normal.webp'); }
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:danger"]:active:not(:disabled),
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: danger"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-pressed.webp'); }
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:danger"]:disabled,
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: danger"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-disabled.webp'); }
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: primary"],
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:primary"],
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: outline"],
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:outline"],
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: danger"],
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:danger"] {
   --cap: calc(var(--sm2-btn-h, 48px) * 75 / 169);
   background: none !important;
   border-style: solid !important;
@@ -4843,14 +4844,14 @@ html[data-ui="arte"] button[style*="--sm2-btn-kind:danger"] {
 }
 /* Rodapé de 3 botões em 360/375: o miolo útil é ~58–63px; "alterações" (67px a 14px) estourava. Fonte 12,5px nas telas estreitas. */
 @media (max-width: 380px) {
-  html[data-ui="arte"] button[style*="--sm2-btn-kind: primary"],
-  html[data-ui="arte"] button[style*="--sm2-btn-kind:primary"],
-  html[data-ui="arte"] button[style*="--sm2-btn-kind: outline"],
-  html[data-ui="arte"] button[style*="--sm2-btn-kind:outline"],
-  html[data-ui="arte"] button[style*="--sm2-btn-kind: danger"],
-  html[data-ui="arte"] button[style*="--sm2-btn-kind:danger"] { font-size: calc(var(--sm2-text-sm) - 1.5px) !important; }
+  html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: primary"],
+  html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:primary"],
+  html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: outline"],
+  html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:outline"],
+  html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: danger"],
+  html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:danger"] { font-size: calc(var(--sm2-text-sm) - 1.5px) !important; }
 }
-html[data-ui="arte"] button[style*="--sm2-btn-kind"]:disabled {
+html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind"]:disabled {
   color: rgb(255 255 255 / .72) !important;
   text-shadow: none;
 }
