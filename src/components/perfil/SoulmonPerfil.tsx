@@ -11,6 +11,8 @@ import {
 } from '../../utils/soulmonPerfil';
 import type { Language } from '../../utils/i18n';
 import { EspecialNomeLeitura } from './EspecialNomeLeitura';
+import { Icon } from '../ui/Icon';
+import type { CarePattern } from '../../utils/carePattern';
 // Arte que já está no repo (beta-2, 11: "ícones próprios, sem arte nova"): escudo, engrenagem, livro, chama, poção, estrela, aperto de mãos (atributo e ataque ganharam arte própria, P2).
 import iconGear from '../../assets/soulmon/icons/icon-gear.png';
 import iconSpellbook from '../../assets/soulmon/icons/icon-spellbook.png';
@@ -27,6 +29,8 @@ const ATTR_ART: Record<MainAttr, string | undefined> = {
   resistencia: perfilResistencia,
   agilidade: perfilAgilidade,
 };
+
+const PATTERN_ICON: Record<string, string> = { constante: 'event_repeat', explosivo: 'bolt', equilibrado: 'spa' };
 
 const rowStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: 12, minHeight: 44 };
 const labelStyle: CSSProperties = { ...sm2Hint, margin: 0, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 };
@@ -47,8 +51,10 @@ function Row({ id, icon, label, hint, children }: { id: string; icon: ReactNode;
   );
 }
 
-export function SoulmonPerfil({ language, input, especialNome }: {
+export function SoulmonPerfil({ language, input, especialNome, carePattern }: {
   language: Language; input: PerfilInput;
+  /** Ritmo de cuidado (veio do Bond, tarefa 23); só quando a leitura é confiável. */
+  carePattern?: CarePattern | null;
   /** O nome escolhido (`''` = padrão), quando foi aceito e o gravador; sem o gravador a carta não oferece a troca. */
   especialNome?: string;
 }) {
@@ -67,6 +73,11 @@ export function SoulmonPerfil({ language, input, especialNome }: {
           {p.personalidade && (
             <Row id="personalidade" icon={art(PASSIVE_ICON_ART[p.personalidade.id] ?? iconBond)} label={isPt ? 'Personalidade' : 'Personality'} hint={isPt ? p.personalidade.descPt : p.personalidade.descEn}>
               {isPt ? p.personalidade.namePt : p.personalidade.nameEn}
+            </Row>
+          )}
+          {carePattern && (
+            <Row id="ritmo" icon={<Icon name={PATTERN_ICON[carePattern.id] ?? 'auto_awesome'} size={24} tone="primary" />} label={isPt ? 'Ritmo' : 'Rhythm'} hint={isPt ? carePattern.descPt : carePattern.descEn}>
+              {isPt ? carePattern.namePt : carePattern.nameEn}
             </Row>
           )}
           <Row id="atributo" icon={art(ATTR_ART[p.atributo])} label={isPt ? 'Atributo principal' : 'Main attribute'} hint={L(PERFIL_IMPACTO.atributo[p.atributo])}>

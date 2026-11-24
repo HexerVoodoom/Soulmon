@@ -7663,3 +7663,9 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-nova-form { display: flex; flex-direction: column; gap: var(--sm2-space-4); margin: 0; }
 .sm2-nova-cat { display: flex; flex-direction: column; gap: var(--sm2-space-2); }
 .sm2-nova-cat [data-testid="category-points"] { margin-top: var(--sm2-space-3); }
+
+/* Anel de ramo de evolução (tarefa 23) */
+.sm2-evo-ring { position: relative; display: inline-flex; align-items: center; justify-content: center; inline-size: 36px; block-size: 36px; }
+.sm2-evo-ring-trilho { stroke: var(--sm2-line, rgba(127,127,127,.25)); }
+.sm2-evo-ring-arco { stroke: var(--sm2-ring-color, var(--sm2-primary-ink)); transition: stroke-dashoffset .4s ease; }
+.sm2-evo-ring-num { position: absolute; font-size: var(--sm2-text-xs); line-height: 1; color: var(--sm2-ink, inherit); }

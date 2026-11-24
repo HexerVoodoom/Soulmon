@@ -29,6 +29,7 @@
  * desempate por ritmo de cuidado, e a situação de cada nó dita em PALAVRAS no
  * `aria-label` (WCAG 1.4.1: cor e posição nunca são o único portador).
  */
+import { EvolutionRing } from './EvolutionRing';
 import { emphasizeSoulFragment } from './ui/SoulFragmentTerm';
 import { EvolveButton } from './pixel/EvolveButton';
 import { useState, useMemo, useEffect, useRef, type CSSProperties } from 'react';
@@ -1420,7 +1421,7 @@ export function EvolutionPath({
                       >
                         <AttrGlyph attr={attr} />
                         <span>{L(ATTR_LABEL[attr])}</span>
-                        <span className="sm2-num" style={{ ...sm2Hint, margin: 0 }}>{pontosDe(attr)}</span>
+                        <EvolutionRing value={pontosDe(attr)} max={Math.max(...ATTR_ORDER.map(pontosDe))} color={ATTR_COLOR[attr]} label={`${pontosDe(attr)}`} />
                       </p>
                       {path.map((evo, i) => (
                         <div key={creatureFormId(evo)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
