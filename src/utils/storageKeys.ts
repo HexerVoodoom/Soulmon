@@ -26,6 +26,8 @@ export const STORAGE_KEYS = {
   LAST_BAD_DAY: 'soulmon-last-bad-day',
   AI_SETTINGS: 'soulmon-ai-settings',
   THEME: 'soulmon-theme',
+  /** Pele da interface: 'arte' (padrão) | 'minimal'. Ver `utils/uiSkin.ts`. */
+  UI_SKIN: 'soulmon-ui-skin',
   LANGUAGE: 'soulmon-language',
   ONBOARDING_COMPLETE: 'soulmon-onboarding-complete',
   USER_NAME: 'soulmon-user-name',

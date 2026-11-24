@@ -1514,6 +1514,9 @@ Sobrepõe o `bitsCap` do `ResultExtrasContext` com o teto diário efetivo da Fen
 
 ⚰️ **Apagado em `744c06633` (29/10/2026).** Era o toast de Desfazer da conclusão (decisão #57). Substituído pela tag de rodapé `CompletionTag` (entrada própria abaixo), que também mostra o ganho exato.
 
+### `src/components/UiSkinRow.tsx` (24/11/2026)
+**Dono de:** a linha "Interface" (Padrão com arte / Minimalista) de Configurações › Aparência. **Props:** `language`, `enabled?` (padrão `UI_SKIN_OPTION_ENABLED`; desligada não renderiza nem lê o contexto). **Chamado por:** `src/components/SettingsPage.tsx`. **Régua:** `src/components/UiSkinRow.render.test.tsx`.
+
 ### `src/components/UnlockAccountModal.tsx`
 **Dono de:** o desbloqueio completo DENTRO do jogo (não só na tela inicial) — o modal de compra e o convite discreto `UnlockNudge`.
 **Props principais:** `UnlockReason` (type: `'task-limit'|'evolution'|'report'|'shop'`) · `UnlockAccountModalProps` — `language`, entitlement atual, motivo do convite, callbacks de compra/restauração.

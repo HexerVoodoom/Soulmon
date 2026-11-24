@@ -2013,6 +2013,9 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/utils/spriteGen.ts` (a ação do aviso de conta não paga o dispara), `src/App.tsx` (escuta e faz `setUnlockReason('evolution')` se a conta não for paga).
 **Régua:** `src/utils/spriteCopy.paga.test.ts`.
 
+### `src/utils/uiSkin.ts` (24/11/2026)
+**Dono de:** a pele da interface (`data-ui` no `<html>`): o tipo `UiSkin` (`'arte' | 'minimal'`, união nomeada para caber uma 3ª pele), o padrão `'arte'`, a flag `UI_SKIN_OPTION_ENABLED` (liga a opção em Configurações; `false` até a fase 2) e `parseUiSkin` (valor ausente/inválido vira `'arte'`). **Exports:** `UiSkin`, `UI_SKINS`, `DEFAULT_UI_SKIN`, `UI_SKIN_OPTION_ENABLED`, `parseUiSkin`. Chave: `STORAGE_KEYS.UI_SKIN` (`soulmon-ui-skin`). Régua: `src/utils/uiSkin.test.ts`, `src/styles/uiSkin.contract.test.ts`.
+
 ### `src/utils/uuid.ts` (20/10/2026)
 **Dono de:** `newUuid()` — UUID v4 que não derruba o app: `crypto.randomUUID` quando existe, senão `getRandomValues`, senão `Math.random`. Existe porque o relatório de falha do APK mostrou `crypto.randomUUID is not a function` no 1º uso de um aparelho (WebView sem a função), e os dois pontos que geram o `SAVE_ID` a chamavam crua dentro de um `useState`. **Exports:** `newUuid`. **Chamado por:** `App.tsx` (estado `saveId`) e `GameStateContext` (geração do `SAVE_ID`). **Régua:** `utils/uuid.test.ts`.
 

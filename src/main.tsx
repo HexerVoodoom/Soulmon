@@ -13,6 +13,7 @@
   import { ErrorBoundary } from './components/ErrorBoundary';
   import { GameStateProvider } from './contexts/GameStateContext';
   import { ThemeProvider } from './contexts/ThemeContext';
+  import { UiSkinProvider } from './contexts/UiSkinContext';
   import { migrateLegacyStorageKeys } from './utils/storageKeys';
   import { armarTemaNoPrimeiroGesto } from './utils/tema';
   import { iniciarMusica } from './utils/musica';
@@ -49,12 +50,14 @@
   void carregarCatalogosNovos().then(() => { createRoot(document.getElementById("root")!).render(
     <ErrorBoundary>
       <ThemeProvider>
+       <UiSkinProvider>
         <GameStateProvider>
           {/* Beta fechado (release/beta-1): 403 `beta-closed` troca o app pela tela própria. */}
           <BetaClosedGate>
             <App />
           </BetaClosedGate>
         </GameStateProvider>
+       </UiSkinProvider>
       </ThemeProvider>
     </ErrorBoundary>
   ); sairDaSplash(); });
