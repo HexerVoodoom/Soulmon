@@ -25,7 +25,7 @@ beforeAll(() => {
   }
 });
 
-function montar() {
+function montar(extra: { arrastoDireto?: boolean } = {}) {
   const onClose = vi.fn();
   const onUse = vi.fn();
   const el = document.createElement('div');
@@ -35,7 +35,7 @@ function montar() {
   petTargetRef.current = el;
   renderWithCss(
     <Mochila open onClose={onClose} foodInventory={{ '🍎': 3, '💗': 1 }} language="pt-BR"
-      onUse={onUse} petTargetRef={petTargetRef} onTargetChange={() => {}} petName="Bito" />,
+      onUse={onUse} petTargetRef={petTargetRef} onTargetChange={() => {}} petName="Bito" {...extra} />,
   );
   return { onClose, onUse };
 }
@@ -130,6 +130,17 @@ describe('Mochila: rolar a lista x arrastar o item (dono, 23/11/2026)', () => {
     expect(onUse).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
     expect((document.querySelector('[data-mochila]') as HTMLElement).className).not.toContain('sm3-arrastando');
+  });
+
+  it('arrastoDireto (onboarding): o dedo arrasta sem toque longo e soltar no pet usa o item', () => {
+    const { onUse } = montar({ arrastoDireto: true });
+    dedoNoItem();
+    act(() => { fireEvent.pointerMove(document, { clientX: 60, clientY: 300, pointerType: 'touch' }); });
+    expect((document.querySelector('[data-mochila]') as HTMLElement).className).toContain('sm3-arrastando');
+    act(() => { fireEvent.pointerMove(document, { clientX: 150, clientY: 150, pointerType: 'touch' }); });
+    act(() => { fireEvent.pointerUp(document, { clientX: 150, clientY: 150, pointerType: 'touch' }); });
+    expect(onUse).toHaveBeenCalledWith('🍎');
+    expect(readFileSync('src/index.css', 'utf8')).toContain('.sm3-item[data-direto] { touch-action: none;');
   });
 
   it('o item deixa a rolagem vertical passar (touch-action: pan-y no CSS)', () => {

@@ -81,7 +81,7 @@ export function EtapaAlimentar({ onDone, language = 'pt-BR', foodInventory, onFe
       )}
 
       <Mochila open={mochilaAberta} onClose={fechar} foodInventory={inv} language={language}
-        onUse={usar} petTargetRef={petRef} onTargetChange={setSobre} petName={nome} />
+        onUse={usar} petTargetRef={petRef} onTargetChange={setSobre} petName={nome} arrastoDireto />
     </div>
   );
 }

@@ -6050,6 +6050,7 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   user-select: none;
   -webkit-user-select: none;
 }
+.sm3-item[data-direto] { touch-action: none; } /* onboarding: arrasto direto, o dedo nao rola a lista */
 .sm3-item[data-on] { border-color: var(--sm2-primary-ink); }
 .sm3-item:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
 .sm3-item-arte { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
