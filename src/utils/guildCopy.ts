@@ -240,6 +240,8 @@ export const GUILD_COPY = {
   'guild.erro.entrar': ['Entrar na conta', 'Sign in'],
   // ── Bosque: só o que a fatia A desenha (§3) ────────────────────────────
   'guild.bosque.titulo': ['Bosque', 'Grove'],
+  // Clan Hall: a árvore mora no Grove; aqui só a porta.
+  'guild.arvore.ver': ['Ver a árvore no Bosque', 'See the tree in the Grove'],
   // O panorama (18/10/2026): tela cheia, 4 árvores, uma por estação.
   'guild.bosque.entrar': ['Entrar no bosque', 'Enter the grove'],
   // D-49..D-53 (19/10/2026): o Bosque é UM cenário (Clã e panorama); os membros andam nele. Balões = banco FIXO, sem IA,
@@ -282,7 +284,7 @@ export const GUILD_COPY = {
   // Faixa BINÁRIA (perto/silêncio): nunca barra de razão exata, nunca tempo estimado (parecer do guarda, 29/09).
   'guild.bosque.perto': ['Perto de {estagio}.', 'Near {estagio}.'],
   // ── Roda (§4) ──────────────────────────────────────────────────────────
-  'guild.roda.titulo': ['Roda', 'Circle'],
+  'guild.roda.titulo': ['Membros', 'Members'],
   'guild.roda.contagem': ['{n} na roda', '{n} in the circle'],
   'guild.roda.presente': ['no bosque hoje', 'in the grove today'],
   // Gestos: três fixos, anônimos, para a roda inteira. Sem texto livre, sem push.

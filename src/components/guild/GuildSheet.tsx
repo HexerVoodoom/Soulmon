@@ -50,7 +50,7 @@ import {
 } from '../../utils/guildCopy';
 import {
   GUILD_NAME_MAX, GUILD_CODE_LENGTH, GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES,
-  RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, CASA_DOACOES, CASA_BITS_MIN, CASA_STAGES, normalizeGuildCode, type GuildGesture, type CasaStageId,
+  RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, CASA_DOACOES, CASA_BITS_MIN, normalizeGuildCode, type GuildGesture, type CasaStageId,
 } from '../../utils/guildRules';
 // LÁPIDE (10/11/2026): `GuildLoja` (a Loja do clã, cosméticos da Casa) saiu; entram os Buffs do clã.
 import { GuildBuffs } from './GuildBuffs';
@@ -120,6 +120,8 @@ interface GuildSheetProps {
   playerDayTz?: PlayerDayAnchor;
   /** Qual sala abre: o Salão (Bosque/Roda/Mural, o padrão — porta do Hall) ou a Feira (porta da Arena). */
   room?: 'salao' | 'feira' | 'guerra' | 'grove';
+  /** CTA do Clan Hall "Ver a árvore no Bosque": a árvore saiu da Casa e mora só no Grove; quem monta a folha sabe abrir o prédio. */
+  onAbrirBosque?: () => void;
   /** O resgate da Feira foi confirmado pelo servidor: soma os Emblemas pelo MESMO caminho do Torneio
    *  e, se veio a Concha da Maré, a põe em `ownedFurniture`. A folha só chama UMA vez por recibo. */
   onClaimed?: (claim: { emblems: number; trophyId: string | null }) => void;
@@ -165,7 +167,7 @@ type PredioId = 'praca' | 'plantio';
 
 const kindOf = (e: unknown): GuildErrorKind => (e instanceof GuildError ? e.kind : 'server');
 
-export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pendentesDoDia, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin, casa, missao, cla, feira }: GuildSheetProps) {
+export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pendentesDoDia, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin, casa, missao, cla, feira, onAbrirBosque }: GuildSheetProps) {
   const t = useCallback((k: GuildKey, vars?: Record<string, string | number>) => guildText(language, k, vars), [language]);
   /** Saída do clã em DUAS confirmações (dono, 30/10/2026 — revoga o "um toque" do LV-G5: saiu sem querer, era o único
    *  membro e o clã foi apagado com tudo que tinha sido doado). 0 = fechado, 1 = "sair?", 2 = a confirmação final. */
@@ -707,7 +709,8 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
       <>
         {alerta}
         {resgate}
-        <div className="sm2-stats-card">
+        {/* Clan Hall em CARDS, nesta ordem (pedido do dono, 23/11/2026): (1) o CLÃ, (2) os MEMBROS, (3) a porta da ÁRVORE (que mora no Grove), (4) os BUFFS. */}
+        <div className="sm2-stats-card" data-guild-card="cla">
           <div className="sm2-guild-hd">
             {/* O nome quebra em qualquer ponto (QA #4) e é o alvo do foco depois de uma ação. */}
             <h2 className="sm2-lib-h2 sm2-guild-name">{g.name}</h2>
@@ -767,8 +770,6 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             </section>
           )}
 
-          <SalaRoda guild={g} t={t} nominal={nominal} language={language} />
-
           <div className="sm2-coop-code">
             <span className="sm2-lib-s">{t('guild.codigo.label')}</span>
             <code className="sm2-coop-cd sm2-num">{g.code}</code>
@@ -794,6 +795,32 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             )}
             {copiado && <span className="sm2-lib-s" aria-hidden="true">{t('guild.codigo.copiado')}</span>}
           </div>
+
+          {/* Tesouro e doação do clã: dado do CLÃ, por isso mora no card do clã (a árvore não está mais aqui). */}
+          {g.casa && (
+            <SalaCasa
+              guild={g}
+              t={t}
+              ocupado={ocupado}
+              casa={casa}
+              onDoar={(bits) => void agir(async () => {
+                const r = await donateToGuild(saveId, bits, tz.current);
+                if (r.accepted > 0) casaRef.current?.onSpend(r.accepted);
+                return r.guild;
+              }, { anunciar: 'guild.casa.doar.ok' })}
+              onSlot={(item) => void agir(async () => {
+                const v = await setGuildSlot(saveId, item, tz.current);
+                casaRef.current?.onSlot(v?.casa ? v.casa.mine.slot : item);
+                return v;
+              }, { anunciar: item ? 'guild.casa.slot.ok' : 'guild.casa.slot.volta' })}
+              language={language}
+            />
+          )}
+        </div>
+
+        {/* (2) MEMBROS: a lista de quem está no clã, num card só dela, com o convite logo abaixo. */}
+        <div className="sm2-stats-card" data-guild-card="membros">
+          <SalaRoda guild={g} t={t} nominal={nominal} language={language} />
           {/* §321 (13/11/2026, pedido do dono): CONVIDAR pela busca de jogadores. Botão SIMPLES do kit (não a arte do
               `CtaButton`, decisão do dono), com a MESMA largura dos outros botões da ficha (`width: 100%` inline = largura total,
               alvo de 48 px). Clã cheio = o botão fica, apagado, com o porquê (nunca some em silêncio). */}
@@ -813,25 +840,24 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
         </div>
 
         {/* D-57/D-107: o Clan Hall é ADMINISTRATIVO (nome, ficha, membros, código acima; Casa, Prédios e Mural abaixo). O Bosque, a Feira e a Guerra moram nos prédios próprios (Hall e Arena). */}
+        {/* (3) A ÁRVORE saiu do Clan Hall: mora só no Grove. Aqui fica a porta, com a regra de crescimento atrás do "i". */}
+        {g.casa && onAbrirBosque && (
+        <div className="sm2-stats-card" data-guild-card="arvore">
+          <section className="sm2-guild-sec" aria-label={t('guild.bosque.titulo')} data-guild-room="arvore">
+            <div className="sm2-guild-secHd">
+              <h3 className="sm2-stats-lab">{t('guild.bosque.titulo')}</h3>
+              <InfoTip language={language} label={language === 'pt-BR' ? 'Como a árvore cresce' : 'How the tree grows'} style={{ minHeight: 28 }}>{t('guild.casa.regra')}</InfoTip>
+            </div>
+            <button type="button" data-guild-arvore-ver onClick={onAbrirBosque} className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}>
+              {t('guild.arvore.ver')}
+            </button>
+          </section>
+        </div>
+        )}
+
+        {/* (4) BUFFS do clã (comprados pelo anfitrião com o tesouro), num card só deles. */}
         {g.casa && (
-        <div className="sm2-stats-card" data-guild-card="casa">
-            <SalaCasa
-              guild={g}
-              t={t}
-              language={language}
-              ocupado={ocupado}
-              casa={casa}
-              onDoar={(bits) => void agir(async () => {
-                const r = await donateToGuild(saveId, bits, tz.current);
-                if (r.accepted > 0) casaRef.current?.onSpend(r.accepted);
-                return r.guild;
-              }, { anunciar: 'guild.casa.doar.ok' })}
-              onSlot={(item) => void agir(async () => {
-                const v = await setGuildSlot(saveId, item, tz.current);
-                casaRef.current?.onSlot(v?.casa ? v.casa.mine.slot : item);
-                return v;
-              }, { anunciar: item ? 'guild.casa.slot.ok' : 'guild.casa.slot.volta' })}
-            />
+        <div className="sm2-stats-card" data-guild-card="buffs">
             <GuildBuffs
               casa={g.casa}
               language={language}
@@ -1077,20 +1103,12 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
   const c = guild.casa!;
   const isPt = language === 'pt-BR';
   const [lista, setLista] = useState(false);
-  const proximo = c.perto && c.nivelIndex < CASA_STAGES.length - 1 ? casaStageName(t, CASA_STAGES[c.nivelIndex + 1]) : null;
   const nome = (id: string) => { const it = ALL_SHOP_ITEMS.find(x => x.id === id); return it ? (isPt ? it.namePt : it.nameEn) : id; };
   const bits = casa?.bits ?? 0; // §373: o saldo inteiro doa (o Bit vindo de Crédito também)
   const livres = casa ? donatableItems({ ownedFurniture: casa.ownedFurniture, equippedDecor: casa.equippedDecor as never }) : [];
   const meu = c.mine.slot;
   return (
     <section className="sm2-guild-sec" aria-label={t('guild.casa.titulo')} data-guild-room="casa">
-      <h3 className="sm2-grove-stage" data-casa-nivel>{casaStageName(t, c.nivel)}</h3>
-      <p className="sm2-grove-line">{t(`guild.casa.linha.${c.nivel}`)}</p>
-      {proximo && <p className="sm2-grove-line" data-casa-perto>{t('guild.casa.perto', { estagio: proximo })}</p>}
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <InfoTip language={language} label={isPt ? 'Como a casa cresce' : 'How the house grows'} style={{ minHeight: 28 }}>{t('guild.casa.regra')}</InfoTip>
-      </div>
-
       {/* W14b: "Bring Bits" é a seção de Bits do clã: o TOTAL (um número do clã, nunca por pessoa) e, com carteira, o gesto de trazer. */}
       <p className="sm2-stats-t" style={{ margin: 0 }} data-casa-bits-titulo>{t('guild.casa.doar.titulo')}</p>
       {c.bitsTotal !== null && <p className="sm2-lib-s" style={{ margin: 0, display: 'flex', gap: 6, alignItems: 'center' }} data-casa-bits-total>{t('guild.casa.bits.total')} <BitsAmount value={c.bitsTotal} size={16} /></p>}
