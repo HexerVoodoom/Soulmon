@@ -43,7 +43,7 @@ import { HexRenameModal } from './HexRenameModal';
 import { applyServerHexRename, type HexRenameKind } from '../../utils/hexsmithRename';
 import { readLocal } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
-import { HEX_ART, HEX_MAP_ART, resolveHexChipArt, resolveHexCrownArt, resolveHexSlotArt } from '../../assets/soulmon/hex';
+import { HEX_ART, HEX_MAP_ART, resolveHexChipArt, resolveHexCrownArt, resolveHexGloveArt, resolveHexSlotArt } from '../../assets/soulmon/hex';
 import { HexSlotGlyph } from './HexSlotGlyph';
 import { ForgeResultModal } from '../ForgeResultModal';
 
@@ -259,8 +259,8 @@ function SlotFace({ slot, value, size }: { slot: HexSlot; value?: string; size: 
     if (chip) return <img src={chip} alt="" aria-hidden="true" width={size} height={size} draggable={false} data-hex-chip={value} />;
     return <ElementIcon id={value} size={size} />;
   }
-  const art = slot === 'coroa' && value ? resolveHexCrownArt(value) : resolveHexSlotArt(slot);
-  if (art) return <img src={art} alt="" aria-hidden="true" width={size} height={size} className="sm2-hex-art" data-empty={!value} data-hex-crown={slot === 'coroa' && value ? value : undefined} />;
+  const art = slot === 'coroa' && value ? resolveHexCrownArt(value) : slot === 'luvas' && value ? resolveHexGloveArt(value) : resolveHexSlotArt(slot);
+  if (art) return <img src={art} alt="" aria-hidden="true" width={size} height={size} className="sm2-hex-art" data-empty={!value} data-hex-crown={slot === 'coroa' && value ? value : undefined} data-hex-glove={slot === 'luvas' && value ? value : undefined} />;
   return <HexSlotGlyph slot={slot} size={size} color={value ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)'} filled={!!value} />;
 }
 

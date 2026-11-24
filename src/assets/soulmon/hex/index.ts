@@ -15,7 +15,7 @@
 import type { HexSlot } from '../../../utils/hexsmith';
 import type { SpecialFamily } from '../../../utils/combate/specials';
 
-const ARTE = import.meta.glob('./{slot-*,chip-*,coroa-*,forjar,mapa-portas}.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const ARTE = import.meta.glob('./{slot-*,chip-*,coroa-*,luva-*,forjar,mapa-portas}.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 const art = (nome: string): string | undefined => ARTE[`./${nome}.png`];
 
@@ -44,3 +44,11 @@ export const resolveHexChipArt = (elementId: string): string | undefined => art(
 
 /** A coroa da FAMÍLIA do especial (`coroa-<familia>.png`); sem ela, a coroa única (`slot-coroa.png`); sem as duas, `undefined` (glifo). */
 export const resolveHexCrownArt = (family: SpecialFamily | string): string | undefined => art(`coroa-${family}`) ?? HEX_ART.slotIcon.coroa;
+
+/** Arquivo da luva por GOLPE (`HexStrike`): `magic` → `luva-magia.png`; os outros usam o próprio id (`luva-ranged-slash`, `luva-melee-slash`, `luva-melee-smash`). */
+const LUVA_ARQUIVO: Readonly<Record<string, string>> = { magic: 'luva-magia', 'ranged-slash': 'luva-ranged-slash', 'melee-slash': 'luva-melee-slash', 'melee-smash': 'luva-melee-smash' };
+/** A luva do GOLPE equipado/escolhido; sem ela (golpe desconhecido ou arquivo ausente), a arte única do slot (`slot-luvas.png`); sem as duas, `undefined` (glifo). */
+export const resolveHexGloveArt = (strike: string): string | undefined => {
+  const nome = LUVA_ARQUIVO[strike];
+  return (nome ? art(nome) : undefined) ?? HEX_ART.slotIcon.luvas;
+};
