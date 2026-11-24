@@ -54,9 +54,10 @@ function Pop({ slot, side, children }: { slot: EquipSlot; side: string; children
   return <div ref={ref} className="sm2-vit-pop" data-side={side} data-vitra-pop={slot}>{children}</div>;
 }
 
-export function VitraMap({ chakras, onBackdrop, label, children }: { chakras: readonly VitraChakra[]; onBackdrop: () => void; label: string; children?: ReactNode }) {
+/** `inline`: dentro do corpo de um modal (AreaSheet), sem tela cheia: o palco ocupa a largura do modal, ancorado no topo. */
+export function VitraMap({ chakras, onBackdrop, label, children, inline }: { chakras: readonly VitraChakra[]; onBackdrop: () => void; label: string; children?: ReactNode; inline?: boolean }) {
   return (
-    <div data-vitra-map className="sm2-vit-map" role="group" aria-label={label} onKeyDown={(e) => { if (e.key === "Escape") onBackdrop(); }}>
+    <div data-vitra-map className="sm2-vit-map" data-vitra-inline={inline || undefined} role="group" aria-label={label} onKeyDown={(e) => { if (e.key === "Escape") onBackdrop(); }}>
       <div className="sm2-vit-stage" data-vitra-stage>
         {VITRA_MAP_ART && <img src={VITRA_MAP_ART} alt="" aria-hidden="true" draggable={false} className="sm2-vit-figure" data-vitra-art />}
         {/* toque no fundo fecha o balão aberto (alvo fantasma sob os chakras) */}

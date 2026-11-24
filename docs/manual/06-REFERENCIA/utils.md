@@ -4988,3 +4988,6 @@ Dono da regra "OU ampulheta OU relógio" das criaturas de tempo (§324): `umMoti
 - `companheiroInvocado.ts`: novos `NOMES_ARQUETIPO_EVOCACAO` e `tituloEEvocador(t)`; `GameState.soulmonClassTitles` lido quando falta o cache do estágio (só o positivo).
 - `hexsmithCopy.ts`: `HEX_CROWN_FAMILY_DESC: Record<SpecialFamily, Par>` cobre as 10 famílias.
 - `riftSets.ts`: novos `riftFloorName(elementName, part)` ("Fogo 1"/"Fogo 2") e `riftSetName(elementName, isPt)` ("Fogo 1 e 2"/"Fire 1 & 2"). `riftMapCopy.ts`: `askBody(label, setName)`; `nodeAria` com o nome do conjunto primeiro.
+
+### `src/utils/potionFavorites.ts`
+**Dono de:** as poções favoritas do Laboratório (Vesca), por aparelho em localStorage (`soulmon:potionFavorites`, fora do save na nuvem): `readPotionFavorites`, `writePotionFavorites` (com try/catch), `toggleFavorite` (puro) e `favoritesFirst` (favoritas no topo, ordem estável). **Chamado por:** `src/components/ElementPotionSheet.tsx` (estrela com `aria-pressed`, alvo de 44px). **Régua:** `potionFavorites.test.ts`.

@@ -6770,3 +6770,5 @@ O dono vê "Algo deu errado" ao abrir o APK da Play e a produção não reproduz
 - **Save:** `equippedDecor` mantém o formato (slot→id); save antigo com o cristal em `floor-right` segue válido; id desconhecido não quebra. O servidor (`functions/api/save.js`) NÃO valida `equippedDecor` por slot (confirmado por busca), então não há espelho a manter.
 - **Alternativa descartada:** liberar cada item em vários espaços por `fits` (acoplado a cenário, não a espaço) ou duplicar o cristal por espaço.
 
+
+- **§506 (revisão 23/11/2026, dono testando o #1155):** a lista (`view="list"`) foi REJEITADA. A Soulsmith abre a ForgeCard ORIGINAL (mapa de chakras com a figura humanoide e os 3 pontos), mas embutida na `AreaSheet` com a Vitra no topo (`ForgeCard view="map" inline`), sem tela cheia; rola se preciso; ✕ único da folha.

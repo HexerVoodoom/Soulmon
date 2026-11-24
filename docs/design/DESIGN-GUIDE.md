@@ -42,7 +42,7 @@ Levantamento (código, 22/11/2026): **~718 `<button` em 223 arquivos .tsx**; ~13
 | Escolha de linha / sorteio | `EscolhaLinha`, `SortearNovos` (Torneio, Match-3; Arena no PR #1093) | — | Não |
 | Voltar / fechar | `BackArrow`, `BackCircleButton`, `ChevronAcao`; ✕ da moldura de aço (`sm2-moldura-aco__fechar`, sobre o disco da arte) | 44 | Glifo; ✕ de aço usa o disco da arte |
 | Ícone de ação / nav | `sm-icon-action-btn`, `sm-nav-btn`, `NavGlyphs` | 44 | Parcial (`icones-ui`) |
-| Botões locais por tela | `sm2-deck-btn`, `sm2-guild-btn`, `sm2-guild-invite-btn`, `sm2-hex-equip-btn`, `sm2-evolve-btn`, `sm2-chat-*`, `sm2-grove-walker-btn`, `sm3-material-btn`, `sm3-mochila-usar-btn`, `sm-game-card__btn` | variam | **Não** — candidatos a migrar para uma categoria acima |
+| Botões locais por tela | `sm2-deck-btn`, `sm2-guild-btn`, `sm2-guild-invite-btn`, `sm2-hex-equip-btn`, `sm2-evolve-btn`, `sm2-chat-*` (menos `sm2-chat-action-btn`, migrado), `sm2-grove-walker-btn`, `sm3-material-btn`, `sm-game-card__btn` | variam | **Não** — candidatos a migrar para uma categoria acima |
 | Legado | `retro-button`, `sm-btn`, `sm-btn-secondary`, `sm-px-*` | — | Migrar/aposentar |
 
 **Hierarquia:** 1 CTA principal por tela (modal conta como tela própria: `CtaButton` só no `ModalFrame` de prédio, `sm2Button` em folha avulsa) → secundária = `CtaTextButton` (ao lado de CtaButton) ou o par `primary`+`outline` (sem CtaButton) → terciária = `quiet`/`ghost`.

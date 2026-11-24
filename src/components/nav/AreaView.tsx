@@ -744,7 +744,7 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'caderno' && <CadernoSheet formatoInicial={cadernoFormatoIni} language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'fenda' && <MasmorraSheet language={language} saveId={props.guild.saveId} bitsToday={play.minigameBitsToday} onStart={() => { setRiftAuto(true); if (props.naMasmorra) { setSheet(null); setGame('masmorra'); } else start('masmorra'); }} onMap={() => { setSheet(null); setRiftMapOpen(true); }} />}
             {/* 23/11/2026 (dono): a folha do Soulsmith abre COM a Vitra (fala + retrato, como na Hexsmith) e a Forja de Alma (ForgeCard, lista de upar) mora DENTRO dela, rolável; o ✕ é o da folha. */}
-            {open?.id === 'ferreiro' && <ForgeCard language={language} view="list" />}
+            {open?.id === 'ferreiro' && <ForgeCard language={language} view="map" inline />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
             {open?.id === 'hexsmith' && <HexsmithSheet language={language} sprite={props.guild.mySprite} demoCharacterId={props.demoCharacterId} evolutionStage={props.evolutionStage} skills={props.skills} petElement={props.petElement} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={startSalao} funStatus={play.funSession?.status} onBuyTickets={play.funSession?.onBuy ? () => play.funSession!.onBuy!() : undefined} refused={funRefused} />}
