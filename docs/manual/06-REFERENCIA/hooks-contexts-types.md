@@ -175,6 +175,9 @@ Os dois são **acréscimo**, nunca renomeação (linha vermelha #20 — save só
 **Régua:** nenhuma — não há teste próprio; a decisão de manter ou remover é registrada em `docs/STATUS.md`.
 **Avisos do arquivo:** nenhum comentário próprio de aviso; a divergência (módulo nunca montado) não está declarada no código, só é reconstruível pela ausência de chamador.
 
+### `src/contexts/UiSkinContext.tsx` (24/11/2026)
+**Dono de:** a pele da interface (`'arte'` | `'minimal'`) e a sincronização do atributo `data-ui` no `<html>`, no mesmo molde do `ThemeContext`. **Exports:** `UiSkinProvider({ children })` (lê `STORAGE_KEYS.UI_SKIN` via `safeStorage`; inválido/ausente/storage indisponível = `'arte'`; grava com `silent`) e `useUiSkin()` (`{ skin, setSkin }`, lança fora do provider). O `data-ui` inicial vem de um script inline em `index.html` (hash na CSP de `public/_headers`). **Chamado por:** `src/main.tsx`, `src/components/UiSkinRow.tsx`. **Régua:** `src/contexts/UiSkinContext.test.tsx`.
+
 ### `src/contexts/ThemeContext.tsx`
 **Dono de:** o tema visual (claro/escuro/sistema) e a sincronização do atributo `data-theme` no `<html>`.
 **Sincronização 01/11/2026:** o valor do Provider (`{ mode, resolvedTheme, setMode }`) é memoizado com `useMemo` — um objeto novo por render re-renderizava todo consumidor de `useTheme()` à toa. Mesma API.

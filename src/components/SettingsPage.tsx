@@ -16,6 +16,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { SLEEP_REMINDER_EVENT } from '../utils/restWindow';
 import { isTelemetryEnabled, setTelemetryEnabled, telemetryConsentCopy } from '../utils/telemetry';
 import { useTheme } from '../contexts/ThemeContext';
+import { UiSkinRow } from './UiSkinRow';
 import { desligarMusica, ligarMusica, musicaPreferida } from '../utils/musica';
 import { APP_VERSION, FeedbackRow, BugReportRow } from './FeedbackLink';
 import { ProfileEditor } from './perfil/ProfileEditor';
@@ -659,6 +660,7 @@ export function SettingsPage({
             ))}
           </div>
         </div>
+        <UiSkinRow language={language} />
         <SpritePoseRows language={language} pose={spritePose} />
         {/* Beta12 (B2): COMPLEMENTAR (padrão) ou o mesmo jeito do jogador. O rótulo não diz o tipo de ninguém. */}
         {onChangeVoiceMode && (

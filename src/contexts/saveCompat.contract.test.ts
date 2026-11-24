@@ -86,6 +86,7 @@ const NOVAS_DESDE_20_10_2026: readonly string[] = [
   'soulmon-balao-dicas-vistas', // §333 (13/11/2026): cooldown dos balões de dica do Soulmon, no aparelho
   'soulmon-balao-dourado-ignorados', // §383 (14/11/2026): sumiços sem toque do balão dourado, no aparelho
   'soulmon-widget-events-applied', // 18/11/2026: eids da fila do widget da Home já aplicados, no aparelho
+  'soulmon-ui-skin', // 24/11/2026: pele da interface ('arte' | 'minimal'), no aparelho
 ];
 
 /** Valores de STORAGE_KEYS em 20/10/2026 — literal, não derivada. */

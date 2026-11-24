@@ -68,6 +68,19 @@
           } catch (e) {}
         })();
       </script>
+      <script>
+        (function () {
+          try {
+            // Pele da interface (`data-ui`): mesma chave de `STORAGE_KEYS.UI_SKIN`
+            // (src/utils/storageKeys.ts). Padrão 'arte' — valor ausente ou
+            // inválido cai nele, então quem nunca mexeu não vê flash.
+            var skin = localStorage.getItem('soulmon-ui-skin');
+            document.documentElement.dataset.ui = skin === 'minimal' ? 'minimal' : 'arte';
+          } catch (e) {
+            document.documentElement.dataset.ui = 'arte';
+          }
+        })();
+      </script>
     </head>
 
     <!-- SPLASH — estática de propósito: aparece ANTES do bundle carregar (é

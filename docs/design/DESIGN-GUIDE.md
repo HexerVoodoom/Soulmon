@@ -104,7 +104,21 @@ Alvo ≥ 44 (`alvo44.test.tsx`), foco visível em todo botão (anel 2 px `primar
 7. Estados de tela (erro, parcial, sem permissão, sucesso) sem padrão.
 8. Lacunas de ARTE (só as de arte; o resto acima é sistema): botões `sm2Button` por estado (P6), botões locais (1), estados de card (3) e arte do ✕ do aço. A lista consolidada de assets está com o orquestrador, não neste guia.
 
+## Duas interfaces (pele `data-ui`)
+
+O app tem UM só DOM e DUAS peles por CSS, escolhidas pelo jogador em Configurações › Interface (a opção fica atrás de `UI_SKIN_OPTION_ENABLED` em `src/utils/uiSkin.ts` até a pele minimalista existir):
+
+- **`arte`** (padrão): molduras nos modais e arte nos botões de AÇÃO (principal, secundário, perigo, voltar, fechar). Chips e abas só ganham bordinha.
+- **`minimal`**: modais e botões sem arte e sem borda, só CSS/SVG. Ícones com arte ficam iguais nas duas.
+
+Regras:
+
+1. O atributo `data-ui` no `<html>` segue o molde do tema: script inline em `index.html` antes da 1ª pintura (padrão `arte`, sem flash), `UiSkinProvider` depois, chave `soulmon-ui-skin`. O tipo é uma união nomeada (`UiSkin`), não um booleano: pode haver uma 3ª pele.
+2. CSS de arte (`url(` de `assets/soulmon/ui`) só vale sob `html[data-ui="arte"]`; a base de tokens É a minimalista. O guard `src/styles/uiSkin.contract.test.ts` congela as regras de arte ainda fora do escopo numa allowlist que só pode encolher (o cabeçalho do teste ensina a migrar uma regra).
+3. Medidas que a arte impõe (pads, caps, largura de gema) viram tokens com valor por pele; peças com `<img>` escolhem a peça num único ponto (mapa por pele), nunca `if` espalhado.
+
 ## 8. Changelog
+- 2026-11-24 — duas interfaces, fase 1: chave `data-ui="arte"|"minimal"` + contexto + opção em Configurações (atrás de flag) + guard de CSS; nenhum visual mudou.
 - 2026-11-24 (noite) — decisões do dono (REGISTRO §524, §525): borda longa do popup cristal = variante A (faixa turquesa lisa fina, sem fio de bronze), quinas geradas pelo dono; título de modal central INLINE sem placa e ✕ glifo à direita em ~22 modais, margem externa 16 px; as folhas de baixo (`AreaSheet`/`SheetFrame`) AINDA usam a placa (está desenhada na arte) até existir arte de topo sem placa.
 - 2026-11-24 — arte dos botões sm2 ligada por escopo `.sm2-btn-arte` (CreateModal primeiro); ver §3.1.
 - 2026-11-24 — consolidação: moldura cristal e popup com título inline na tabela de modais (§3.2); botões locais migrados para `sm2Button`, com `md` para `sm` (48 para 44 px) na Guilda (#1182); token `--sm2-moldura-pad-x-min` PROPOSTO (respiro lateral mínimo = ornamento + 10 px; rodapé ~37 px; cristal de canto 17,5u), ainda não existe no CSS e a implementação é do #1170. Auditoria da P7 em aberto: rodapé do Passeio invade o ornamento 13-17 px, título inline invade o canto do cristal 16-19 px, placa corta título longo. Os números de botão da §3.1 são de 22/11 e não foram reconferidos. Ver REGISTRO §515 e §517.
