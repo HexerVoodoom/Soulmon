@@ -3640,7 +3640,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
    Mesmo esquema da Hexsmith: placa quadrada, três pontos, balão ao lado. Tudo por token (cores de brasa só na figura de vidro, que é arte). */
 .sm2-vit-map { position: fixed; inset: 0; z-index: 300; overflow: hidden; background: #06171A; container-type: size; }
 /* O PALCO tem a proporção da arte (852/1846) e COBRE a tela, centrado (cover manual): chakras em % do palco = sempre sobre os anéis, qualquer tela. */
-.sm2-vit-stage { position: absolute; left: 50%; top: 50%; width: max(100cqw, calc(100cqh * 852 / 1846)); aspect-ratio: 852 / 1846; transform: translate(-50%, -50%); container-type: inline-size; }
+.sm2-vit-stage { position: absolute; left: 50%; top: 50%; width: max(100cqw, calc(100cqh * 1024 / 1365)); aspect-ratio: 1024 / 1365; transform: translate(-50%, -50%); container-type: inline-size; }
 .sm2-vit-figure { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; user-select: none; }
 .sm2-vit-backdrop { position: absolute; inset: 0; }
 .sm2-vit-spot { position: absolute; width: 0; height: 0; --r: max(22px, 9cqw); }
@@ -3653,7 +3653,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
 .sm2-vit-foot > * { margin: 0; pointer-events: auto; text-shadow: 0 1px 6px rgba(0, 0, 0, .8); }
 .sm2-vit-chakra {
   position: absolute; left: 0; top: 0; transform: translate(-50%, -50%);
-  display: grid; place-items: center; width: max(44px, 15.3cqw); height: max(44px, 15.3cqw); padding: 0; margin: 0; cursor: pointer;
+  display: grid; place-items: center; width: max(44px, 8.8cqw); height: max(44px, 8.8cqw); padding: 0; margin: 0; cursor: pointer;
   border-radius: 50%; border: 1px solid var(--sm2-line); background: color-mix(in srgb, #06171A 78%, transparent); color: var(--sm2-ink);
   transition: box-shadow var(--sm2-dur-tap) var(--sm2-ease), border-color var(--sm2-dur-tap) var(--sm2-ease);
   &[data-owned="true"] { border-color: color-mix(in srgb, var(--sm2-gold-ink) 70%, transparent); }
@@ -4781,6 +4781,66 @@ button[style*="--sm2-btn:ghost"]:active,
 button[style*="--sm2-btn: ghost"]:active {
   background-color: var(--sm2-primary-soft) !important;
 }
+
+/* ── Arte dos botões `sm2Button` (P6 aprovou 24/11/2026; P7 liga) ───────────
+   ESCOPADO: só vale dentro de um contêiner `.sm2-btn-arte`. Para ligar no app
+   inteiro basta pôr a classe no root; sem ela nada muda nos ~350 botões.
+   `sm2Button()` grava `--sm2-btn-kind` (primary|outline|danger|quiet|ghost) e
+   `--sm2-btn-h` (44/48/56 px) no style; aqui só primary/outline/danger ganham
+   arte (quiet/ghost ficam sem). 9-slice horizontal 703×169: a ponta com a gema
+   ocupa ~75 px → `--cap` = altura × 75/169. Estados = 3 arquivos (normal,
+   pressed no `:active`, disabled no `:disabled`). Texto claro em qualquer tema
+   porque o miolo da arte é escuro/teal nos dois (contraste no PR #P7). */
+.sm2-btn-arte { --sm2-btn-arte-ink: #FFFFFF; }
+.sm2-btn-arte button[style*="--sm2-btn-kind:primary"],
+.sm2-btn-arte button[style*="--sm2-btn-kind: primary"] { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-normal.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:primary"]:active:not(:disabled),
+.sm2-btn-arte button[style*="--sm2-btn-kind: primary"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-pressed.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:primary"]:disabled,
+.sm2-btn-arte button[style*="--sm2-btn-kind: primary"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-disabled.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:outline"],
+.sm2-btn-arte button[style*="--sm2-btn-kind: outline"] { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-normal.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:outline"]:active:not(:disabled),
+.sm2-btn-arte button[style*="--sm2-btn-kind: outline"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-pressed.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:outline"]:disabled,
+.sm2-btn-arte button[style*="--sm2-btn-kind: outline"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-disabled.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:danger"],
+.sm2-btn-arte button[style*="--sm2-btn-kind: danger"] { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-normal.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:danger"]:active:not(:disabled),
+.sm2-btn-arte button[style*="--sm2-btn-kind: danger"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-pressed.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:danger"]:disabled,
+.sm2-btn-arte button[style*="--sm2-btn-kind: danger"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-disabled.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind: primary"],
+.sm2-btn-arte button[style*="--sm2-btn-kind:primary"],
+.sm2-btn-arte button[style*="--sm2-btn-kind: outline"],
+.sm2-btn-arte button[style*="--sm2-btn-kind:outline"],
+.sm2-btn-arte button[style*="--sm2-btn-kind: danger"],
+.sm2-btn-arte button[style*="--sm2-btn-kind:danger"] {
+  --cap: calc(var(--sm2-btn-h, 48px) * 75 / 169);
+  background: none !important;
+  border-style: solid !important;
+  border-color: transparent !important;
+  border-width: 0 var(--cap) !important;
+  border-radius: 0 !important;
+  border-image: var(--arte) 0 75 fill / 0 var(--cap) stretch !important;
+  padding-inline: 8px !important;
+  color: var(--sm2-btn-arte-ink) !important;
+  text-shadow: 0 1px 2px rgba(4, 18, 20, .55);
+}
+.sm2-btn-arte button[style*="--sm2-btn-kind"]:disabled {
+  color: rgb(255 255 255 / .72) !important;
+  text-shadow: none;
+}
+/* ✕ de remover item (CreateModal): disco da arte `sm2-fechar` no lugar do glifo. */
+.sm2-btn-arte button[aria-label^="Remover passo"],
+.sm2-btn-arte button[aria-label^="Remove step"] {
+  background: url('./assets/soulmon/ui/sm2/sm2-fechar.webp') center / contain no-repeat !important;
+  border-radius: 50% !important;
+}
+.sm2-btn-arte button[aria-label^="Remover passo"] > *,
+.sm2-btn-arte button[aria-label^="Remove step"] > * { visibility: hidden; }
+.sm2-btn-arte button[aria-label^="Remover passo"]:active,
+.sm2-btn-arte button[aria-label^="Remove step"]:active { filter: brightness(.8); transform: scale(.96); }
 
 /* ── Campo filled ───────────────────────────────────────────────────────── */
 .sm2-form-field {
@@ -6950,7 +7010,7 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 
 /* Recap da evolucao (REGISTRO 190): a barra enche e brilha uma vez. prefers-reduced-motion zera as duracoes pela regra global. */
 .sm2-evo-recap-fill { transition: width 1.4s cubic-bezier(.22, 1, .36, 1); }
-/* 30/10/2026 (dono): preenchimento turquesa com glow EXTERNO e INTERNO, dentro da moldura de cobre (`evo/barra-moldura.png`). */
+/* 30/10/2026 (dono): preenchimento turquesa com glow EXTERNO e INTERNO, dentro da moldura de cobre (`evo/barra-evolucao-B.png`, canal x 19–456 / y 58–68 de 480×128). */
 .sm2-evo-recap-fill {
   background: linear-gradient(to bottom, #b8fff6 0%, #3ff0e0 32%, #12c2c0 70%, #0a8f95 100%);
   box-shadow: inset 0 1px 2px rgba(255,255,255,.75), inset 0 -2px 3px rgba(0,60,70,.55), 0 0 6px 1px rgba(63,240,224,.55);
@@ -7496,6 +7556,16 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* Diálogo centrado (`RitualDialog`): o miolo rola e carrega o respiro/gap que o cartão liso tinha. */
 .sm2-moldura-ritual { overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
 .sm2-moldura-ritual .sm2-moldura-modal__conteudo { gap: 12px; overflow-y: auto; padding-left: calc(var(--u) * 5); padding-right: calc(var(--u) * 5); padding-bottom: calc(var(--u) * 9); }
+.sm2-moldura-ritual--titulo .sm2-moldura-modal__conteudo { padding-top: calc(var(--u) * 15); padding-right: calc(var(--u) * 3); scrollbar-gutter: stable; }
+.sm2-moldura-ritual--titulo [data-ritual-close-start] { position: absolute; z-index: 4; order: 0; top: calc(var(--u) * 6.4 - 22px); left: calc(var(--u) * 26 - 6px); margin: 0 !important; }
+.sm2-moldura-ritual--titulo .sm2-moldura-modal__conteudo > *:not([data-ritual-close-start]) { padding-right: calc(var(--u) * 2); }
+/* Árvore da evolução: colunas com respiro; em contêiner estreito a fonte, o glow e as legendas encolhem um passo. */
+.sm2-evo-caminhos { container-type: inline-size; column-gap: var(--sm2-space-2); }
+.sm2-evo-caminhos > * { min-inline-size: 0; padding-inline: var(--sm2-space-1); }
+@container (max-width: 380px) {
+  .sm2-evo-caminhos > * { padding-inline: 0; --sm2-evo-nome-fs: calc(var(--sm2-text-xs) - 1px); --sm2-evo-glow-blur: 8px; --sm2-evo-glow-spread: 1px; --sm2-evo-hint-lh: 1.25; }
+}
+.sm2-evo-caminhos [data-testid^="sm-estado-"] { line-height: var(--sm2-evo-hint-lh, inherit); text-wrap: balance; }
 .sm2-info-hit:focus-visible { outline: 2px solid #e3c06a; outline-offset: -4px; }
 /* MOLDURA FINAL DO DONO (24/11/2026, `AreaSheet` padrão): madeira com cipós e gemas, medalhão vazio à esquerda (✕), ornamento (i) à direita, placa teal.
    Mesmo método do painel (topo/base em `--u` com proporção da arte @720, lados repeat-y); medidas em u = 1% da largura = 7,2 px do arquivo.
@@ -7578,10 +7648,9 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* Mapa do Soulsmith: o título vai na placa da moldura (o do HUD fica só para o nome acessível). */
 [data-forge-view="map"] .sm2-vit-title { opacity: 0; }
 /* Mapa do Soulsmith DENTRO do modal da área (23/11/2026): sem tela cheia; palco na largura do modal, ancorado no topo (chakras ≤53% da arte + folga do balão). */
-/* Sem rolagem, cabeça inteira (24/11/2026): o mapa ocupa o que sobra do corpo do modal (flex), o palco é 'contain' ANCORADO NA BASE: block-size = contêiner / 0,95
-   (corta só os ~5% de arco vazio do topo; a cabeça começa em ~6,8%) e nunca maior que a largura permite (a figura encolhe em vez de cortar a cabeça); chakras seguem em % do palco. */
+/* Sem rolagem, sem faixas, sem esticar (24/11/2026, decisão do dono): o mapa ocupa o que sobra do corpo do modal (flex); o palco é COVER PELA LARGURA, ancorado na BASE (poça de lava no fundo): inline-size 100%, proporção da arte, o excedente do TOPO é cortado pelo overflow do mapa; chakras seguem em % do palco. */
 .sm2-vit-map[data-vitra-inline] { position: relative; inset: auto; z-index: auto; inline-size: 100%; flex: 1 1 0; min-block-size: 0; border-radius: var(--sm2-radius-md, 12px); }
-.sm2-vit-map[data-vitra-inline] .sm2-vit-stage { --vit-h: min(calc(100cqh / .95), calc(100cqw * 1846 / 852)); inset-block: auto 0; inset-inline: 50% auto; block-size: var(--vit-h); inline-size: calc(var(--vit-h) * 852 / 1846); aspect-ratio: auto; transform: translateX(-50%); }
+.sm2-vit-map[data-vitra-inline] .sm2-vit-stage { inset-block: auto 0; inset-inline: 0; inline-size: 100%; block-size: auto; aspect-ratio: 1024 / 1365; transform: none; }
 .sm2-vit-map[data-vitra-inline] .sm2-vit-foot { padding: 16px 12px 12px; }
 [data-area-sheet-body]:has([data-vitra-inline]) { overflow-y: hidden !important; display: flex; flex-direction: column; }
 [data-area-sheet-body]:has([data-vitra-inline]) > [data-forge-card] { flex: 1 1 0; min-block-size: 0; display: flex; flex-direction: column; }
@@ -7764,7 +7833,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* Centro de Evolução (P5): menu de 2 botões dentro da folha do prédio; nome da forma com o cadeado à direita; o desfazer do traço centrado sob a árvore. */
 .sm2-lab-choice { display: grid; gap: var(--sm2-space-2); padding-block: var(--sm2-space-2); }
 .sm2-lab-choice > button { inline-size: 100%; }
-.sm2-evo-namerow { position: relative; inline-size: 100%; display: flex; align-items: center; justify-content: center; padding-inline: 48px; box-sizing: border-box; }
+.sm2-evo-namerow { flex-wrap: wrap; gap: var(--sm2-space-2); position: relative; inline-size: 100%; display: flex; align-items: center; justify-content: center; padding-inline: 48px; box-sizing: border-box; }
 .sm2-evo-lock { position: absolute; inset-inline-end: 0; inset-block-start: 50%; transform: translateY(-50%); min-inline-size: 44px; min-block-size: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; background: none; box-shadow: none; color: var(--sm2-ink-muted, var(--sm2-ink)); cursor: pointer; }
 .sm2-evo-lock[aria-pressed="true"] { color: var(--sm2-primary-ink); }
 .sm2-evo-revert { display: flex; justify-content: center; margin-block-start: var(--sm2-space-5); }
@@ -7776,3 +7845,19 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-day-square:disabled { opacity: 0.4; cursor: default; }
 [data-quando] { display: flex; flex-direction: column; gap: var(--sm2-space-2); min-inline-size: 0; }
 [data-quando-controles] { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--sm2-space-4); min-inline-size: 0; }
+/* Arte final do Evolution Center (P5 evo-assets): conectores A, nó A, cadeado B. */
+.sm2-evo-ligacao { position: relative; inline-size: 100%; aspect-ratio: 300 / 48; margin-block: 0; }
+.sm2-evo-ligacao--join { transform: scaleY(-1); }
+.sm2-evo-conector { position: absolute; inset: 0; display: block; inline-size: 100%; block-size: 100%; object-fit: fill; overflow: visible; }
+.sm2-evo-lock-img { display: block; inline-size: 28px; block-size: 28px; }
+.sm2-evo-no-arte { position: relative; }
+.sm2-evo-no-arte[data-busy="true"] { opacity: .75; }
+.sm2-evo-no-matiz { position: absolute; inset: 0; display: block; mix-blend-mode: color; opacity: .85; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; pointer-events: none; }
+
+/* Barra de evolução B (`evolution/EvoBar.tsx`): moldura 480×128 por largura do contêiner; canal medido no PNG (x 19–456, y 58–68). */
+.sm2-evo-barra { position: relative; inline-size: 100%; aspect-ratio: 480 / 128; margin-block: -5%; }
+.sm2-evo-barra__moldura { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; pointer-events: none; }
+.sm2-evo-barra__canal { position: absolute; inset-inline-start: 3.96%; inset-inline-end: 4.9%; inset-block-start: 45.3%; block-size: 8.6%; border-radius: 2px; overflow: visible; }
+
+.sm2-evo-segurada { display: inline-flex; align-items: center; min-block-size: 24px; padding-inline: var(--sm2-space-2); border-radius: 999px; background: var(--sm2-primary-soft); color: var(--sm2-primary-ink); font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); font-weight: 600; letter-spacing: .04em; }
+.sm2-evo-no-arte[data-node-art="locked"] .sm2-evo-no-matiz { opacity: .4; }

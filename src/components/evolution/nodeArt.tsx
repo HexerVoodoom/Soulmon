@@ -1,5 +1,12 @@
+import normal from '../../assets/soulmon/evo/evo-no-A-normal.png';
+import atual from '../../assets/soulmon/evo/evo-no-A-atual.png';
+import alcancado from '../../assets/soulmon/evo/evo-no-A-alcancado.png';
+import bloqueado from '../../assets/soulmon/evo/evo-no-A-bloqueado.png';
+
 /**
- * ⚠️ FRONTEIRA DE ARTE DO NÓ (hoje: SVG por token — H1 opção (a)).
+ * ⚠️ FRONTEIRA DE ARTE DO NÓ (hoje: PNG A do dono, 4 estados — instalado em 24/11/2026; antes, SVG por token, H1 opção (a)).
+ * Mapa: current→atual (anel aceso turquesa), reached→alcancado, forecast→normal, locked→bloqueado. A cor do RAMO entra por
+ * `mix-blend-mode: color` numa máscara do próprio PNG (o neutro segue sendo a arte; o ramo só troca o matiz).
  *
  * Este arquivo é o ÚNICO lugar que sabe COM O QUE o anel de um nó da árvore é
  * desenhado. `SoulNode.tsx` (vidro, sprite/silhueta, foco, aria) e
@@ -48,50 +55,35 @@ export const NODE_SIZE = 88;
 export const NODE_GLASS = 80;
 export const NODE_SPRITE = 64;
 
-const R = 41;
-const C = NODE_SIZE / 2;
-
-const RING_TONE: Record<SoulNodeVisual, string> = {
-  current: 'var(--sm2-primary-ink)',
-  reached: 'var(--sm2-primary-deep)',
-  forecast: 'var(--sm2-primary-deep)',
-  locked: 'var(--sm2-muted)',
-};
+const ARTE: Record<SoulNodeVisual, string> = { current: atual, reached: alcancado, forecast: normal, locked: bloqueado };
 
 export interface NodeArtProps {
   visual: SoulNodeVisual;
-  /** O Oráculo está desenhando esta forma: anel tracejado, mesmo tom. */
+  /** O Oráculo está desenhando esta forma: a moldura pulsa/tracejada some — só marca `data-busy` (a animação é do CSS global). */
   busy?: boolean;
-  /** Rodada 7 (I3): a COR do ramo no anel (Poder verde, Harmonia azul, Ultra amarelo). */
+  /** Rodada 7 (I3): a COR do ramo (Poder verde, Harmonia azul, Ultra amarelo). */
   ringColor?: string;
 }
 
-/** O disco e o anel do nó — vetor, por token. */
+/** A moldura do nó — PNG neutro (96²) mostrado a `NODE_SIZE`; com `ringColor`, uma camada de matiz do ramo sobre a mesma silhueta. */
 export function NodeArt({ visual, busy = false, ringColor }: NodeArtProps) {
-  const dashed = visual === 'forecast' || busy;
+  const src = ARTE[visual];
   return (
-    <svg
-      viewBox={`0 0 ${NODE_SIZE} ${NODE_SIZE}`}
-      width={NODE_SIZE}
-      height={NODE_SIZE}
+    <span
       aria-hidden="true"
       data-node-art={visual}
+      data-busy={busy ? 'true' : undefined}
+      className="sm2-evo-no-arte"
       style={{ position: 'absolute', inset: 0, display: 'block' }}
     >
-      <circle cx={C} cy={C} r={R} fill="var(--sm2-surface-2)" />
-      {visual === 'current' && (
-        <circle data-node-halo cx={C} cy={C} r={R + 2.5} fill="none" stroke={RING_TONE.current} strokeWidth={1} />
+      <img data-node-frame src={src} alt="" width={NODE_SIZE} height={NODE_SIZE} style={{ display: 'block', inlineSize: '100%', blockSize: '100%' }} />
+      {ringColor && (
+        <span
+          data-node-tint
+          className="sm2-evo-no-matiz"
+          style={{ background: ringColor, WebkitMaskImage: `url(${src})`, maskImage: `url(${src})` }}
+        />
       )}
-      <circle
-        data-node-ring
-        cx={C}
-        cy={C}
-        r={R}
-        fill="none"
-        stroke={ringColor ?? RING_TONE[visual]}
-        strokeWidth={3}
-        strokeDasharray={dashed ? '6 5' : undefined}
-      />
-    </svg>
+    </span>
   );
 }

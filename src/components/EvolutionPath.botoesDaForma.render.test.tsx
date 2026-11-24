@@ -31,7 +31,7 @@ describe('botões por forma', () => {
     renderWithCss(<EvolutionPath {...props} />);
     expect(screen.queryByText('Degenerar para…')).toBeNull();
     fireEvent.click(screen.getByTestId('sm-no-champion-harmony').querySelector('button[data-soul-node]') as HTMLElement);
-    expect(screen.getByText('Degenerar para…')).toBeTruthy();
+    expect(screen.getByTestId('sm-formas-alt').textContent).toContain('Degenerar para…');
     expect(screen.getByTestId('sm-formas-alt')).toBeTruthy();
   });
 

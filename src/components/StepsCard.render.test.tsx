@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { StepsCard } from './StepsCard';
 
@@ -18,4 +19,19 @@ describe('StepsCard meta travada', () => {
     const d = renderWithCss(<StepsCard {...base} language="en-US" goal={7000} />);
     expect(d.container.textContent).not.toContain('starts tomorrow');
   });
+});
+
+describe('StepsCard como porta do menu para quem recusou o convite', () => {
+  for (const w of [360, 375, 412]) {
+    it(`${w}px: sem permissão mostra o consentimento ANTES de pedir; Ativar só chama o fluxo existente ao toque`, () => {
+      (window as any).innerWidth = w;
+      const onRequestPermission = vi.fn();
+      const r = renderWithCss(<StepsCard {...base} hasPermission={false} onRequestPermission={onRequestPermission} language="pt-BR" />);
+      expect(onRequestPermission).not.toHaveBeenCalled();
+      const botoes = r.container.querySelectorAll('button');
+      expect(botoes.length).toBe(2);
+      fireEvent.click(botoes[1]);
+      expect(onRequestPermission).toHaveBeenCalledTimes(1);
+    });
+  }
 });

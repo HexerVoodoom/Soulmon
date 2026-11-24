@@ -10,6 +10,9 @@
 > pixel art **só dentro do visor**; tudo fora é SVG + Material Symbols. Cada asset abaixo
 > recebe um veredito **dentro / fora / decisão do dono** por essa régua.
 
+
+> **Nota 24/11/2026 — assets MOVIDOS:** os diretórios `E:\Soulmon-assets\{higgsfield-banco,out,entrada-dono}` foram movidos para `D:\Soulmon-assets-mov\<nome>\` (falta de espaço em `E:`), em vez de editar ~60 referências. Ao ler "E:\Soulmon-assets\higgsfield-banco|out|entrada-dono" neste e em outros docs, procure em `D:\Soulmon-assets-mov\`. Os demais subdiretórios de `E:\Soulmon-assets` não mudaram.
+
 ---
 
 > **Atualização 15/09/2026 (fim da rodada da SQUAD-ARTE):** as levas `entrega2` (berço), `entrega4` (Dino + 7 anims),
@@ -517,7 +520,7 @@ Notas: a cota do ChatGPT foi atingida em 23/11 (retoma ao liberar); arquivo novo
 
 ## P6 — cenários de combate dos 4 elementos novos + botões sm2 (24/11/2026)
 - `combate/elemento/{fantasma,morto_vivo,sangue,furia}.png` (360×640, pixelado a partir de ChatGPT com refs carniceiro/abismo/ácido; 1–2 cristais turquesa discretos; carregados pelo glob de `combatArt.ts`). Aprovados pelo dono em 24/11. Originais: `E:\Soulmon-assets\p6-elementos-novos\cenario-<id>-orig.png`.
-- `ui/sm2/sm2-{primary,outline,danger}-{normal,pressed,disabled}.webp` (9, 703×169, alfa) e peças `sm2-{voltar,fechar,voltar-press,equipado,dia,dia-sel,dia-press,dia-off,chip,chip-sel,energias-vazio,energias-cheio}.webp` (12). Sem consumidor ainda: o P7 liga o `sm2Button`. Guard ZERO PNG ganhou a exceção `ui/sm2/` (§316c revogado). Originais: `E:\Soulmon-assets\p6-botoes-sm2\`.
+- `ui/sm2/sm2-{primary,outline,danger}-{normal,pressed,disabled}.webp` (9, 703×169, alfa) e peças `sm2-{voltar,fechar,voltar-press,equipado,dia,dia-sel,dia-press,dia-off,chip,chip-sel,energias-vazio,energias-cheio}.webp` (12). Consumo (P7, 24/11): os 9 botões entram via `.sm2-btn-arte` (`index.css`, `border-image`) no `CreateModal` (Criar/Cancelar) e `sm2-fechar` no ✕ de remover passo; as outras 11 peças (voltar, equipado, dia*, chip*, energias*) seguem sem consumidor. Guard ZERO PNG ganhou a exceção `ui/sm2/` (§316c revogado). Originais: `E:\Soulmon-assets\p6-botoes-sm2\`.
 ## P6 — botões do Rift (23/11/2026, aprovados pelo dono)
 
 `src/assets/soulmon/ui/btn-rift{,-press,-off}.webp` (Enter the Rift, primário) e `btn-rift-sec{,-press,-off}.webp` (See the map, secundário). 1080×232, WebP, alfa real, sem texto na arte. Mesma família do `btn-ranking` (pedra facetada teal, filete de bronze), mas sem medalhão dourado: Enter tem um cristal turquesa em cada ponta; Map tem pontas lisas. 9-slice só na horizontal: pontas 200 px (Enter) e 150 px (Map); altura em CSS 72–84, mínimo 48. Cortes e regras de contraste em `btn-rift.cortes.json`. Implementação: `BotaoEspecial variant='rift'` (P3). Originais, prompt e tags em `E:/Soulmon-assets/p6-rift-botoes/`.

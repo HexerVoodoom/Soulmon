@@ -36,7 +36,8 @@ describe('P6 — "Tap to continue" do level-up', () => {
 describe('P7 — evolução', () => {
   it('o botão "Evolution hold" mostra cadeado ABERTO/FECHADO (pedido do dono, Centro de Evolução) sem texto fixo (só ícone, no canto do nome); a faísca estática (pixels soltos) saiu', () => {
     const fonte = src('./EvolutionPath.tsx');
-    expect(fonte).toMatch(/<Icon name=\{evolutionLocked \? 'lock' : 'lock_open'\} size=\{24\} fill=\{evolutionLocked \? 1 : 0\}/);
+    expect(fonte).toMatch(/src=\{evolutionLocked \? cadeadoFechado : cadeadoAberto\} alt=""/);
+    expect(fonte).not.toMatch(/name=\{evolutionLocked \? 'lock'/);
     expect(fonte).not.toContain('data-visor-spark');
   });
 });

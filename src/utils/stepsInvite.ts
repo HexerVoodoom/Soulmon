@@ -17,3 +17,14 @@ export function shouldShowStepsInvite(input: {
 }): boolean {
   return input.available === true && input.consent === undefined && input.onboarded;
 }
+
+/**
+ * O CARTÃO DOS PASSOS EM CONFIGURAÇÕES (menu lateral) — a porta que fica aberta DEPOIS do "Agora não".
+ *
+ * O convite (acima) é UMA vez só e nunca volta; mas quem recusou tem de poder mudar de ideia por conta própria, sem ninguém
+ * insistindo. Por isso o cartão aparece sempre que o aparelho tem contador, inclusive com `stepsConsent === 'declined'`: ele é
+ * pedido pela pessoa (abrir Configurações), nunca empurrado. O consentimento continua vindo ANTES do diálogo do sistema.
+ */
+export function shouldShowStepsSettingsEntry(available: boolean | null): boolean {
+  return available === true;
+}

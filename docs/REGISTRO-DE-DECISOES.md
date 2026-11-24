@@ -6841,3 +6841,57 @@ Estado da `origin/main` ao reconciliar: o último § é o **§511** (Cristal Fun
 - **Alternativa descartada:** um elemento fixo por cenário (o que havia).
 
 - **§512 (balanço, decisão do dono 23/11/2026):** a chance de essência no baú comum segue o nº de elementos do cenário (`ESSENCE_BY_ELEMENTS`: 3 elementos = 20%, 4 = 25%); antes o servidor usava 10% (elems=1). Efeito medido: ~0,7 → ~1,76 essência por sessão sem chave; teto diário de 8 mantido. O dono mandou MANTER a tabela como aprovada (não reduzir).
+
+## §524 — Borda do popup cristal: variante A e quinas geradas pelo dono (24/11/2026, dono)
+
+- **Decisão:** a borda longa do popup cristal é a **variante A** (faixa turquesa lisa e fina, sem fio de bronze). As quinas foram GERADAS pelo dono no ChatGPT (alfa real) e substituem as da P6; `popup-cristal-1024` novo (#1201 com a borda A, depois #1208 com as quinas do dono).
+- **Alternativa que perdeu:** borda com fio de bronze e as quinas geradas pela P6. **Gatilho de revisão:** não registrada.
+
+## §525 — Título de modal central: inline, sem placa (24/11/2026, dono)
+
+- **Decisão:** o título de modal central é **inline, SEM placa**, com ✕ glifo à direita, aplicado em ~22 modais da fila (#1187); margem externa 24 -> 16 px; correções de respiro em #1206 e #1212. A moldura final do dono está ligada nos modais de NPC e de prédio (#1209, `ui/moldura/npc-*.webp`).
+- **Exceção:** as folhas de baixo (`AreaSheet`/`SheetFrame`) MANTÊM a placa, porque ela está desenhada na própria arte. **Gatilho:** existir arte de topo sem placa para essas folhas (pendente em `ASSETS-A-GERAR.md`).
+- **Alternativa que perdeu:** placa de bronze em todos os modais (§515 foi o passo intermediário).
+
+## §526 — Passeio não abre sozinho no começo do dia (24/11/2026, dono; CONFIRMADA pelo dono em 24/11/2026)
+
+- **Decisão (#1186):** o Passeio deixa de abrir sozinho; só abre por ação do jogador. Leitura adotada: sai a página "From Yesterday's Adventure" do `dailyReport`; o resumo de ontem fica. **CONFIRMADA pelo dono em 24/11/2026: a leitura adotada era essa.**
+- **Alternativa que perdeu:** abertura automática no começo do dia. **Gatilho:** resposta do dono sobre a leitura.
+
+## §527 — Evolution Center: arte final e menus (24/11/2026, dono)
+
+- **Decisão:** barra B, conectores A (v3, 300x48), nós A, cadeado B (#1203, ainda aberto em 24/11). O caminho previsto ganha brilho colorido (Poder verde, Harmonia azul, Benevolência dourado) no lugar de "Locked"/"Forecast"; o estado vai em `aria-label`. ✕ à esquerda fecha tudo e "i" à direita; some a dica do Vesca. Já mergeados: #1199, #1200, #1205, #1177.
+- **Alternativa que perdeu:** rótulos "Locked"/"Forecast" visíveis; barras, conectores, nós e cadeado das outras variantes. **Gatilho:** não registrada.
+
+## §528 — Fundador: um modal por prêmio, só o ✕, fundo B (24/11/2026, dono)
+
+- **Decisão:** um modal por prêmio em sequência (#1194; já descrito no §523). Hotfix do fechar (#1191: o popup abria sobre outro modal e ficava inert). Sem botão Close, só o ✕ (#1202). Chama do cristal centrada (#1195, `steps(5)`). Fundo B com cristais e circuito (#1207): recorte paisagem 1200x648 mantendo a chave; a versão vertical 720x1440 e a variante A (sem luz) ficam guardadas.
+- **Alternativa que perdeu:** o fundo A, sem luz. **Gatilho:** não registrada.
+
+## §529 — Barra de moedas: o chip anterior volta (24/11/2026, dono)
+
+- **Decisão:** a barra "cobre" P1 foi **REJEITADA** (#1214 fechado). Volta o chip anterior com a moldura `chip-moeda`, com o ícone da moeda no lugar do nome, mais o valor (#1216 na main). As pílulas iguais do #1192 eram etapa intermediária.
+- **Alternativa que perdeu:** a barra de cobre. **Gatilho:** não registrada.
+
+## §530 — Escolhedor Hábito/Tarefa e "Quando" (24/11/2026, dono)
+
+- **Decisão:** o escolhedor é um bottom sheet simples, texto de 20 px centralizado, ícones PNG (escudo com check, chama) com fallback ao vetor (#1211 mergeado). No "Quando", "Uma vez" e "Marcar todos" ficam na mesma linha (#1213, aberto em 24/11).
+- **Alternativa que perdeu:** o escolhedor em popup com ícones só vetoriais. **Gatilho:** não registrada.
+
+## §531 — Arte aprovada e o que ainda falta (24/11/2026, dono)
+
+- **Aprovado:** backgrounds dos 4 elementos; botões `sm2` (9+12 peças, #1188); cenários de combate dos 4 elementos e cenários de caminho.
+- **FX de combate:** o dono gostou, mas achou pixelado. A P6 confere peça a peça contra os do jogo e regenera só o pior.
+- **Cenas do Focus:** refazer em vista de cima (top-down) com mais tecnologia Soulmon (6 cenas no #1215, aberto).
+- **Correção de escopo:** o feedback "bom mas distoante, refaça com referências" era sobre os FX/assets de COMBATE dos 4 elementos, NÃO sobre os 12 sprites de Soulmon (aprovados, #1158).
+- **Alternativa que perdeu:** regenerar o lote de FX inteiro. **Gatilho:** não registrada.
+
+## §532 — Esclarecimentos de 24/11: "limite de uso" e bytes (24/11/2026)
+
+- **"Limite de uso" de 23/11:** o reportado pela P6 era da sessão Claude, NÃO do ChatGPT. O "gatilho" do §519 ("cota do ChatGPT atingida em 23/11") fica corrigido: foi o limite da sessão Claude.
+- **Bytes:** a dívida de JS/CSS de entrada foi re-medida no #1217 (+9,6 KB JS, +13,9 KB CSS), justificada por pedidos do dono; a nota já está na linha existente do orçamento de bytes (§506), sem duplicar aqui.
+
+## §533 — Processo: stash, junction e docs (24/11/2026, dono)
+
+- **Regra:** NENHUM `git stash` em worktree (a lista de stash é compartilhada: em 24/11 um pop acidental aplicou stash de outra sessão; o dono autorizou o reset só naquele worktree). Soltar a junction de `node_modules` com `[System.IO.Directory]::Delete` e CONFIRMAR antes de `git worktree remove` (o `D:\nm-cache\node_modules` foi danificado duas vezes; backup íntegro em `D:\nm-new\node_modules`). O sparse das worktrees inclui `/vitest.*` e `/tools/`. Os docs do Soulmon ficam com a sessão "[soulmon] 20-11".
+- **Alternativa que perdeu:** `stash` como atalho em worktree; `rmdir` simples na junction. **Gatilho:** nova ocorrência de dano ao `nm-cache`.
