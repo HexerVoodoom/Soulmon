@@ -25,6 +25,15 @@ describe('CreateChoicePopup (bottom sheet)', () => {
       expect(filhos[1].getAttribute('data-create-choice')).toBe('task'); // primeiro depois da alça
       expect(document.querySelectorAll('[data-create-choice]').length).toBe(2);
       expect(parseInt(getComputedStyle(document.querySelector('.sm2-escolhedor__op')!).minHeight)).toBeGreaterThanOrEqual(44);
+      const op = getComputedStyle(document.querySelector('.sm2-escolhedor__op')!);
+      expect(op.textAlign).toBe('center');
+      expect(op.justifyContent).toBe('center');
+      expect(op.fontSize).toBe('var(--sm2-text-lg)');
+      for (const k of ['task', 'habit']) {
+        const img = document.querySelector(`[data-escolhedor-icone="${k}"]`)!;
+        expect(img.getAttribute('alt')).toBe('');
+        expect(img.closest('button')!.getAttribute('aria-label')).toBeTruthy();
+      }
       fireEvent.click(document.querySelector('[data-create-choice="task"]')!);
       fireEvent.click(document.querySelector('[data-create-choice="habit"]')!);
       expect(onPick.mock.calls).toEqual([['task'], ['habit']]);

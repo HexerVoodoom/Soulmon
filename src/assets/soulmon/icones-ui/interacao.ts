@@ -17,6 +17,8 @@ import cicloLuaCheiaNuvem from './interacao/ciclo-lua-cheia-nuvem.png';
 import recompensaEstrela from './interacao/recompensa-estrela.png';
 import statusCadeado from './interacao/status-cadeado.png';
 import statusRaio from './interacao/status-raio.png';
+import statusEscudoCheck from './interacao/status-escudo-check.png';
+import statusChama2 from './interacao/status-chama-2.png';
 
 const porPrefixo = (mods: Record<string, string>, prefixo: string): Readonly<Record<string, string>> => {
   const out: Record<string, string> = {};
@@ -44,4 +46,6 @@ export const REPORT_HEAD_ART: Readonly<Record<'star' | 'nightlight' | 'bedtime' 
 };
 
 /** Peças de status com slot: o cadeado (trancado) e o raio (skill básica). */
+/** Escolhedor Hábito/Tarefa (24/11/2026): reaproveita o escudo-check (tarefa) e a chama (hábito) até a arte própria `icon-escolher-*` (P6). */
+export const ESCOLHEDOR_ICON_ART = { tarefa: statusEscudoCheck, habito: statusChama2 } as const;
 export const STATUS_ICON_ART = { cadeado: statusCadeado, raio: statusRaio } as const;

@@ -1,5 +1,6 @@
 import type { Language } from '../utils/i18n';
 import { Icon } from './ui/Icon';
+import { ESCOLHEDOR_ICON_ART } from '../assets/soulmon/icones-ui/interacao';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 
 /**
@@ -24,11 +25,11 @@ export function CreateChoicePopup({ open, language, onClose, onPick, onCommit }:
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div ref={ref} role="dialog" aria-modal="true" aria-label={pt ? 'Novo hábito ou nova tarefa' : 'New habit or new task'} className="sm2-escolhedor">
         <span className="sm2-escolhedor__alca" aria-hidden="true" />
-        <button type="button" data-create-choice="task" className="sm2-escolhedor__op" onClick={() => onPick('task')}>
-          <Icon name="task_alt" size={24} tone="inherit" />{pt ? 'Nova tarefa' : 'New task'}
+        <button type="button" data-create-choice="task" className="sm2-escolhedor__op" aria-label={pt ? 'Nova tarefa' : 'New task'} onClick={() => onPick('task')}>
+          {ESCOLHEDOR_ICON_ART.tarefa ? <img data-escolhedor-icone="task" src={ESCOLHEDOR_ICON_ART.tarefa} alt="" width={32} height={32} draggable={false} /> : <Icon name="task_alt" size={24} tone="inherit" />}{pt ? 'Nova tarefa' : 'New task'}
         </button>
-        <button type="button" data-create-choice="habit" className="sm2-escolhedor__op" onClick={() => onPick('habit')}>
-          <Icon name="event_repeat" size={24} tone="inherit" />{pt ? 'Novo hábito' : 'New habit'}
+        <button type="button" data-create-choice="habit" className="sm2-escolhedor__op" aria-label={pt ? 'Novo hábito' : 'New habit'} onClick={() => onPick('habit')}>
+          {ESCOLHEDOR_ICON_ART.habito ? <img data-escolhedor-icone="habit" src={ESCOLHEDOR_ICON_ART.habito} alt="" width={32} height={32} draggable={false} /> : <Icon name="event_repeat" size={24} tone="inherit" />}{pt ? 'Novo hábito' : 'New habit'}
         </button>
         {onCommit && (
           <button type="button" data-create-choice="commit" className="sm2-escolhedor__op" onClick={onCommit}>
