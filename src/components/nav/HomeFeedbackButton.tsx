@@ -3,6 +3,7 @@ import { homeFeedbackLabel } from '../FeedbackLink';
 import type { FeedbackStatus } from '../FeedbackModal';
 import { sendFeedback, type FeedbackType } from '../../utils/feedbackClient';
 import type { Language } from '../../utils/i18n';
+import { isFeedbackButtonVisible } from '../../utils/feedbackFlag';
 import { CORNER_INK, CORNER_RING_STYLE } from './cornerAnchor';
 
 // O modal só existe depois do primeiro toque no besourinho: fica fora do chunk de entrada.
@@ -15,7 +16,7 @@ const FeedbackModal = lazy(() => import('../FeedbackModal').then(m => ({ default
  * via `/api/feedback`, sem abrir o app de e-mail; o `mailto:` saiu SÓ daqui). O rascunho
  * mora neste componente: falha de envio mantém o texto. Alvo de toque 44.
  */
-export function HomeFeedbackButton({ language }: { language: Language }) {
+export function HomeFeedbackButton({ language, visible = isFeedbackButtonVisible() }: { language: Language; visible?: boolean }) {
   const label = homeFeedbackLabel(language);
   const [open, setOpen] = useState(false);
   const [jaAbriu, setJaAbriu] = useState(false);
@@ -35,6 +36,7 @@ export function HomeFeedbackButton({ language }: { language: Language }) {
     else setStatus(r.reason === 'rate' ? 'error-rate' : r.reason === 'network' ? 'error-network' : 'error-server');
   };
 
+  if (!visible) return null;
   return (
     <>
       <button
