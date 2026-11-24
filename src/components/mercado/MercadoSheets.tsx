@@ -26,6 +26,7 @@ import { elementsMatchingBases, isPotionUnlocked } from '../../utils/elementPoti
 import { ESSENCE_ELEMENT_IDS } from '../../utils/elementDex';
 import { essenceName } from '../../utils/essences';
 import { essenceUnitPrice } from '../../utils/essenceShop';
+import { RECOVERY_ITEMS, recoveryBlock, type RecoveryKind } from '../../utils/recoveryShop';
 import { EssenceBuySheet } from './EssenceBuySheet';
 import { ElementBaseSlots, ElementIcon, emptySlots } from '../ElementBaseSlots';
 import { GuildOwnedShelf } from './GuildOwnedShelf';
@@ -445,15 +446,37 @@ export interface CambistaSheetProps {
   essences?: Record<string, number>;
   /** §205: compra no SERVIDOR (preço, saldo e trancado decididos lá). Sem a prop, a lista é só vitrine. */
   onBuyEssence?: (element: string, qty: number) => Promise<boolean>;
+  /** Aba Outros (24/11/2026): Recuperar energia/vida por Créditos (servidor cobra e conta o teto semanal). Sem a prop, os botões ficam desabilitados. */
+  onBuyRecovery?: (kind: RecoveryKind) => Promise<{ ok: boolean; reason?: string }>;
+  recoveryState?: { energy: number; maxEnergy: number; hp: number; maxHp: number };
 }
 
-export function CambistaSheet({ language, credits, onExchangeCredits, onRecoverPendingBits, onGetCredits, accountTier, onUnlock, unlockedElements, essences, onBuyEssence }: CambistaSheetProps) {
+export function CambistaSheet({ language, credits, onExchangeCredits, onRecoverPendingBits, onGetCredits, accountTier, onUnlock, unlockedElements, essences, onBuyEssence, onBuyRecovery, recoveryState }: CambistaSheetProps) {
   const isPt = language === 'pt-BR';
   const [tab, setTab] = useState<CambistaTab>('bits');
   const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
   const { flash, say } = useShopFlash();
   const [pendingEss, setPendingEss] = useState<string | null>(null);
   const [buyingEss, setBuyingEss] = useState(false);
+  const [buyingRec, setBuyingRec] = useState<RecoveryKind | null>(null);
+  const [recMsg, setRecMsg] = useState<string | null>(null);
+  /** Recuperar energia/vida: o servidor cobra e recusa com weekly-cap (volta na próxima semana); cheio e saldo bloqueiam o botão. */
+  const doRecovery = async (kind: RecoveryKind) => {
+    if (!onBuyRecovery) return;
+    setBuyingRec(kind); setRecMsg(null);
+    try {
+      const r = await onBuyRecovery(kind);
+      setRecMsg(r.ok
+        ? (isPt ? 'Feito!' : 'Done!')
+        : r.reason === 'weekly-cap'
+          ? (isPt ? 'Limite semanal atingido: volta na próxima semana.' : 'Weekly limit reached: back next week.')
+          : r.reason === 'insufficient'
+            ? (isPt ? 'Créditos insuficientes.' : 'Not enough Credits.')
+            : r.reason === 'full'
+              ? (isPt ? 'Já está cheio.' : 'Already full.')
+              : (isPt ? 'A troca não foi concluída. Tente de novo.' : 'The trade did not go through. Try again.'));
+    } finally { setBuyingRec(null); }
+  };
   const confirmEssence = async (qty: number) => {
     const id = pendingEss;
     if (!id || !onBuyEssence) return;
@@ -554,9 +577,29 @@ export function CambistaSheet({ language, credits, onExchangeCredits, onRecoverP
       )}
 
       {tab === 'other' && (
-        <p data-cambista-other style={{ ...sm2Hint, margin: 0 }}>
-          {isPt ? 'Em breve: outras trocas, como energia.' : 'Coming soon: other trades, like energy.'}
-        </p>
+        <div data-cambista-other style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {(['energy', 'life'] as const).map(kind => {
+            const item = RECOVERY_ITEMS[kind];
+            const st = recoveryState ?? { energy: 0, maxEnergy: 1, hp: 0, maxHp: 1 };
+            const bloqueio = recoveryBlock(kind, { credits, ...st });
+            const off = !onBuyRecovery || bloqueio !== null || buyingRec !== null;
+            const nome = kind === 'energy' ? (isPt ? 'Recuperar energia' : 'Recover energy') : (isPt ? 'Recuperar vida' : 'Recover life');
+            const efeito = kind === 'energy' ? (isPt ? `+${item.restores} de energia` : `+${item.restores} energy`) : (isPt ? `+${item.restores} coração` : `+${item.restores} heart`);
+            return (
+              <div key={kind} data-recovery-item={kind} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, border: '1px solid var(--sm2-line)', background: 'var(--sm2-surface-2)' }}>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ ...sm2Text, display: 'block', fontWeight: 600 }}>{nome}</span>
+                  <span style={{ ...sm2Hint, display: 'block' }}>{efeito}{' · '}{isPt ? `até ${item.weeklyCap} por semana` : `up to ${item.weeklyCap} per week`}</span>
+                  {bloqueio && recoveryState && <span data-recovery-why style={{ ...sm2Hint, display: 'block' }}>{bloqueio === 'full' ? (isPt ? 'Já está cheio' : 'Already full') : (isPt ? 'Créditos insuficientes' : 'Not enough Credits')}</span>}
+                </span>
+                <button type="button" data-recovery-buy={kind} disabled={off} aria-disabled={off ? true : undefined} onClick={() => void doRecovery(kind)} style={{ ...sm2Button('primary', off), flexShrink: 0 }}>
+                  <span className="sm2-num">{item.credits}</span>{' '}{isPt ? 'Créd.' : 'Credits'}
+                </button>
+              </div>
+            );
+          })}
+          {recMsg && <p role="status" data-recovery-msg style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{recMsg}</p>}
+        </div>
       )}
     </div>
   );

@@ -202,6 +202,38 @@ export async function buyEssence(element: string, qty: number, opIdExplicito?: s
   return { ok: false, reason: 'network' };
 }
 
+export type RecoveryBuyResult =
+  | { ok: true; ent?: Entitlement; kind: 'energy' | 'life'; restores: number; price: number }
+  | { ok: false; reason: string };
+
+/**
+ * EXCHANGER (24/11/2026) — "Recuperar energia"/"Recuperar vida" por Créditos NO SERVIDOR (`buy-recovery`). Preço e teto SEMANAL
+ * (1 de cada por semana ISO) são do servidor (`functions/api/_recoveryShop.js`); o cliente só aplica o efeito quando isto devolve
+ * `ok`, e checa "cheio" ANTES de chamar. Mesmo `opId` num reenvio = mesma resposta, sem cobrar de novo.
+ */
+export async function buyRecovery(kind: 'energy' | 'life', opIdExplicito?: string): Promise<RecoveryBuyResult> {
+  const id = currentSaveId();
+  if (!id) return { ok: false, reason: 'no-save' };
+  const gesto = abrirGesto(id, 'recovery', kind, opIdExplicito);
+  const opId = gesto.opId;
+  for (let tentativa = 0; tentativa < 2; tentativa++) {
+    try {
+      const res = await fetch('/api/entitlements?action=buy-recovery', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ id, kind, opId }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data === null) continue; // 200 ilegível: reenvia com o MESMO opId (replay sem cobrar de novo)
+      gesto.fechar(res.status, data?.ok === true, data?.reason);
+      if (!res.ok || !data?.ok) return { ok: false, reason: typeof data?.reason === 'string' ? data.reason : 'error' };
+      const ent = entDaResposta(data);
+      return { ok: true, kind: data.kind, restores: Number(data.restores) || 0, price: Number(data.price) || 0, ...(ent ? { ent } : {}) };
+    } catch { /* rede: uma nova tentativa com o MESMO opId */ }
+  }
+  return { ok: false, reason: 'network' };
+}
+
 // ── PACOTES DE BITS (§373) ───────────────────────────────────────────────────
 
 /**

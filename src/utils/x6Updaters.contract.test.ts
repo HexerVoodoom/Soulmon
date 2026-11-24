@@ -153,9 +153,12 @@ describe('X-6: o updater reconfere a recusa sobre o `prev`, delegando ao dono da
       .toMatch(/\[HEART_ITEM_EMOJI\]:/);
   });
 
-  it('nenhum preço em Créditos aponta para HP', () => {
+  it('cura por Créditos: SÓ o item semanal do Exchanger (24/11/2026 REVERTEU a D7+D15 de 06/09/2026), com teto semanal de 1', () => {
     const mon = readFileSync(path.join(SRC, 'utils/monetization.ts'), 'utf-8');
     const vivos = mon.replace(/\/\/.*$/gm, '');
-    expect(vivos, 'um custo em Créditos para curar voltou a existir').not.toMatch(/HEART_COST_CREDITS\s*=/);
+    // o preço solto em monetization.ts continua proibido: a cura por Créditos mora num lugar só, com o limite semanal como contrapeso
+    expect(vivos, 'a cura por Créditos mora em utils/recoveryShop.ts').not.toMatch(/HEART_COST_CREDITS\s*=/);
+    const rec = readFileSync(path.join(SRC, 'utils/recoveryShop.ts'), 'utf-8');
+    expect(rec).toMatch(/life: \{ credits: \d+, weeklyCap: 1, restores: 1 \}/);
   });
 });

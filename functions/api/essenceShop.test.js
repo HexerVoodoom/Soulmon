@@ -19,18 +19,18 @@ function setup(credits = 20, save = { defeatedElements: ['fogo', 'vapor'], essen
 
 describe('tabela de preço (servidor)', () => {
   it('base 1, par 2; pacote de 5 com 10% off arredondado para baixo', () => {
-    expect(essenceUnitPrice('fogo')).toBe(1);
-    expect(essenceUnitPrice('vapor')).toBe(2);
-    expect(essencePackPrice('fogo', 1)).toBe(1);
-    expect(essencePackPrice('fogo', 5)).toBe(4);
-    expect(essencePackPrice('vapor', 5)).toBe(9);
-    expect(essencePackPrice('fogo', 3)).toBe(3);
-    expect(essencePackPrice('fogo', 12)).toBe(10); // 2 grupos de 5 (4+4) + 2 soltas
-    expect(essencePackPrice('vapor', 7)).toBe(9 + 4);
+    expect(essenceUnitPrice('fogo')).toBe(8); // R$ equivalentes (dono, 24/11/2026): 8 / 30 / 61; pacote de 5 = 38 / 151 / 303
+    expect(essenceUnitPrice('vapor')).toBe(30);
+    expect(essencePackPrice('fogo', 1)).toBe(8);
+    expect(essencePackPrice('fogo', 5)).toBe(38);
+    expect(essencePackPrice('vapor', 5)).toBe(151);
+    expect(essencePackPrice('fogo', 3)).toBe(24);
+    expect(essencePackPrice('fogo', 12)).toBe(92); // 2 grupos de 5 (38+38) + 2 soltas
+    expect(essencePackPrice('vapor', 7)).toBe(151 + 60);
     expect(essencePackPrice('fogo', 0)).toBe(0);
     expect(essencePackPrice('fogo', 1.5)).toBe(0);
-    expect(essencePackPrice('fogo', 999_999)).toBe(199_999 * 4 + 4);
-    expect(essencePackPrice('fogo', ESSENCE_MAX_PER_ELEMENT)).toBe(200_000 * 4);
+    expect(essencePackPrice('fogo', 999_999)).toBe(199_999 * 38 + 32);
+    expect(essencePackPrice('fogo', ESSENCE_MAX_PER_ELEMENT)).toBe(200_000 * 38);
     expect(essencePackPrice('fogo', ESSENCE_MAX_PER_ELEMENT + 1)).toBe(0);
     expect(essencePackPrice('nada', 1)).toBe(0);
   });
@@ -38,15 +38,15 @@ describe('tabela de preço (servidor)', () => {
 
 describe('action=buy-essence', () => {
   it('compra de N qualquer (§479): cobra o preço do servidor para N e credita N', async () => {
-    const t = setup(20);
+    const t = setup(100);
     const r = await t.buy({ element: 'fogo', qty: 7 });
-    expect(r.body).toMatchObject({ ok: true, qty: 7, price: 6, credits: 14 });
-    expect(t.saldo()).toBe(14);
+    expect(r.body).toMatchObject({ ok: true, qty: 7, price: 54, credits: 46 });
+    expect(t.saldo()).toBe(46);
   });
-  it('N grande (1000) sem limite por compra: cobra 800 e credita', async () => {
-    const t = setup(1000);
+  it('N grande (1000) sem limite por compra: cobra 7600 e credita', async () => {
+    const t = setup(8000);
     const r = await t.buy({ element: 'fogo', qty: 1000 });
-    expect(r.body).toMatchObject({ ok: true, qty: 1000, price: 800 });
+    expect(r.body).toMatchObject({ ok: true, qty: 1000, price: 7600 });
   });
   it('N acima do teto de estoque = 409 sem cobrar', async () => {
     const t = setup(10_000_000, { defeatedElements: ['fogo'], essences: { fogo: 5 } });
@@ -56,15 +56,15 @@ describe('action=buy-essence', () => {
   });
   it('N acima do saldo = 402 sem cobrar', async () => {
     const t = setup(3);
-    expect((await t.buy({ element: 'fogo', qty: 4 })).status).toBe(402);
+    expect((await t.buy({ element: 'fogo', qty: 1 })).status).toBe(402);
     expect(t.saldo()).toBe(3);
   });
   it('debita o preço do SERVIDOR (ignora price do corpo) e devolve o novo saldo', async () => {
-    const t = setup(20);
+    const t = setup(300);
     const r = await t.buy({ element: 'vapor', qty: 5, price: 1 });
     expect(r.status).toBe(200);
-    expect(r.body).toMatchObject({ ok: true, element: 'vapor', qty: 5, price: 9, credits: 11 });
-    expect(t.saldo()).toBe(11);
+    expect(r.body).toMatchObject({ ok: true, element: 'vapor', qty: 5, price: 151, credits: 149 });
+    expect(t.saldo()).toBe(149);
   });
   it('saldo insuficiente = 402 e nada debitado', async () => {
     const t = setup(1);
@@ -74,12 +74,12 @@ describe('action=buy-essence', () => {
     expect(t.saldo()).toBe(1);
   });
   it('mesmo opId = mesma resposta, cobra uma vez só', async () => {
-    const t = setup(20);
+    const t = setup(100);
     const a = await t.buy({ element: 'fogo', qty: 5 });
     const b = await t.buy({ element: 'fogo', qty: 5 });
     expect(b.status).toBe(200);
     expect(b.body.credits).toBe(a.body.credits);
-    expect(t.saldo()).toBe(16);
+    expect(t.saldo()).toBe(62);
   });
   it('sem opId válido = 400', async () => {
     const t = setup(20);

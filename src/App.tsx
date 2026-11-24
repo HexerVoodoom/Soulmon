@@ -299,7 +299,7 @@ import { pedirFreeRookie } from './utils/freeRookie';
 import type { BitsExchangeOutcome } from './utils/bitsPackCopy';
 import { ArcadeModal } from './components/play/ArcadeModal';
 import type { SalaoGame } from './components/play/PlaySheets';
-import { fetchEntitlement, spendCredits, buyEssence, buyBitsPack, recoverPendingBitsBuys, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
+import { fetchEntitlement, spendCredits, buyEssence, buyRecovery, buyBitsPack, recoverPendingBitsBuys, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
 import { purchase, reconcileSubscription, reconcilePurchases } from './utils/playBilling';
 import {
   effectiveOwnedFrames, grantFrameOnEvolution, resolveWidgetFrame, setPaidWidgetFramesFromEntitlement, usePaidWidgetFrames,
@@ -5118,6 +5118,26 @@ export default function App() {
     return true;
   }, [language, setGameState, gameState, refuseDemo]);
 
+  /** EXCHANGER (24/11/2026): Recuperar energia (+5) e Recuperar vida (+1 coração) por Créditos. O servidor cobra, confere o teto SEMANAL
+   *  (1 de cada) e deduplica; cheio é checado AQUI antes de chamar. O efeito só entra quando o servidor confirma. */
+  const handleBuyRecovery = useCallback(async (kind: 'energy' | 'life'): Promise<{ ok: boolean; reason?: string }> => {
+    if (isDemoMode(gameState)) { refuseDemo(); return { ok: false, reason: 'demo' }; }
+    const gs = gameStateRef.current;
+    const cheio = kind === 'energy' ? gs.energyPoints >= getMaxEnergyForStage(gs.evolutionStage) : gs.healthPoints >= gs.maxHealthPoints;
+    if (cheio) return { ok: false, reason: 'full' };
+    const r = await buyRecovery(kind);
+    if (!r.ok) return { ok: false, reason: r.reason };
+    setGameState(prev => {
+      const base = { ...prev, ...(r.ent ? { credits: r.ent.credits, accountTier: r.ent.tier } : {}) };
+      if (kind === 'energy') {
+        const e = setEnergy(prev, Date.now(), (cur, max) => Math.min(max, cur + r.restores));
+        return { ...base, energyPoints: e.energyPoints, energyClock: e.energyClock };
+      }
+      return { ...base, healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + r.restores) };
+    });
+    return { ok: true };
+  }, [gameState, setGameState, refuseDemo]);
+
   // Assinatura cosmética (D10): a vigência fica numa store fora do GameState e SÓ abre a vitrine do trimestre.
   const subscription = useSubscriptionStatus();
   useEffect(() => {
@@ -8699,6 +8719,8 @@ export default function App() {
                 onRecoverPendingBits={recuperarBitsPendentes}
                 onGetCredits={demo ? undefined : openCredits}
                 onBuyEssence={handleBuyEssence}
+                onBuyRecovery={handleBuyRecovery}
+                recoveryState={{ energy: gameState.energyPoints, maxEnergy: getMaxEnergyForStage(gameState.evolutionStage), hp: gameState.healthPoints, maxHp: gameState.maxHealthPoints }}
                 essences={gameState.essences}
                 accountTier={gameState.accountTier}
                 onUnlock={() => setUnlockReason('shop')}

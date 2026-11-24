@@ -8,7 +8,6 @@
  */
 export const ESSENCE_MAX_PER_ELEMENT = 1_000_000;
 export const ESSENCE_PACK_SIZES = /** @type {const} */ ([1, 5]);
-export const ESSENCE_PACK_DISCOUNT = 0.1;
 
 export const BASE_ELEMENTS = ['fogo', 'agua', 'terra', 'ar', 'eletricidade', 'arcano', 'sombra', 'luz',
   'vileza', 'morte', 'vida', 'vigor', 'marcial', 'tempo', 'som', 'gravidade', 'espaco', 'fada', 'industrial', 'planta'];
@@ -39,9 +38,12 @@ export const essenceBaseCount = id => COMPOSITION.get(id)?.length ?? 0;
 export const essenceShopIds = () => [...COMPOSITION.keys()];
 
 /** Preço de 1 essência; 0 = elemento desconhecido. @param {string} id */
+/** 24/11/2026 (dono): preço em R$ equivalentes (taxa R$ 9,90 ÷ 150 = R$ 0,066 por Crédito). Unitário 8 / 30 / 61; pacote de 5 = 38 / 151 / 303. Espelho: `src/utils/essenceShop.ts`. */
+const UNIT_BY_BASES = { 1: 8, 2: 30, 3: 61 };
+const PACK5_BY_BASES = { 1: 38, 2: 151, 3: 303 };
 export function essenceUnitPrice(id) {
   const n = essenceBaseCount(id);
-  return n <= 0 ? 0 : Math.min(3, n);
+  return n <= 0 ? 0 : UNIT_BY_BASES[Math.min(3, n)];
 }
 
 /**
@@ -54,5 +56,5 @@ export function essencePackPrice(id, qty) {
   const unit = essenceUnitPrice(id);
   if (!unit || !Number.isSafeInteger(qty) || qty < 1 || qty > ESSENCE_MAX_PER_ELEMENT) return 0;
   const packs = Math.floor(qty / 5);
-  return packs * Math.floor(5 * unit * (1 - ESSENCE_PACK_DISCOUNT)) + (qty - packs * 5) * unit;
+  return packs * PACK5_BY_BASES[Math.min(3, essenceBaseCount(id))] + (qty - packs * 5) * unit;
 }
