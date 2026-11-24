@@ -24,7 +24,7 @@ describe('catálogo × recursos do jogo (beta12 §J, A1)', () => {
     for (const id of ['sono-horario-fixo', 'sono-telas-fora', 'sono-preparar-quarto', 'corpo-beber-agua']) {
       expect(ACTIVITY_CATALOG.find(i => i.id === id)?.resource).toBeUndefined();
     }
-    expect(Object.keys(CATALOG_RESOURCE).sort()).toEqual(['corpo-caminhar', 'criatividade-escrita-livre', 'foco-bloco-25min', 'foco-uma-tarefa-por-vez', 'mente-gratidao']);
+    expect(Object.keys(CATALOG_RESOURCE).sort()).toEqual(['corpo-caminhar', 'criatividade-escrita-livre', 'foco-bloco-25min', 'foco-uma-tarefa-por-vez', 'mente-gratidao', 'proposito-refletir-valores']);
   });
   it('o módulo leve não importa o catálogo (fica fora do chunk de entrada)', () => {
     const src = readFileSync(new URL('./catalogResources.ts', import.meta.url), 'utf8');

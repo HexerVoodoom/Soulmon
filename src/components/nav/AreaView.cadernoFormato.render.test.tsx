@@ -26,11 +26,12 @@ describe('Ir ao Caderno abre no formato do hábito', () => {
   it('cada hábito linkado aponta para o seu formato', () => {
     expect(cadernoFormatoOfCatalogId('mente-gratidao')).toBe('gratidao');
     expect(cadernoFormatoOfCatalogId('criatividade-escrita-livre')).toBe('livre');
+    expect(cadernoFormatoOfCatalogId('proposito-refletir-valores')).toBe('importa');
     expect(cadernoFormatoOfCatalogId('corpo-caminhar')).toBeUndefined();
     expect(cadernoFormatoOfCatalogId(undefined)).toBeUndefined();
   });
 
-  for (const [formato, rotulo] of [['gratidao', 'Gratidão'], ['livre', 'Escrita livre']] as const) {
+  for (const [formato, rotulo] of [['gratidao', 'Gratidão'], ['livre', 'Escrita livre'], ['importa', 'O que importa hoje']] as const) {
     it(`initialSection "${formato}" abre a folha com "${rotulo}" selecionado`, async () => {
       renderWithCss(<AreaView {...base({ initialSheet: 'caderno', initialSection: formato })} />);
       const radio = await waitFor(() => screen.getByRole('radio', { name: rotulo }));

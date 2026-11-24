@@ -94,7 +94,8 @@ export function irLaLabel(recurso: CatalogResource | undefined, language: Langua
 }
 
 /** O texto da tag do topo: a palavra "Tarefa" (o checkbox marcado vem desenhado) e o anúncio para leitor de tela. */
-export const autoTagText = (language: Language): string => (language === 'pt-BR' ? 'Tarefa' : 'Task');
+/** O texto do toast: o NOME da tarefa marcada (ex.: "Escrever no jornal de gratidão"); só sem nome cai na palavra genérica. */
+export const autoTagText = (language: Language, name?: string): string => (name?.trim() ? name.trim() : language === 'pt-BR' ? 'Tarefa' : 'Task');
 export const autoTagAria = (name: string, language: Language): string =>
   language === 'pt-BR' ? `Tarefa concluída automaticamente: ${name}` : `Task completed automatically: ${name}`;
 
