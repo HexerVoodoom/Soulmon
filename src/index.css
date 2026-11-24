@@ -7578,11 +7578,13 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* Mapa do Soulsmith: o título vai na placa da moldura (o do HUD fica só para o nome acessível). */
 [data-forge-view="map"] .sm2-vit-title { opacity: 0; }
 /* Mapa do Soulsmith DENTRO do modal da área (23/11/2026): sem tela cheia; palco na largura do modal, ancorado no topo (chakras ≤53% da arte + folga do balão). */
-/* Sem rolagem (24/11/2026): o contêiner mostra só a faixa 18%..75% da arte (chakras em 30..53%), com o palco puxado para cima em 18% da PRÓPRIA altura; chakras seguem em % do palco. */
-.sm2-vit-map[data-vitra-inline] { position: relative; inset: auto; z-index: auto; inline-size: 100%; aspect-ratio: 852 / 1052; border-radius: var(--sm2-radius-md, 12px); }
-.sm2-vit-map[data-vitra-inline] .sm2-vit-stage { top: 0; width: 100%; transform: translate(-50%, -18%); }
+/* Sem rolagem, cabeça inteira (24/11/2026): o mapa ocupa o que sobra do corpo do modal (flex), o palco é 'contain' ANCORADO NA BASE: block-size = contêiner / 0,95
+   (corta só os ~5% de arco vazio do topo; a cabeça começa em ~6,8%) e nunca maior que a largura permite (a figura encolhe em vez de cortar a cabeça); chakras seguem em % do palco. */
+.sm2-vit-map[data-vitra-inline] { position: relative; inset: auto; z-index: auto; inline-size: 100%; flex: 1 1 0; min-block-size: 0; border-radius: var(--sm2-radius-md, 12px); }
+.sm2-vit-map[data-vitra-inline] .sm2-vit-stage { --vit-h: min(calc(100cqh / .95), calc(100cqw * 1846 / 852)); inset-block: auto 0; inset-inline: 50% auto; block-size: var(--vit-h); inline-size: calc(var(--vit-h) * 852 / 1846); aspect-ratio: auto; transform: translateX(-50%); }
 .sm2-vit-map[data-vitra-inline] .sm2-vit-foot { padding: 16px 12px 12px; }
-[data-area-sheet-body]:has([data-vitra-inline]) { overflow-y: hidden !important; }
+[data-area-sheet-body]:has([data-vitra-inline]) { overflow-y: hidden !important; display: flex; flex-direction: column; }
+[data-area-sheet-body]:has([data-vitra-inline]) > [data-forge-card] { flex: 1 1 0; min-block-size: 0; display: flex; flex-direction: column; }
 /* Balão horizontal sobre o chakra: centrado no palco, largura relativa ao modal (cqw do palco), duas opções lado a lado. */
 .sm2-vit-pop[data-horizontal] { inline-size: calc(100cqw - 16px); max-inline-size: 30rem; }
 .sm2-vit-pop[data-horizontal] .sm2-vit-opts { grid-template-columns: 1fr 1fr; }

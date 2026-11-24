@@ -53,10 +53,16 @@ for (const largura of [360, 375, 412]) {
       expect(container.querySelector('[data-vitra-bar][hidden]')).not.toBeNull();
       expect(container.querySelector('.sm2-moldura-tela')).toBeNull();
       expect(container.querySelectorAll('[data-area-sheet-close]')).toHaveLength(1);
-      // sem scroll: o corpo corta (a faixa da arte cabe) e o mapa inline mostra só a faixa dos chakras
+      // sem scroll: o corpo corta e o palco "contain" ancorado na base mostra a cabeça inteira
       expect(getComputedStyle(corpo).overflowY).toBe('hidden');
       const css = readFileSync(resolve(process.cwd(), 'src/index.css'), 'utf8');
-      expect(css).toMatch(/\.sm2-vit-map\[data-vitra-inline\] \.sm2-vit-stage \{[^}]*translate\(-50%, -18%\)/);
+      const regra = css.match(/\.sm2-vit-map\[data-vitra-inline\] \.sm2-vit-stage \{[^}]*\}/)![0];
+      expect(regra).toMatch(/inset-block: auto 0/); // ancorado na BASE
+      expect(regra).not.toMatch(/translate\([^)]*%,\s*-?\d/); // sem puxar o palco para cima (cortava a cabeça)
+      expect(regra).not.toMatch(/(^|[\s{;])top:\s*0/); // nunca ancorado no topo
+      expect(regra).not.toMatch(/(^|[\s{;])width:\s*\d+px/);
+      expect(regra).toMatch(/100cqh \/ \.95/); // corta só ~5% de vazio do topo
+      expect(css).not.toMatch(/\.sm2-vit-map\[data-vitra-inline\][^{]*\{[^}]*prefers-reduced-motion/);
       expect(css).toMatch(/\.sm2-vit-pop\[data-horizontal\] \{[^}]*inline-size: calc\(100cqw - 16px\)/);
       // balão do chakra: horizontal, filho do palco (largura relativa), não solto na viewport
       fireEvent.click(container.querySelector('[data-vitra-chakra="nucleo"]')!);
