@@ -2404,7 +2404,7 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 
 **Sync 23/11/2026 (P5):** o modal de um elemento BASE mostra, acima da composição e das vantagens, o texto aprovado do dono (`[data-element-text]`, de `utils/elementoTextos.data.ts`); combinado e curado seguem sem texto. **Régua:** `src/components/ElementDex.textos.render.test.tsx`.
 
-**Sync 23/11/2026 (P5, accordion):** os chips de categoria saíram; Novo (CheckRow) e Base/Comb II/III/IV/Special viraram seções do MESMO accordion do Bestiário (`DriveAcordeao.tsx`: `Acordeao` + `useAcordeaoFechados`, estado em `DRIVE_ACORDEAO_FECHADOS`; ids `dex-novo`, `dex-base`…, cabeçalho com "destrancados / total"). Com filtro (Novo/bases) as seções vazias somem. **Régua:** `ElementDex.drive.render.test.tsx`.
+**Sync 23/11/2026 (P5, accordion):** os chips de categoria saíram; a tag "Só novos" (CheckRow, sem accordion, abaixo do filtro de bases; 24/11) e Base/Comb II/III/IV/Special viraram seções do MESMO accordion do Bestiário (`DriveAcordeao.tsx`: `Acordeao` + `useAcordeaoFechados`, estado em `DRIVE_ACORDEAO_FECHADOS`; ids `dex-base`…; tudo ABERTO por padrão, só os fechados pelo usuário persistem, cabeçalho com "destrancados / total"). Com filtro (Novo/bases) as seções vazias somem. **Régua:** `ElementDex.drive.render.test.tsx`.
 
 **Sync 23/11/2026 (P5/24):** a aba ganhou chips de categoria (`[data-element-cat]`: Base, Comb II, Comb III, Comb IV, Special; `utils/elementoCategoria.ts`) e a caixa "Novo" (`[data-element-only-new]`, só destrancados com selo); combinam em E com o filtro por bases. A ficha mora em `ElementModal.tsx` (`dexElementName` segue reexportado). O cabeçalho `X / Y` já existia (PT/EN iguais).
 

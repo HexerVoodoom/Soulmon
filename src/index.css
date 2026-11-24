@@ -7565,6 +7565,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-modal--cristal .sm2-moldura-modal__lado,
 .sm2-moldura-modal--cristal .sm2-moldura-modal__topo,
 .sm2-moldura-modal--cristal .sm2-moldura-modal__base { display: none; }
+.sm2-moldura-modal--cristal[data-fundo-unico] .sm2-moldura-modal__fundo { display: block; background-size: cover; background-repeat: no-repeat; background-position: center; border-radius: inherit; }
 .sm2-moldura-modal--cristal::after {
   content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; box-sizing: border-box;
   border: solid transparent; border-width: var(--sm2-cristal-canto);
