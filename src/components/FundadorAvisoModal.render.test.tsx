@@ -17,7 +17,7 @@ describe('FundadorAvisoModal (um por prêmio)', () => {
     ['furn-cristal-fundador', 'Cristal Fundador', 'Ganho por constância: 5 dias.', 5, false],
   ];
   for (const [id, nome, frase, , equipa] of casos) {
-    it(`${id}: arte, nome PT, frase e ${equipa ? 'Equipar + Fechar' : 'só Fechar'}`, () => {
+    it(`${id}: arte, nome PT, frase e ${equipa ? 'Equipar + ✕' : 'só o ✕, sem rodapé'}`, () => {
       const onClose = vi.fn(); const onEquip = vi.fn();
       render(<FundadorAvisoModal language="pt-BR" premio={id} onClose={onClose} onEquip={onEquip} />);
       expect(document.querySelectorAll('[data-fundador-arte]').length).toBe(1);
@@ -25,10 +25,18 @@ describe('FundadorAvisoModal (um por prêmio)', () => {
       expect(document.body.textContent).toContain(frase);
       expect(!!document.querySelector('[data-fundador-equip]')).toBe(equipa);
       if (equipa) { fireEvent.click(document.querySelector('[data-fundador-equip]')!); expect(onEquip).toHaveBeenCalledWith(id); }
-      fireEvent.click(document.querySelector('[data-fundador-close]')!);
+      expect(document.querySelector('[data-fundador-close]')).toBeNull(); // sem botão Close no rodapé
+      expect(Array.from(document.querySelectorAll('button')).some(b => /^(Fechar|Close)$/.test(b.textContent?.trim() ?? ''))).toBe(false);
+      fireEvent.click(document.querySelector('.sm2-popup-fechar')!);
       expect(onClose).toHaveBeenCalled();
     });
   }
+  it('Cristal: nenhum botão de rodapé (só o ✕ no topo)', () => {
+    render(<FundadorAvisoModal language="pt-BR" premio="furn-cristal-fundador" onClose={() => {}} onEquip={() => {}} />);
+    const botoes = Array.from(document.querySelectorAll('button'));
+    expect(botoes.length).toBe(1);
+    expect(botoes[0].classList.contains('sm2-popup-fechar')).toBe(true);
+  });
   it('EN: nome e frase em inglês', () => {
     render(<FundadorAvisoModal language="en-US" premio="founder-fundo" onClose={() => {}} onEquip={() => {}} />);
     expect(document.body.textContent).toContain('Founder Background');

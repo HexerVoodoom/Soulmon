@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * REGRESSÃO (24/11/2026, hotfix): o aviso do Fundador ABRIA mas o ✕ e o "Fechar" não faziam nada. Causa: o popup ia direto ao <body>
+ * REGRESSÃO (24/11/2026, hotfix): o aviso do Fundador ABRIA mas o ✕ não faziam nada. Causa: o popup ia direto ao <body>
  * (portal `sobreTelas`) e abria POR CIMA de outro modal da fila; o `useDialogA11y` do outro modal inertiza os irmãos do <body> (o portal
  * inclusive), então o toque no ✕/Fechar morria. Correção: o aviso é item `fundador` da fila central (um modal por vez).
  */
@@ -37,7 +37,7 @@ const vistos = () => [...document.querySelectorAll('[data-fundador-aviso]')].map
 const ORDEM = ['founder-fundo', 'founder-moldura', 'founder-retrato', 'furn-cristal-fundador'];
 
 describe('aviso do Fundador: um modal por prêmio, em sequência, e fecha de verdade', () => {
-  for (const [nome, achar] of [['✕', botaoX], ['Fechar', () => document.querySelector<HTMLButtonElement>('[data-fundador-close]')!]] as const) {
+  for (const [nome, achar] of [['✕', botaoX]] as const) {
     it(`${nome} fecha cada um, grava só aquele id, abre o próximo e no fim não reabre`, () => {
       let ultimo: FundadorEstado | undefined;
       render(<Harness outroAberto={false} onEstado={s => { ultimo = s; }} />);
