@@ -1,54 +1,44 @@
 // @vitest-environment jsdom
 /**
- * Teste de render do `NodeArt` — a moldura do nó em PNG (arte A do dono, 4 estados, 24/11/2026).
- *
- * Contrato para quem chama (o `SoulNode` posiciona o vidro de 80 por cima): um quadrado `NODE_SIZE²`, decorativo, com a abertura
- * concêntrica. Travado aqui: os quatro estados usam 4 PNGs DISTINTOS, só o `ringColor` ganha a camada de matiz, `busy` só marca o
- * estado, a caixa é 88² e a arte segue invisível para o leitor de tela.
+ * Teste de render do `NodeArt` — só o ANEL do nó, em CSS (24/11/2026): sem PNG, sem miolo preto; o estado vem de `data-node-art`,
+ * a cor do ramo da variável `--sm2-no-cor`, `busy` só marca o estado, a caixa é decorativa.
  */
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { NodeArt, NODE_GLASS, NODE_SIZE, NODE_SPRITE, type SoulNodeVisual } from './nodeArt';
 
 const VISUAIS: SoulNodeVisual[] = ['current', 'reached', 'forecast', 'locked'];
 
-const srcDe = (visual: SoulNodeVisual) => {
-  const { container, unmount } = render(<NodeArt visual={visual} />);
-  const src = (container.querySelector('[data-node-frame]') as HTMLImageElement).getAttribute('src');
-  unmount();
-  return src;
-};
-
 describe('NodeArt', () => {
-  it('cada estado visual usa um PNG PRÓPRIO (normal/atual/alcançado/bloqueado)', () => {
-    const srcs = VISUAIS.map(srcDe);
-    expect(new Set(srcs).size).toBe(VISUAIS.length);
-    expect(srcDe('current')).toMatch(/evo-no-A-atual/);
-    expect(srcDe('reached')).toMatch(/evo-no-A-alcancado/);
-    expect(srcDe('forecast')).toMatch(/evo-no-A-normal/);
-    expect(srcDe('locked')).toMatch(/evo-no-A-bloqueado/);
+  it('cada estado marca o próprio data-node-art e não usa imagem', () => {
+    for (const v of VISUAIS) {
+      const { container, unmount } = render(<NodeArt visual={v} />);
+      expect(container.querySelector(`[data-node-art="${v}"]`)).toBeTruthy();
+      expect(container.querySelector('img')).toBeNull();
+      unmount();
+    }
   });
 
-  it('a cor do ramo entra só quando pedida, como camada de matiz sobre a mesma máscara', () => {
+  it('a cor do ramo entra só quando pedida, pela variável do anel', () => {
     const { container, rerender } = render(<NodeArt visual="reached" />);
-    expect(container.querySelector('[data-node-tint]')).toBeNull();
+    const el = () => container.querySelector('[data-node-art]') as HTMLElement;
+    expect(el().style.getPropertyValue('--sm2-no-cor')).toBe('');
     rerender(<NodeArt visual="reached" ringColor="#22aa55" />);
-    const t = container.querySelector('[data-node-tint]') as HTMLElement;
-    expect(t).toBeTruthy();
-    expect(t.style.background).toBeTruthy();
+    expect(el().style.getPropertyValue('--sm2-no-cor')).toBe('#22aa55');
   });
 
-  it('`busy` marca o estado sem trocar o PNG', () => {
+  it('`busy` só marca o estado', () => {
     const { container } = render(<NodeArt visual="reached" busy />);
     expect(container.querySelector('[data-node-art]')?.getAttribute('data-busy')).toBe('true');
-    expect((container.querySelector('[data-node-frame]') as HTMLImageElement).getAttribute('src')).toBe(srcDe('reached'));
   });
 
-  it('a caixa é 88² e as três medidas do canvas batem (88 / 80 / 64)', () => {
-    const { container } = render(<NodeArt visual="current" />);
-    const img = container.querySelector('[data-node-frame]')!;
-    expect(img.getAttribute('width')).toBe(String(NODE_SIZE));
-    expect(img.getAttribute('height')).toBe(String(NODE_SIZE));
+  it('o anel é contorno fino de 2px sem preenchimento (CSS-fonte) e as medidas do canvas seguem 88 / 80 / 64', () => {
+    const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf8');
+    const regra = css.match(/\.sm2-evo-no-arte \{[^}]*\}/)?.[0] ?? '';
+    expect(regra).toContain('border: 2px solid');
+    expect(regra).not.toMatch(/background/);
     expect([NODE_SIZE, NODE_GLASS, NODE_SPRITE]).toEqual([88, 80, 64]);
   });
 

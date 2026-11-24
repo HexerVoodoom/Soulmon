@@ -48,9 +48,12 @@ describe('árvore do Centro de Evolução', () => {
     expect(screen.getByTestId('sm-arvore-ligacao-join')).toBeTruthy();
     // pontas: fio de cobre curvo (1 aceso = ramo atual, ou nenhum se o atual for o do meio; o resto apagado); meio: linha procedural
     const split = screen.getByTestId('sm-arvore-ligacao-split');
-    expect(split.querySelectorAll('img[data-conector]').length).toBe(2);
-    expect(split.querySelectorAll('svg[data-conector="procedural"] path').length).toBe(1);
-    expect(split.querySelector('img')?.getAttribute('src')).toMatch(/curva-(esq|dir)/);
+    expect(split.querySelectorAll('img').length).toBe(0);
+    expect(split.querySelectorAll('[data-conector-ramo]').length).toBe(3);
+    expect(split.querySelector('[data-conector="tronco"]')).toBeTruthy();
+    expect(split.querySelector('[data-conector="barra"]')).toBeTruthy();
+    expect((split.querySelector('[data-conector-ramo="power"]') as HTMLElement).style.backgroundColor).toMatch(/#22a900|34, 169, 0/i);
+    expect((split.querySelector('[data-conector-ramo="benevolence"]') as HTMLElement).style.backgroundColor).toMatch(/#f2c230|242, 194, 48/i);
     expect(screen.getByTestId('sm-arvore-ligacao-join').className).toContain('sm2-evo-ligacao--join');
   });
   it('em inglês: Power / Harmony / Benevolence', () => {

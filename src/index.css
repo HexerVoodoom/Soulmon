@@ -7892,13 +7892,26 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 [data-quando] { display: flex; flex-direction: column; gap: var(--sm2-space-2); min-inline-size: 0; }
 [data-quando-controles] { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--sm2-space-4); min-inline-size: 0; }
 /* Arte final do Evolution Center (P5 evo-assets): conectores A, nó A, cadeado B. */
-.sm2-evo-ligacao { position: relative; inline-size: 100%; aspect-ratio: 300 / 48; margin-block: 0; }
+.sm2-evo-ligacao { position: relative; inline-size: 100%; block-size: var(--sm2-space-5); margin-block: 0; --sm2-evo-fio: 2px; }
 .sm2-evo-ligacao--join { transform: scaleY(-1); }
-.sm2-evo-conector { position: absolute; inset: 0; display: block; inline-size: 100%; block-size: 100%; object-fit: fill; overflow: visible; }
+/* Branch RETO em CSS: tronco desce do nome, traço horizontal do centro da 1ª ao centro da 3ª coluna, 3 descidas na cor do ramo. */
+.sm2-evo-lig__tronco, .sm2-evo-lig__barra, .sm2-evo-lig__descida { position: absolute; display: block; border-radius: 1px; }
+.sm2-evo-lig__tronco { inset-inline-start: calc(50% - var(--sm2-evo-fio) / 2); inline-size: var(--sm2-evo-fio); inset-block-start: 0; block-size: 50%; background: var(--sm2-muted); }
+.sm2-evo-lig__barra { inset-inline: calc(100% / 6); inset-block-start: calc(50% - var(--sm2-evo-fio) / 2); block-size: var(--sm2-evo-fio); background: linear-gradient(90deg, var(--sm2-evo-poder), var(--sm2-evo-harmonia) 50%, var(--sm2-evo-bene)); }
+.sm2-evo-lig__descida { inset-block-start: 50%; block-size: 50%; inline-size: var(--sm2-evo-fio); }
+.sm2-evo-lig__descida--esq { inset-inline-start: calc(100% / 6 - var(--sm2-evo-fio) / 2); }
+.sm2-evo-lig__descida--meio { inset-inline-start: calc(50% - var(--sm2-evo-fio) / 2); }
+.sm2-evo-lig__descida--dir { inset-inline-start: calc(100% * 5 / 6 - var(--sm2-evo-fio) / 2); }
+.sm2-evo-lig__descida[data-conector="inativo"] { opacity: .7; }
+/* Tracinhos 2px na cor do ramo: valor→nó, nó→nome e entre nós. */
+.sm2-evo-tracinho { display: block; flex: none; inline-size: 2px; border-radius: 1px; background: var(--sm2-tracinho, var(--sm2-muted)); }
 .sm2-evo-lock-img { display: block; inline-size: 28px; block-size: 28px; }
-.sm2-evo-no-arte { position: relative; }
-.sm2-evo-no-arte[data-busy="true"] { opacity: .75; }
-.sm2-evo-no-matiz { position: absolute; inset: 0; display: block; mix-blend-mode: color; opacity: .85; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; pointer-events: none; }
+/* Nó A (24/11/2026): SÓ o anel de 2px em CSS, sem miolo preto; o estado vem do contorno. */
+.sm2-evo-no-arte { border-radius: 50%; box-sizing: border-box; border: 2px solid var(--sm2-no-cor, var(--sm2-primary-deep)); pointer-events: none; }
+.sm2-evo-no-arte[data-node-art="current"] { border-color: var(--sm2-no-cor, var(--sm2-primary-ink)); }
+.sm2-evo-no-arte[data-node-art="forecast"] { border-style: dashed; }
+.sm2-evo-no-arte[data-node-art="locked"] { border-color: color-mix(in srgb, var(--sm2-no-cor, var(--sm2-muted)) 45%, transparent); }
+.sm2-evo-no-arte[data-busy="true"] { opacity: .75; border-style: dashed; }
 
 /* Barra de evolução B (`evolution/EvoBar.tsx`): moldura 480×128 por largura do contêiner; canal medido no PNG (x 19–456, y 58–68). */
 .sm2-evo-barra { position: relative; inline-size: 100%; aspect-ratio: 480 / 128; margin-block: -5%; }
@@ -7906,4 +7919,3 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-evo-barra__canal { position: absolute; inset-inline-start: 3.96%; inset-inline-end: 4.9%; inset-block-start: 45.3%; block-size: 8.6%; border-radius: 2px; overflow: visible; }
 
 .sm2-evo-segurada { display: inline-flex; align-items: center; min-block-size: 24px; padding-inline: var(--sm2-space-2); border-radius: 999px; background: var(--sm2-primary-soft); color: var(--sm2-primary-ink); font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); font-weight: 600; letter-spacing: .04em; }
-.sm2-evo-no-arte[data-node-art="locked"] .sm2-evo-no-matiz { opacity: .4; }

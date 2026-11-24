@@ -74,7 +74,7 @@ export function SoulNode({
     <>
       <NodeArt visual={visual} busy={busy} ringColor={ringColor} />
       <span
-        className="sm2-viewport-screen sm2-visor"
+        className="sm2-visor"
         data-node-glass
         style={{
           position: 'absolute',
@@ -120,7 +120,6 @@ export function SoulNode({
               style={{ width: NODE_SPRITE, height: NODE_SPRITE, display: 'block', objectFit: 'contain', imageRendering: 'pixelated' }}
             />
           ))}
-        <span className="sm2-viewport-glass" style={{ borderRadius: '50%' }} />
       </span>
     </>
   );
