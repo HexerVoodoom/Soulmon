@@ -7941,7 +7941,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-drive-nav-conteudo[data-dir="next"] { --sm2-drive-nav-dx: 12px; }
 @keyframes sm2-drive-nav-in { from { opacity: 0; transform: translateX(var(--sm2-drive-nav-dx, 0)); } to { opacity: 1; transform: none; } }
 .sm2-drive-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
-.sm2-drive-nav-btn { box-sizing: border-box; width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--sm2-ink); cursor: pointer; border-radius: var(--sm2-radius-sm); }
+.sm2-drive-nav-btn { box-sizing: border-box; inline-size: 44px; block-size: 44px; padding: 0; display: flex; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--sm2-ink); cursor: pointer; border-radius: var(--sm2-radius-sm); }
 .sm2-drive-nav-btn:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
 .sm2-drive-nav-btn:disabled { opacity: .3; cursor: default; }
 [data-element-cell][data-last="1"], [data-bestiary-open][data-last="1"] { outline: 2px solid var(--sm2-primary-ink); outline-offset: -2px; border-radius: var(--sm2-radius-sm); }
