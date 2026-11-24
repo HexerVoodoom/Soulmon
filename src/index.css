@@ -7362,6 +7362,7 @@ button.sm2-hex-row {
   &[data-can-craft="true"] { border-color: var(--sm2-primary-ink); background: var(--sm2-primary-soft); }
 }
 .sm2-pocao-head { display: flex; align-items: center; gap: var(--sm2-space-2); }
+.sm2-pocao-fav { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; flex: none; cursor: pointer; border-radius: 22px; border: 0; background: transparent; color: var(--sm2-muted); font: inherit; &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; } }
 .sm2-pocao-ing {
   list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sm2-space-1);
   & > li { display: flex; align-items: center; gap: var(--sm2-space-2); font-size: var(--sm2-text-sm); color: var(--sm2-muted); }
