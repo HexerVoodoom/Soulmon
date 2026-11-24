@@ -48,11 +48,11 @@ describe('Soulsmith em mapa', () => {
     abrir({});
     expect(document.querySelector('[data-vitra-stage]')).not.toBeNull();
     const { CHAKRA } = await import('./forge/VitraMap');
-    expect(CHAKRA.nucleo).toMatchObject({ x: 50, y: 29.9 });
-    expect(CHAKRA.carapaca).toMatchObject({ x: 50, y: 41.6 });
-    expect(CHAKRA.rastro).toMatchObject({ x: 50, y: 53 });
+    expect(CHAKRA.nucleo).toMatchObject({ x: 50, y: 28.8 });
+    expect(CHAKRA.carapaca).toMatchObject({ x: 50, y: 39.2 });
+    expect(CHAKRA.rastro).toMatchObject({ x: 50, y: 49.4 });
     const spot = chakra('nucleo').parentElement as HTMLElement;
-    expect(spot.style.left).toBe('50%'); expect(spot.style.top).toBe('29.9%');
+    expect(spot.style.left).toBe('50%'); expect(spot.style.top).toBe('28.8%');
     expect(document.querySelector('[data-vitra-back]')).toBeNull();
     cleanup();
     const onBack = vi.fn();

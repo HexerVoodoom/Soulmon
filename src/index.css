@@ -3640,7 +3640,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
    Mesmo esquema da Hexsmith: placa quadrada, três pontos, balão ao lado. Tudo por token (cores de brasa só na figura de vidro, que é arte). */
 .sm2-vit-map { position: fixed; inset: 0; z-index: 300; overflow: hidden; background: #06171A; container-type: size; }
 /* O PALCO tem a proporção da arte (852/1846) e COBRE a tela, centrado (cover manual): chakras em % do palco = sempre sobre os anéis, qualquer tela. */
-.sm2-vit-stage { position: absolute; left: 50%; top: 50%; width: max(100cqw, calc(100cqh * 852 / 1846)); aspect-ratio: 852 / 1846; transform: translate(-50%, -50%); container-type: inline-size; }
+.sm2-vit-stage { position: absolute; left: 50%; top: 50%; width: max(100cqw, calc(100cqh * 1024 / 1365)); aspect-ratio: 1024 / 1365; transform: translate(-50%, -50%); container-type: inline-size; }
 .sm2-vit-figure { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; user-select: none; }
 .sm2-vit-backdrop { position: absolute; inset: 0; }
 .sm2-vit-spot { position: absolute; width: 0; height: 0; --r: max(22px, 9cqw); }
@@ -3653,7 +3653,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
 .sm2-vit-foot > * { margin: 0; pointer-events: auto; text-shadow: 0 1px 6px rgba(0, 0, 0, .8); }
 .sm2-vit-chakra {
   position: absolute; left: 0; top: 0; transform: translate(-50%, -50%);
-  display: grid; place-items: center; width: max(44px, 15.3cqw); height: max(44px, 15.3cqw); padding: 0; margin: 0; cursor: pointer;
+  display: grid; place-items: center; width: max(44px, 8.8cqw); height: max(44px, 8.8cqw); padding: 0; margin: 0; cursor: pointer;
   border-radius: 50%; border: 1px solid var(--sm2-line); background: color-mix(in srgb, #06171A 78%, transparent); color: var(--sm2-ink);
   transition: box-shadow var(--sm2-dur-tap) var(--sm2-ease), border-color var(--sm2-dur-tap) var(--sm2-ease);
   &[data-owned="true"] { border-color: color-mix(in srgb, var(--sm2-gold-ink) 70%, transparent); }
@@ -7578,10 +7578,9 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* Mapa do Soulsmith: o título vai na placa da moldura (o do HUD fica só para o nome acessível). */
 [data-forge-view="map"] .sm2-vit-title { opacity: 0; }
 /* Mapa do Soulsmith DENTRO do modal da área (23/11/2026): sem tela cheia; palco na largura do modal, ancorado no topo (chakras ≤53% da arte + folga do balão). */
-/* Sem rolagem, cabeça inteira (24/11/2026): o mapa ocupa o que sobra do corpo do modal (flex), o palco é 'contain' ANCORADO NA BASE: block-size = contêiner / 0,95
-   (corta só os ~5% de arco vazio do topo; a cabeça começa em ~6,8%) e nunca maior que a largura permite (a figura encolhe em vez de cortar a cabeça); chakras seguem em % do palco. */
+/* Sem rolagem, sem faixas, sem esticar (24/11/2026, decisão do dono): o mapa ocupa o que sobra do corpo do modal (flex); o palco é COVER PELA LARGURA, ancorado na BASE (poça de lava no fundo): inline-size 100%, proporção da arte, o excedente do TOPO é cortado pelo overflow do mapa; chakras seguem em % do palco. */
 .sm2-vit-map[data-vitra-inline] { position: relative; inset: auto; z-index: auto; inline-size: 100%; flex: 1 1 0; min-block-size: 0; border-radius: var(--sm2-radius-md, 12px); }
-.sm2-vit-map[data-vitra-inline] .sm2-vit-stage { --vit-h: min(calc(100cqh / .95), calc(100cqw * 1846 / 852)); inset-block: auto 0; inset-inline: 50% auto; block-size: var(--vit-h); inline-size: calc(var(--vit-h) * 852 / 1846); aspect-ratio: auto; transform: translateX(-50%); }
+.sm2-vit-map[data-vitra-inline] .sm2-vit-stage { inset-block: auto 0; inset-inline: 0; inline-size: 100%; block-size: auto; aspect-ratio: 1024 / 1365; transform: none; }
 .sm2-vit-map[data-vitra-inline] .sm2-vit-foot { padding: 16px 12px 12px; }
 [data-area-sheet-body]:has([data-vitra-inline]) { overflow-y: hidden !important; display: flex; flex-direction: column; }
 [data-area-sheet-body]:has([data-vitra-inline]) > [data-forge-card] { flex: 1 1 0; min-block-size: 0; display: flex; flex-direction: column; }
