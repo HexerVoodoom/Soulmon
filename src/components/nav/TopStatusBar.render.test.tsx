@@ -160,3 +160,48 @@ describe('a barrinha no Mapa e nos prédios; as pílulas antigas saíram', () =>
     expect(fechou).toBe(0);
   });
 });
+
+describe('push da barrinha: nasce no 1º render e sobrevive à folha/NPC (bug do mapinha atrás da barrinha)', () => {
+  const push = () => document.documentElement.style.getPropertyValue('--sm2-topbar-push');
+
+  it('1º render síncrono: o push já está na raiz e o topo do voltar o usa (nunca 0 depois de montar)', async () => {
+    const { AreaTopBar } = await import('./AreaTopBar');
+    const { CORNER_RING_TOP } = await import('./cornerAnchor');
+    const r = renderWithCss(<><TopStatusBar data={dados} /><AreaTopBar title="T" backLabel="Voltar" onBack={() => {}} icon="map" overScene /></>);
+    expect(push()).toBe('var(--sm2-topbar-h)');
+    expect(CORNER_RING_TOP).toContain('var(--sm2-topbar-push');
+    const back = r.container.querySelector('[data-area-back]') as HTMLElement;
+    expect(back.getAttribute('style')).toContain('--sm2-topbar-push');
+  });
+
+  it('o index.css define o push por :root:has([data-topbar]) (sem depender de efeito); a Home, sem barrinha, não o define', () => {
+    expect(css).toContain(':root:has([data-topbar]) { --sm2-topbar-push: var(--sm2-topbar-h); }');
+    const { container } = renderWithCss(<div>home</div>);
+    expect(container.querySelector('[data-topbar]')).toBeNull();
+    expect(push()).toBe('');
+  });
+
+  it('a barra da cena e a da folha coexistem: desmontar UMA não zera o push (abrir o NPC)', () => {
+    const a = renderWithCss(<TopStatusBar data={dados} />);
+    const b = renderWithCss(<TopStatusBar data={dados} />);
+    expect(push()).toBe('var(--sm2-topbar-h)');
+    a.unmount();
+    expect(push()).toBe('var(--sm2-topbar-h)'); // antes: '' → o voltar subia para trás da barra
+    b.unmount();
+    expect(push()).toBe('');
+  });
+
+  it('z-index: o voltar (AreaTopBar e ✕ da folha) fica ACIMA da barrinha, e logo abaixo dela (topo = push)', async () => {
+    const zBarra = Number(/\.sm2-topbar \{[^}]*z-index:\s*(\d+)/.exec(css)![1]);
+    const { readFileSync: rf } = await import('node:fs');
+    const zVoltar = Number(/position: 'fixed', zIndex: (\d+)/.exec(rf(join(__dirname, 'AreaTopBar.tsx'), 'utf8'))![1]);
+    const zFolha = Number(/zIndex: (\d+), top: CORNER_RING_TOP/.exec(rf(join(__dirname, 'AreaSheet.tsx'), 'utf8'))![1]);
+    expect(zVoltar).toBeGreaterThan(zBarra);
+    expect(zFolha).toBeGreaterThan(zBarra);
+    const { CORNER_RING_TOP, CORNER_BOX_TOP } = await import('./cornerAnchor');
+    // com push 52 o topo do anel = 12 + 52 = 64 >= base da barra (52)
+    expect(CORNER_RING_TOP).toContain('max(env(safe-area-inset-top, 0px), var(--sm2-topbar-push, 0px))');
+    expect(token('--sm2-topbar-h') + 12).toBeGreaterThanOrEqual(token('--sm2-topbar-h'));
+    expect(CORNER_BOX_TOP).toContain('6px');
+  });
+});

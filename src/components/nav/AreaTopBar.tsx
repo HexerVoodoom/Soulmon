@@ -109,7 +109,7 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
             border: '2px solid var(--sm2-line)',
             borderRadius: '50%',
           }),
-          position: 'fixed', zIndex: 45,
+          position: 'fixed', zIndex: 47, // acima da barrinha do topo (z 46): ela nunca cobre o voltar
           top: CORNER_RING_TOP, left: CORNER_RING_SIDE,
           padding: 0, cursor: 'pointer',
           color: overScene ? SCENE_INK : 'var(--sm2-ink)',

@@ -130,7 +130,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             onClick={() => onClose()}
             label={closeLabel}
             overScene
-            style={{ position: 'absolute', zIndex: 3, top: CORNER_RING_TOP, left: CORNER_RING_SIDE, pointerEvents: 'auto' }}
+            style={{ position: 'absolute', zIndex: 47, top: CORNER_RING_TOP, left: CORNER_RING_SIDE, pointerEvents: 'auto' }}
           />
         )}
 

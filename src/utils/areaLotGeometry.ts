@@ -199,12 +199,6 @@ export const MAPA_PALCO_STYLE = {
   pointerEvents: 'none',
 } as const;
 
-/** Palco do mapa-mundo com a barrinha do topo (24/11/2026): CONTAIN no espaço livre (a imagem inteira, sem cortar prédio nem rótulo, sem esticar), centrado. O pai põe o contêiner `size` entre a base da barrinha e a base da tela. */
-export const MAPA_PALCO_CONTAIN_STYLE = {
-  ...MAPA_PALCO_STYLE,
-  width: `min(100cqw, calc(100cqh * ${MAPA_ASPECT}))`,
-} as const;
-
 /**
  * Ajuste de simetria lateral do mapa-mundo (11/11/2026). A arte `bg-mapa.png` (821 px) tem os prédios de cima desbalanceados:
  * o Mercado começa a 26 px da borda esquerda (3,2%) e o cogumelo dos Jogos passa da borda direita (0 px). Em vez de refazer a

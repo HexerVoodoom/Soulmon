@@ -284,4 +284,21 @@ describe('Home: header e canto do Mapa somam o MESMO inset de topo', () => {
     expect(CORNER_RING_TOP).toContain('max(env(safe-area-inset-top, 0px), var(--sm2-topbar-push, 0px))');
     expect(CORNER_BOX_TOP).not.toContain('+ var(--sm2-topbar-push'); // não soma: é o MAIOR dos dois
   });
+  it('Home: top dos links de canto (push 0) == calc de ANTES do #1229, para qualquer inset', () => {
+    const LEGADO_BOX = 'calc(env(safe-area-inset-top, 0px) + 6px + var(--sm2-topbar-push, 0px))';
+    const LEGADO_RING = 'calc(env(safe-area-inset-top, 0px) + 12px + var(--sm2-topbar-push, 0px))';
+    // avalia os dois calc() com inset I e push P (só +, max, px)
+    const aval = (css: string, inset: number, push: number) => {
+      const js = css.split('env(safe-area-inset-top, 0px)').join(String(inset)).split('var(--sm2-topbar-push, 0px)').join(String(push))
+        .replace(/calc/g, '').replace(/max/g, 'Math.max').replace(/px/g, '');
+      return Function(`return (${js})`)() as number;
+    };
+    for (const inset of [0, 24, 38, 47]) {
+      expect(aval(CORNER_BOX_TOP, inset, 0)).toBe(aval(LEGADO_BOX, inset, 0));
+      expect(aval(CORNER_RING_TOP, inset, 0)).toBe(aval(LEGADO_RING, inset, 0));
+    }
+    expect(aval(CORNER_BOX_TOP, 38, 38)).toBe(44); // Home com inset 38: caixa em 44 = .sm2-hud (38) + 6
+    // com a barrinha (push 52, colada no topo físico): só a barrinha, sem somar o inset
+    expect(aval(CORNER_BOX_TOP, 38, 52)).toBe(58);
+  });
 });

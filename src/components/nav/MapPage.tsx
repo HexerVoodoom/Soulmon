@@ -6,7 +6,7 @@ import { LockBadge, LockNotice, lockLabel } from '../ui/LockBadge';
 import { areaLockedAt, buildingLockLine } from '../../utils/gates';
 
 import bgMapa from '../../assets/soulmon/mapa/bg-mapa.png';
-import { MAPA_MUNDO_PINTADO, MAPA_PALCO_CONTAIN_STYLE, MAPA_AJUSTE_ESCALA } from '../../utils/areaLotGeometry';
+import { MAPA_MUNDO_PINTADO, MAPA_PALCO_STYLE, MAPA_AJUSTE_ESCALA } from '../../utils/areaLotGeometry';
 
 /**
  * O MAPA — arte real (minimal-ui F3).
@@ -80,7 +80,7 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
       {/* O espaço livre: do fim da barrinha (`--sm2-topbar-push`) à base da tela (safe-area inferior); a imagem entra inteira (contain) e centrada ali. */}
       <div data-map-livre style={{ position: 'absolute', left: 0, right: 0, top: 'var(--sm2-topbar-push, 0px)', bottom: 'var(--sm2-map-bottom, env(safe-area-inset-bottom, 0px))', containerType: 'size', pointerEvents: 'none' }}>
         {/* O fundo mora DENTRO do palco: imagem e alvos crescem juntos, ancorados na borda direita (simetria lateral, ver MAPA_AJUSTE_ESCALA). */}
-        <div style={{ ...MAPA_PALCO_CONTAIN_STYLE, transform: `translate(-50%, -50%) scale(${MAPA_AJUSTE_ESCALA})`, transformOrigin: '100% 50%' }}>
+        <div style={{ ...MAPA_PALCO_STYLE, transform: `translate(-50%, -50%) scale(${MAPA_AJUSTE_ESCALA})`, transformOrigin: '100% 50%' }}>
           <img
             src={bgMapa}
             alt=""
