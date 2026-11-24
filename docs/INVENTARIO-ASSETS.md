@@ -10,6 +10,9 @@
 > pixel art **só dentro do visor**; tudo fora é SVG + Material Symbols. Cada asset abaixo
 > recebe um veredito **dentro / fora / decisão do dono** por essa régua.
 
+
+> **Nota 24/11/2026 — assets MOVIDOS:** os diretórios `E:\Soulmon-assets\{higgsfield-banco,out,entrada-dono}` foram movidos para `D:\Soulmon-assets-mov\<nome>\` (falta de espaço em `E:`), em vez de editar ~60 referências. Ao ler "E:\Soulmon-assets\higgsfield-banco|out|entrada-dono" neste e em outros docs, procure em `D:\Soulmon-assets-mov\`. Os demais subdiretórios de `E:\Soulmon-assets` não mudaram.
+
 ---
 
 > **Atualização 15/09/2026 (fim da rodada da SQUAD-ARTE):** as levas `entrega2` (berço), `entrega4` (Dino + 7 anims),

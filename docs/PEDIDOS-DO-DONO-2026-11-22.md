@@ -133,3 +133,19 @@ Estado de cada pedido (fonte: relatórios P2 a P7, site e marketing; "aberto" = 
 | Marketing: voz sintética (Kokoro), séries "criador" e "apresentando o mundo" | roteiros e amostras prontos; nada publicado; o dono escolhe a voz |
 
 **Perguntas em aberto ao dono (reunidas dos relatórios):** (1) o hábito "refletir" marca com qualquer entrada do Caderno ou só "importa"; (2) o onboarding exige toque longo para arrastar comida: ok; (3) o Mural (história do bosque) vai ao Grove; (4) o card "árvore" do Clan Hall, quase só um botão "Ver a árvore no Bosque", é aceitável (a arte da árvore da Casa não existe); (5) "Novo" no Drive é accordion com CheckRow "Só os novos" ou lista própria; (6) Hexsmith: ✕ no medalhão esquerdo e "i" no direito, conferir em tela; (7) gap de Play policy/age rating na bíblia; (8) FUGIU em PT (o `RESULT_BANNER` não escolhe idioma); (9) instalar as cenas do Focus como `soulmon/jornada/bloco-<cena>.webp` (1024x2048); (10) o `disabled` do `sm2Button` (surface-2/muted) é o visual desejado; (11) apagar `D:\nm-cache\node_modules.old`; (12) música CC BY de Kevin MacLeod para o Soulmon; (13) R$ 19,30 de mídia sem decisão; (14) perfil de teste `1-forja\trabalho\profile` aguarda OK para apagar.
+
+## Rodada 24/11/2026 — pedidos e estado (REGISTRO §524 a §533)
+
+| Pedido / decisão do dono | Estado |
+|---|---|
+| Borda A do popup cristal; quinas geradas pelo dono (§524) | #1201 e #1208 mergeados |
+| Título inline sem placa em ~22 modais, margem 24 -> 16 px, respiro; moldura do dono nos modais de NPC/prédio (§525) | #1187, #1206, #1212, #1209 mergeados; folhas de baixo (`AreaSheet`/`SheetFrame`) ainda com placa, falta arte de topo |
+| Passeio não abre sozinho no começo do dia (§526) | #1186 mergeado; leitura adotada, **aguarda confirmação do dono** |
+| Evolution Center: barra B, conectores A, nós A, cadeado B, brilho por caminho, ✕ à esquerda e "i" à direita (§527) | #1199, #1200, #1205, #1177 mergeados; #1203 (arte final) aberto |
+| Fundador: um modal por prêmio, só ✕, chama centrada, fundo B (§528) | #1191, #1194, #1195, #1202, #1207 mergeados (#1166 também) |
+| Barra de moedas: chip anterior com moldura `chip-moeda`, ícone + valor (§529) | #1214 (barra cobre) fechado; #1216 mergeado |
+| Escolhedor Hábito/Tarefa em bottom sheet; "Uma vez" e "Marcar todos" na mesma linha (§530) | #1211 mergeado; #1213 aberto |
+| Arte aprovada (backgrounds, botões sm2, cenários); FX pixelados; cenas do Focus top-down (§531) | #1188 mergeado; #1215 (lote 2, cenas do Focus) aberto; FX e cenas top-down pendentes |
+| Bytes re-medidos (#1217) e regra de processo stash/junction (§532, §533) | #1217 mergeado; regra em vigor |
+
+**Ainda aguardam o dono:** (1) confirmar a leitura do Passeio (§526); (2) dos relatórios da Rodada 6, as perguntas acima que seguem sem resposta registrada.
