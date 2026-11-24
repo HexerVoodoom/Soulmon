@@ -2433,6 +2433,13 @@ export default function App() {
     toast(w.text, { id: 'wake-warning', action: { label: w.action, onClick: markDayAwake } });
     return true;
   }, [language, markDayAwake]);
+  const [retroFechada, setRetroFechada] = useState(false);
+  const [bonusIntroOpen, setBonusIntroOpen] = useState(false);
+  /* Aviso do Conjunto Fundador (item `fundador` da fila): pendentes = ganhos e ainda não avisados. Fechar grava SÓ o que estava na tela (idempotente, aditivo). */
+  const fundadorPend = fundadorPendentes(gameState);
+  const fundadorPodeAbrir = hasCompletedOnboarding && !showIntro && !isDemoMode(gameState) && currentView === 'home' && !bonusIntroOpen
+    && (retroFechada || !needsWeeklyRetro(gameState, new Date())) && fundadorPend.length > 0;
+  const fecharFundadorAviso = useCallback(() => setGameState(prev => marcarFundadorAvisados(prev, fundadorPendentes(prev))), [setGameState]);
   const presentation = usePresentationQueue({
     // enquanto o Soulmon dorme à espera de ser acordado: nada do início de dia, celebração ou convite entra (a fila decide)
     holdDayStart: dayWakePending,
@@ -2452,6 +2459,8 @@ export default function App() {
       catalogOnboarding: !primeiroDiaAtivo && needsCatalogOnboarding(gameState as any),
       dayGoals: !primeiroDiaAtivo && dayGoalsOpen && (dayPlanCandidatesNow.length > 0 || dayGoalsSuggestions.length > 0),
       checkIn: !primeiroDiaAtivo && Boolean(checkInPlanData),
+      // Aviso do Conjunto Fundador: UM item da fila (nunca por cima de outro modal). Só na Home, sem a retrospectiva na frente nem o intro de bônus.
+      fundador: fundadorPodeAbrir,
       evolveTask: evolveModalStage !== null && evolutionCeremony === null,
       evoStats: evoStatsShown !== null && evolutionCeremony === null,
       elementoNovo: (elemMostrados !== null || elemPendentes.length > 0) && evolutionCeremony === null && evolveModalStage === null && evoStatsShown === null && evoRecap === null && elementoNovoPodeAbrir(elemEsperaSaida, currentView, areaAtividade),
@@ -2537,6 +2546,7 @@ export default function App() {
         case 'noticeToast': setNoticeKey(null); break;
         case 'dayGoals': setDayGoalsOpen(false); break;
         case 'checkIn': handleCheckInSkip(); break;
+        case 'fundador': fecharFundadorAviso(); break;
         case 'evolveTask': setEvolveModalStage(null); break;
         case 'evoStats': setEvoStatsShown(null); break;
         case 'elementoNovo': setElemMostrados(null); break;
@@ -3123,7 +3133,6 @@ export default function App() {
     }));
   }, []);
   /** O modal de apresentação da tarefa bônus (uma vez só, `bonusIntroSeen`). */
-  const [bonusIntroOpen, setBonusIntroOpen] = useState(false);
 
   const handleToggleActivityCompletion = (activityId: string, opts?: { auto?: boolean }) => {
     const today = new Date().toDateString();
@@ -6700,7 +6709,6 @@ export default function App() {
       return lista === prev.stageByWeek ? prev : { ...prev, stageByWeek: lista };
     });
   }, [hasCompletedOnboarding, gameState.evolutionStage, setGameState]);
-  const [retroFechada, setRetroFechada] = useState(false);
   /** Fecha a retrospectiva: marca a segunda como vista e ativa o bônus de retorno da semana (se houver hábito mais difícil). */
   const handleCloseWeeklyRetro = useCallback(() => {
     const agora = new Date();
@@ -10669,25 +10677,18 @@ export default function App() {
           </Suspense>
         );
       })()}
-      {/* Aviso do Conjunto Fundador (PR 2/2): só na Home, depois do onboarding, sem a retrospectiva nem o intro de bônus na frente; fila = um popup por vez. */}
-      {(() => {
-        if (!hasCompletedOnboarding || showIntro || isDemoMode(gameState) || currentView !== 'home' || bonusIntroOpen) return null;
-        if (!retroFechada && needsWeeklyRetro(gameState, new Date())) return null;
-        const pend = fundadorPendentes(gameState);
-        if (pend.length === 0) return null;
-        const fechar = () => setGameState(prev => marcarFundadorAvisados(prev, pend));
-        return (
-          <Suspense fallback={null}>
-            <FundadorAvisoModal language={language} premios={pend} dias={gameState.fundadorDias ?? 0} onClose={fechar}
-              onEquip={(id) => {
-                if (id === 'founder-fundo') handleEquipBackground(id);
-                else if (id === 'founder-moldura') handleEquipFrame(id);
-                else if (id === 'founder-retrato') setGameState(prev => (prev.avatarId === id ? prev : { ...prev, avatarId: sanitizeAvatarId(id) }));
-                fechar();
-              }} />
-          </Suspense>
-        );
-      })()}
+      {/* Aviso do Conjunto Fundador: item `fundador` da fila central (um modal por vez, nunca por cima de outro). */}
+      {interstitial === 'fundador' && fundadorPend.length > 0 && (
+        <PresentationSlot id="fundador" onFail={() => presentation.fail('fundador')} fallback={null}>
+          <FundadorAvisoModal language={language} premios={fundadorPend} dias={gameState.fundadorDias ?? 0} onClose={fecharFundadorAviso}
+            onEquip={(id) => {
+              if (id === 'founder-fundo') handleEquipBackground(id);
+              else if (id === 'founder-moldura') handleEquipFrame(id);
+              else if (id === 'founder-retrato') setGameState(prev => (prev.avatarId === id ? prev : { ...prev, avatarId: sanitizeAvatarId(id) }));
+              fecharFundadorAviso();
+            }} />
+        </PresentationSlot>
+      )}
       {bonusIntroOpen && (
         <Suspense fallback={null}>
           <BonusTaskIntroModal
