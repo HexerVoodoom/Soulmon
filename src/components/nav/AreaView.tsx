@@ -524,7 +524,7 @@ export function AreaView(props: AreaViewProps) {
   const close = () => { setSheet(null); setStallKind(undefined); };
   // R1: qualquer camada de tela cheia (folha, jogo, duelo) avisa o `App`, que
   // esconde o topo sobre a cena — ele não pode competir com o ✕/voltar da camada.
-  const layerOpen = sheet !== null || duelOpen || game !== null;
+  const layerOpen = sheet !== null || duelOpen || game !== null || riftMapOpen; // 24/11/2026: o mapa do Rift cobre o topo "Exploração" (só o voltar do próprio mapa)
   // J1 (rodada 7): baixa os chunks de jogar ANTES do toque (ver `playPrefetch.ts`).
   usePlayPrefetch(area === 'exploracao' || area === 'jogos' || area === 'forja', sheet !== null);
   const { onLayerChange } = props;
