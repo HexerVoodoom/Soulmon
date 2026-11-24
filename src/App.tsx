@@ -19,6 +19,7 @@ import {
   openSourceFromUrl, afterBadDayGapBucket, trackRetentionOnOpen,
 } from './utils/telemetry';
 import { CornerLink } from './components/nav/CornerLink';
+import { TopStatusBar, TopStatusBarContext, type TopStatusBarData } from './components/nav/TopStatusBar';
 import { HomeFeedbackButton } from './components/nav/HomeFeedbackButton';
 import { MissionsLink } from './components/nav/MissionsLink';
 import { AvisosLink } from './components/nav/AvisosLink';
@@ -1765,6 +1766,14 @@ export default function App() {
   }, [prontoMasPago, currentView, setUnlockReason]);
   // R1: camada de tela cheia aberta numa área (folha/jogo/duelo) — esconde o topo sobre a cena.
   const [areaLayerOpen, setAreaLayerOpen] = useState(false);
+  /** A barrinha do topo (Mapa e prédios): os mesmos corações e energia do HUD do companheiro (`healthPoints`, `settleEnergy`) e as 3 moedas. */
+  const topBarHearts = Math.floor(gameState.healthPoints);
+  const topBarEnergy = settleEnergy(gameState, tickTime(gameState, Date.now())).energyPoints ?? 0;
+  const topBarMaxEnergy = maxEnergyOf(gameState);
+  const topBarData = useMemo<TopStatusBarData>(() => ({
+    language, hearts: topBarHearts, energy: topBarEnergy, maxEnergy: topBarMaxEnergy,
+    bits: gameState.gamePoints ?? 0, emblems: gameState.emblems ?? 0, credits: gameState.credits ?? 0,
+  }), [language, topBarHearts, topBarEnergy, topBarMaxEnergy, gameState.gamePoints, gameState.emblems, gameState.credits]);
   /** A `AreaView` informa se há ATIVIDADE rodando (jogo/duelo/Torneio); `undefined` = não sabemos (portão da carta "Elemento novo" cai no palpite da área inteira). */
   const [areaAtividade, setAreaAtividade] = useState<boolean | undefined>(undefined);
   // J1 (rodada 7): o chunk das áreas (e a folha de jogar) sobe em tempo ocioso — o toque não espera a rede.
@@ -8618,6 +8627,9 @@ export default function App() {
             <EvoBanner language={language} stage={gameState.evolutionStage} playerName={userName} petName={soulmonDisplayName(gameState.soulmonMeta)} fetchFeed={fetchEvoFeed} />
           </Suspense>
 
+          {/* Barrinha do topo nos prédios (P2, 24/11/2026): a da cena; some junto com o topo quando há folha/jogo por cima (a folha traz a sua, `AreaSheet`). */}
+          {area && <TopStatusBar data={topBarData} covered={areaLayerOpen} />}
+
           {pane === 'map' && (
             <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
             <MapPage
@@ -8628,6 +8640,9 @@ export default function App() {
               bits={gameState.gamePoints ?? 0}
               emblems={gameState.emblems ?? 0}
               credits={gameState.credits ?? 0}
+              hearts={topBarData.hearts}
+              energy={topBarData.energy}
+              maxEnergy={topBarData.maxEnergy}
             />
             </Suspense>
           )}
@@ -8642,6 +8657,7 @@ export default function App() {
           {area && (
             <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
               {/* `key` da view: trocar de área remonta e fecha a folha aberta. */}
+              <TopStatusBarContext.Provider value={topBarData}>
               <ResultExtrasContext.Provider value={buildResultExtras(gameState, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0), language === 'pt-BR')}>
               <AreaView
                 petBase={petBaseOf(gameState)}
@@ -8921,6 +8937,7 @@ export default function App() {
                 guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, pendentesDoDia, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend, onVerAchado: handleFeiraVoltaVer }, feira: { me: feiraMe, onCredit: handleFeiraCredit }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
               />
               </ResultExtrasContext.Provider>
+              </TopStatusBarContext.Provider>
             </Suspense>
           )}
 

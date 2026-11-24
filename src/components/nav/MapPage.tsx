@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Language } from '../../utils/i18n';
 import { AREAS, areaLabel, type AreaId } from '../../navigation';
-import { bitsStyle, emblemStyle, CREDIT_COLOR } from '../../utils/currencies';
-import { InfoTip } from '../ui/InfoTip';
-import { CreditIcon } from '../ui/CreditIcon';
-import { HonorIcon } from '../ui/HonorIcon';
-import { BitsIcon } from '../ui/BitsIcon';
+import { TopStatusBar } from './TopStatusBar';
 import { LockBadge, LockNotice, lockLabel } from '../ui/LockBadge';
 import { areaLockedAt, buildingLockLine } from '../../utils/gates';
 
@@ -27,17 +23,12 @@ import { MAPA_MUNDO_PINTADO, MAPA_PALCO_STYLE, MAPA_AJUSTE_ESCALA } from '../../
  * radial escurecendo, para o link da Home — `CornerLink glow` — se destacar
  * sem caixa em volta).
  *
- * O saldo das 3 moedas é um menu discreto no canto inferior direito, dentro da própria cena —
- * não uma lista separada. Formatação e cor vêm de `utils/currencies.ts`
- * (dono único: nenhuma moeda pode ser confundida com outra).
+ * O saldo (Corações, Energia, Créditos, Honra, Bits) é a barrinha fixa do topo (`TopStatusBar`, 24/11/2026) — não mais as 3 pílulas do canto inferior direito.
  */
 /** O cristal central pintado no mapa-mundo, em % da imagem. */
 const CRISTAL = [46, 30, 62, 43] as const;
 
-/** Lado do ícone das 3 moedas (px): um pouco maior que os 16 de antes. */
-const MOEDA_ICONE = 22;
-
-export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, credits, bondLevel }: {
+export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, credits, hearts = 0, energy = 0, maxEnergy = 0, bondLevel }: {
   language: Language;
   /** O Vínculo do usuário: a área só trava se TODOS os prédios dela travam (`areaMinBond`). Sem ele, nada trava. */
   bondLevel?: number;
@@ -47,10 +38,12 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
   bits: number;
   emblems: number;
   credits: number;
+  /** Corações e energia de agora (+ teto) para a barrinha do topo. */
+  hearts?: number;
+  energy?: number;
+  maxEnergy?: number;
 }) {
   const isPt = language === 'pt-BR';
-  const fmt = (n: number) => n.toLocaleString(language);
-  const [nBits, nEmblems, nCredits] = [fmt(bits), fmt(emblems), fmt(credits)];
   const [lockNote, setLockNote] = useState<string | null>(null);
   const segurando = useRef<ReturnType<typeof setTimeout> | null>(null);
   const soltar = () => { if (segurando.current) clearTimeout(segurando.current); segurando.current = null; };
@@ -81,55 +74,8 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
         }}
       />
 
-      {/* Saldo das 3 moedas — canto INFERIOR direito (espelho do link da
-          Home, no esquerdo). ⚠️ Morava no canto superior direito e a arte do
-          "Jogos" pintava POR CIMA dele (fix1). As 3 pílulas são IGUAIS (QA 24/11/2026,
-          pílulas achatadas sobrepostas): ícone + valor, largura fixa, moldura `chip-moeda`
-          de antes (a barra de cobre foi reprovada pelo dono). Layout e largura em `.sm2-moeda*` no index.css. */}
-      <div
-        data-map-currencies
-        className="sm2-moeda-hud"
-        style={{
-          position: 'absolute',
-          right: 'var(--sm2-space-3)',
-          bottom: 'calc(var(--sm2-space-3) + env(safe-area-inset-bottom, 0px))',
-          zIndex: 2,
-        }}
-      >
-        <InfoTip
-          language={language}
-          align="right"
-          autoCloseMs={4000}
-          label={`${nBits} Bits — ${isPt ? 'como conseguir' : 'how to earn'}`}
-          className="sm2-moeda"
-          style={{ ...bitsStyle, minHeight: 34 }}
-          trigger={<span data-map-chip className="sm2-moeda__in"><BitsIcon size={MOEDA_ICONE} /><span className="sm2-moeda__val">{nBits}</span></span>}
-        >
-          {isPt ? 'Bits: ganhe cumprindo o dia (tarefas e hábitos) e jogando minijogos, a Masmorra e a Arena. Gaste na loja.' : 'Bits: earn them by finishing your day (tasks and habits) and playing minigames, the Dungeon and the Arena. Spend them in the shop.'}
-        </InfoTip>
-        <InfoTip
-          language={language}
-          align="right"
-          autoCloseMs={4000}
-          label={isPt ? `${nEmblems} de Honra — como conseguir` : `${nEmblems} Honor — how to earn`}
-          className="sm2-moeda"
-          style={{ ...emblemStyle, minHeight: 34 }}
-          trigger={<span data-map-chip className="sm2-moeda__in"><HonorIcon size={MOEDA_ICONE} /><span className="sm2-moeda__val">{nEmblems}</span></span>}
-        >
-          {isPt ? 'Honra: ganhe em combates do Torneio, no treino e em missões da semana. Gaste na aba Honra das lojinhas.' : 'Honor: earn it in Tournament fights, sparring and weekly missions. Spend it in the Honor tab of the shops.'}
-        </InfoTip>
-        <InfoTip
-          language={language}
-          align="right"
-          autoCloseMs={4000}
-          label={isPt ? `${nCredits} Créditos — como conseguir` : `${nCredits} Credits — how to get`}
-          className="sm2-moeda"
-          style={{ color: CREDIT_COLOR, fontFamily: 'var(--sm2-font-text)', fontWeight: 700, minHeight: 34 }}
-          trigger={<span data-map-chip className="sm2-moeda__in"><CreditIcon size={MOEDA_ICONE} /><span className="sm2-moeda__val">{nCredits}</span></span>}
-        >
-          {isPt ? 'Créditos: só por compra com dinheiro real. Servem para pacotes de Bits e para sortear de novo.' : 'Credits: only by purchase with real money. Use them for Bits packs and rerolls.'}
-        </InfoTip>
-      </div>
+      {/* A BARRINHA DO TOPO (P2, 24/11/2026): Corações | Energia à esquerda; Créditos | Honra | Bits à direita, cada valor na bordinha de bronze (`TopStatusBar`). Ocupou o lugar das 3 pílulas do canto inferior direito (⚰️, #1216). */}
+      <TopStatusBar data={{ language, credits, emblems, bits, hearts, energy, maxEnergy }} />
 
       {/* Os distritos vêm pintados no fundo (05/11/2026): cada botão é só o alvo de toque e o rótulo, no palco da imagem. */}
       <div style={{ position: 'absolute', inset: 0, containerType: 'size', pointerEvents: 'none' }}>

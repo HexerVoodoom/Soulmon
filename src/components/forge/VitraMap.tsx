@@ -11,11 +11,11 @@ import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import type { EquipSlot } from '../../utils/equipment';
 import { VITRA_MAP_ART } from '../../assets/soulmon/vitra';
 
-/** Centro de cada chakra em % do PALCO (a arte inteira, 852x1846), medido nos anéis de `vitra-mapa.png`; o diâmetro do anel é 18% da largura. */
+/** Centro de cada chakra em % do PALCO (a arte inteira, 1024x1365), medido por ajuste de círculo nos anéis de `vitra-palco-3x4.webp` (x 50%; diâmetro ~8,7% da largura). */
 export const CHAKRA: Readonly<Record<EquipSlot, { x: number; y: number; side: 'below' }>> = {
-  nucleo: { x: 50, y: 29.9, side: 'below' },
-  carapaca: { x: 50, y: 41.6, side: 'below' },
-  rastro: { x: 50, y: 53, side: 'below' },
+  nucleo: { x: 50, y: 28.8, side: 'below' },
+  carapaca: { x: 50, y: 39.2, side: 'below' },
+  rastro: { x: 50, y: 49.4, side: 'below' },
 };
 
 export interface VitraChakra {

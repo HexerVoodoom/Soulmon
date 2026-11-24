@@ -24,6 +24,8 @@ import iconEnviar from './enviar.png';
 import iconHp from './hp.png';
 import iconEnergia from './energia.png';
 import chipMoeda from './chip-moeda.png';
+import barrinhaSlot from './barrinha-slot-bronze.png';
+import barrinhaFaixa from './barrinha-faixa-fundo.png';
 // Rodada 3 (30/09/2026, aprovada pelo dono): a mochila do passeio (32², ao pé do pet)
 // e o sol de "Acordar" (128²), no lugar do emoji 🎒 e do glifo `wb_sunny`.
 import iconMochila from './mochila.png';
@@ -84,6 +86,11 @@ export const QUEST_EXCLAMACAO_ART: string = iconQuestExclamacao;
  *  `border-image`. Fatias medidas por amostragem de pixel: tampa lateral
  *  ~48px (cristais), borda de cima 18, de baixo 18. */
 export const CHIP_MOEDA_ART = chipMoeda;
+
+/** BARRINHA DO TOPO (24/11/2026, P6): a faixa fina fixa com Corações, Energia, Créditos, Honra e Bits (`components/nav/TopStatusBar.tsx`). Arte @2x (o PNG é o dobro
+ *  do CSS): `slot` = a bordinha de bronze de cada valor, 132×56 (9-slice horizontal, tampas de 20 px = 10 CSS px); `faixa` = o fundo, 824×80 (fio de cobre + turquesa
+ *  embaixo). Os dois entram pelo `url()` de `.sm2-topbar*` no index.css; o export mantém o par à vista do contrato de assets. */
+export const TOPBAR_ART = { slot: barrinhaSlot, faixa: barrinhaFaixa } as const;
 export const CHIP_MOEDA_SLICE = { top: 18, right: 48, bottom: 18, left: 48 } as const;
 
 /**
