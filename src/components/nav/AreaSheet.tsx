@@ -17,6 +17,7 @@ import { Icon } from '../ui/Icon';
 import { useBackDimmed } from '../../utils/modalDepth';
 import { NavGlyph } from '../ui/NavGlyphs';
 import { TopStatusBar } from './TopStatusBar';
+import { useMolduraAtiva } from '../../contexts/UiSkinContext';
 
 /** Moldura da folha (fatiamento vertical, arte aprovada; PLANO-MOLDURAS-MODAIS). `false` volta ao card liso de antes. */
 export const MOLDURA_MODAL = true;
@@ -88,13 +89,15 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
   // Com a moldura, o `ModalFrame` é o dono do encaixe do "i" (sobre o ornamento da arte); sem ela, o encaixe da linha do título.
   const { slot, slotRef } = useModalInfoSlot();
+  // A moldura é POR PELE (`data-ui`): 'minimal' = a folha lisa de antes (sem arte, sem borda). `MOLDURA_MODAL` segue de interruptor mestre.
+  const emoldurado = useMolduraAtiva() && MOLDURA_MODAL;
   const npcKey = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
   if (!open) return null;
   const frame = npcFrame ?? npcFrameFor(areaId, lotId);
-  const aco = MOLDURA_MODAL && moldura === 'aco';
-  const inline = MOLDURA_MODAL && !aco && titulo === 'inline';
+  const aco = emoldurado && moldura === 'aco';
+  const inline = emoldurado && !aco && titulo === 'inline';
   // Moldura FINAL do dono (24/11/2026): madeira com cipós e gemas, medalhão esquerdo (✕), ornamento (i) à direita, placa de título. Só o padrão (nem aço, nem inline).
-  const dono = MOLDURA_MODAL && !aco && !inline;
+  const dono = emoldurado && !aco && !inline;
 
   const npcSrc = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
   const npc = npcVoice ?? (areaId ? lotNpcVoice(areaId, lotId, language) : { name: '', line: '' });
@@ -185,6 +188,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
         </div>
 
         <SheetShell
+          emoldurado={emoldurado}
           data-area-sheet
           title={inline ? undefined : title}
           fundo={fundoDoLote(areaId, lotId)}
@@ -202,7 +206,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             // range min/max: o 1/3 de cima da TELA, acima da folha, é do NPC.
             height: '66.6667dvh',
             flex: 'none',
-            ...(MOLDURA_MODAL
+            ...(emoldurado
               // Aço: o cristal-chama sobe para fora do topo (o rolável tem a própria rolagem, então a casca pode transbordar).
               ? { overflow: aco ? 'visible' : 'hidden' }
               : {
@@ -218,21 +222,21 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           {aco && <CristalChama />}
           {aco && !hideClose && <FecharAco label={closeLabel} onClose={onClose} />}
           {(closeInSheet || dono) && !hideClose && !aco && (
-            <div className={dono ? 'sm2-moldura-dono__fechar' : undefined} style={dono ? undefined : MOLDURA_MODAL ? { position: 'absolute', top: 'calc(var(--u) * 3)', left: 'calc(var(--u) * 3)', zIndex: 4 } : { padding: '8px 16px 0', flexShrink: 0 }}>
+            <div className={dono ? 'sm2-moldura-dono__fechar' : undefined} style={dono ? undefined : emoldurado ? { position: 'absolute', top: 'calc(var(--u) * 3)', left: 'calc(var(--u) * 3)', zIndex: 4 } : { padding: '8px 16px 0', flexShrink: 0 }}>
               <BackCircleButton data-area-sheet-close="" onClick={() => onClose()} label={closeLabel} style={dono ? { border: 0, color: '#E9F5F2' } : undefined} />
             </div>
           )}
           {/* Com a moldura (`MOLDURA_MODAL`) o TÍTULO mora na PLACA do topo (`ModalFrame title`, serifa dourada, centrado, reticências se longo) e esta
               linha vira só os encaixes (start-slot, head-slot, "i"), pousados POR CIMA da moldura (z 4) sobre a placa e o disco do canto. */}
-          <div data-area-sheet-head style={MOLDURA_MODAL
+          <div data-area-sheet-head style={emoldurado
             ? { position: 'absolute', top: 0, left: 0, right: 0, height: aco ? 'calc(var(--u) * 22)' : dono ? 'calc(var(--u) * 15)' : 'calc(var(--u) * 16.9)', zIndex: 4, display: 'flex', alignItems: 'center', padding: '0 calc(var(--u) * 3)', boxSizing: 'border-box', pointerEvents: 'none' }
             : { display: 'flex', alignItems: 'center', minHeight: 52, padding: '8px 16px 0', boxSizing: 'border-box', backgroundColor: 'var(--sm2-surface)' }}>
-            {MOLDURA_MODAL
+            {emoldurado
               ? <span style={{ flex: 1 }} />
               : <h2 style={{ flex: 1, margin: 0, textAlign: 'right', paddingRight: 8, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>{title}</h2>}
             {headSlotRef && <span ref={headSlotRef} data-area-sheet-head-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, pointerEvents: 'auto' }} />}
             {/* Sem moldura: o "i" ÚNICO da folha (`ModalInfo`) entra aqui, canto direito, na linha do título. Com ela o botão mora no ornamento da arte (`ModalFrame`). */}
-            {!MOLDURA_MODAL && <span ref={slotRef} data-modal-info-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginRight: -10, pointerEvents: 'auto' }} />}
+            {!emoldurado && <span ref={slotRef} data-modal-info-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginRight: -10, pointerEvents: 'auto' }} />}
           </div>
           {/* H6 (01/10/2026): o rolável começa COLADO no título (sem `padding-top`),
               para o cabeçalho fixo de dentro (abas/filtro, `position: sticky;
@@ -251,15 +255,15 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
               <h2 className="sm2-popup-titulo" data-popup-titulo>{title}</h2>
             </div>
           )}
-          <div data-area-sheet-body style={MOLDURA_MODAL
+          <div data-area-sheet-body style={emoldurado
             // Com a moldura: o rolável começa sob a placa e vai até a borda de baixo — por baixo das peças —, com respiro (`--sm2-moldura-pad-*`) para o fim não ficar escondido.
             ? { flex: 1, minHeight: 0, overflowY: 'auto', marginTop: inline ? 0 : 'var(--sm2-moldura-pad-t)', padding: footer ? '0 var(--sm2-moldura-pad-x) 16px' : '0 var(--sm2-moldura-pad-x) calc(var(--sm2-moldura-pad-b) + env(safe-area-inset-bottom, 0px))' }
             : { flex: 1, overflowY: 'auto', padding: footer ? '0 16px 16px' : '0 16px calc(16px + env(safe-area-inset-bottom, 0px))' }}>
             <div aria-hidden="true" style={{ height: 8 }} />
-            {MOLDURA_MODAL ? children : <ModalInfoSlotProvider slot={slot}>{children}</ModalInfoSlotProvider>}
+            {emoldurado ? children : <ModalInfoSlotProvider slot={slot}>{children}</ModalInfoSlotProvider>}
           </div>
           {footer && (
-            <div data-area-sheet-footer style={{ flexShrink: 0, padding: MOLDURA_MODAL ? '10px var(--sm2-moldura-pad-x-rodape, var(--sm2-moldura-pad-x)) calc(var(--sm2-moldura-pad-b) + env(safe-area-inset-bottom, 0px))' : '10px 16px calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid var(--sm2-muted)', background: MOLDURA_MODAL ? 'transparent' : 'var(--sm2-surface)' }}>
+            <div data-area-sheet-footer style={{ flexShrink: 0, padding: emoldurado ? '10px var(--sm2-moldura-pad-x-rodape, var(--sm2-moldura-pad-x)) calc(var(--sm2-moldura-pad-b) + env(safe-area-inset-bottom, 0px))' : '10px 16px calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid var(--sm2-muted)', background: emoldurado ? 'transparent' : 'var(--sm2-surface)' }}>
               {footer}
             </div>
           )}
@@ -286,7 +290,7 @@ function FecharAco({ label, onClose }: { label: string; onClose: () => void }) {
   );
 }
 
-/** Casca da folha: moldura 9-slice (ligada por `MOLDURA_MODAL`) ou o `div` liso de antes. */
-function SheetShell({ fundo, fundoVazio, title, ...props }: Omit<HTMLAttributes<HTMLDivElement>, 'title'> & { 'data-area-sheet'?: boolean | string; 'data-moldura-variante'?: string; fundo?: string; fundoVazio?: boolean; title?: string }) {
-  return MOLDURA_MODAL ? <ModalFrame fundo={fundo} fundoVazio={fundoVazio} title={title || undefined} {...props} /> : <div {...props} />;
+/** Casca da folha: moldura 9-slice (ligada por `MOLDURA_MODAL` + pele 'arte') ou o `div` liso de antes. */
+function SheetShell({ emoldurado, fundo, fundoVazio, title, ...props }: Omit<HTMLAttributes<HTMLDivElement>, 'title'> & { emoldurado: boolean; 'data-area-sheet'?: boolean | string; 'data-moldura-variante'?: string; fundo?: string; fundoVazio?: boolean; title?: string }) {
+  return emoldurado ? <ModalFrame fundo={fundo} fundoVazio={fundoVazio} title={title || undefined} {...props} /> : <div {...props} />;
 }

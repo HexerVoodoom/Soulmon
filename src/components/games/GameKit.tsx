@@ -34,6 +34,7 @@ import { FX_ART } from '../../utils/fxArt';
 import { gameStory, type GameStoryId } from '../../utils/gameStories';
 import type { Language } from '../../utils/i18n';
 import { TelaMoldura, MOLDURA_TELAS } from '../ui/TelaMoldura';
+import { useMolduraAtiva } from '../../contexts/UiSkinContext';
 import type { TelaMoldura as TelaMolduraId } from '../../assets/soulmon/ui/moldura/fundos';
 
 /** Largura LÓGICA do visor de jogo (×2 = 348, o vidro do canvas). */
@@ -49,7 +50,8 @@ export const DIALOG_VISOR_W = 144;
 export function GameRoot({ children, style, full = false, moldura }: { children: ReactNode; style?: CSSProperties; full?: boolean; /** Fundo + moldura da tela cheia (`TelaMoldura`). */ moldura?: { tela: TelaMolduraId; title?: string } }) {
   // Com moldura, o botão de informação da tela mora no ornamento "i" da arte (`TelaMoldura`); sem ela, cada `InfoTip` é o "i" de sempre.
   const { slot, slotRef } = useModalInfoSlot();
-  const comMoldura = !!moldura && MOLDURA_TELAS;
+  const peleComMoldura = useMolduraAtiva();
+  const comMoldura = !!moldura && MOLDURA_TELAS && peleComMoldura;
   return (
     <div
       data-game-root
@@ -60,7 +62,7 @@ export function GameRoot({ children, style, full = false, moldura }: { children:
         boxSizing: 'border-box',
         padding: full ? '8px 12px 0' : '10px 16px 16px',
         // A barra de status foi removida (tela de ponta a ponta): o voltar e o título descem a área segura de cima.
-        paddingTop: `calc(env(safe-area-inset-top, 0px) + ${full ? 8 : 10}px${moldura && MOLDURA_TELAS ? ' + 1vw * 15' : ''})`,
+        paddingTop: `calc(env(safe-area-inset-top, 0px) + ${full ? 8 : 10}px${comMoldura ? ' + 1vw * 15' : ''})`,
         // `full` (D-02, 18/10/2026): rodada de tela quase cheia. O GameRoot (z 100) já cobre o link de canto (z 45), então a faixa da
         // nav (`--sm-corner-h`) que a página reserva embaixo é só vazio: aqui ela some, ficando a área segura do aparelho + uma folga.
         paddingBottom: full
@@ -73,7 +75,7 @@ export function GameRoot({ children, style, full = false, moldura }: { children:
         ...style,
       }}
     >
-      {moldura && <TelaMoldura tela={moldura.tela} title={moldura.title} infoSlotRef={slotRef} />}
+      {comMoldura && moldura && <TelaMoldura tela={moldura.tela} title={moldura.title} infoSlotRef={slotRef} />}
       {comMoldura ? <ModalInfoSlotProvider slot={slot} bare>{children}</ModalInfoSlotProvider> : children}
     </div>
   );

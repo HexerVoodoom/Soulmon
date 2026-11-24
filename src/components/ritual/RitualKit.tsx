@@ -5,6 +5,7 @@ import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { SM2_SHADOW_CARD, sm2Hint } from '../form/FormKit';
 import { ModalFrame } from '../ui/ModalFrame';
 import { MOLDURA_HOME_DIALOGOS } from '../ui/SheetFrame';
+import { useMolduraAtiva } from '../../contexts/UiSkinContext';
 
 /**
  * RITUAIS — o kit do diálogo centrado (canvas `docs/design/wireframes/
@@ -84,7 +85,8 @@ export function RitualDialog({
   focusContainer = false, veilRole, children, style, className, theme, closeOnBackdrop = false,
 }: RitualDialogProps) {
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
-  const moldura = MOLDURA_HOME_DIALOGOS && theme !== 'light';
+  const peleComMoldura = useMolduraAtiva();
+  const moldura = peleComMoldura && MOLDURA_HOME_DIALOGOS && theme !== 'light';
   const closeButton = closeLabel ? <CloseX onClose={onClose} label={closeLabel} side={closeSide} inOrder={closeLast} /> : null;
 
   useLayoutEffect(() => {
