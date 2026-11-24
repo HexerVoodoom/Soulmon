@@ -7618,6 +7618,10 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-modal--dono .sm2-moldura-modal__placa { left: calc(var(--u) * 25.1); width: calc(var(--u) * 54.1); top: calc(var(--u) * 4.7); height: calc(var(--u) * 7.7); padding: 0 calc(var(--u) * 1.5); box-sizing: border-box; }
 .sm2-moldura-modal--dono .sm2-moldura-modal__info { right: calc(var(--u) * 2.85); top: calc(var(--u) * 4.25); width: calc(var(--u) * 8.5); height: calc(var(--u) * 8.5); }
 .sm2-moldura-dono__fechar { position: absolute; z-index: 4; left: calc(var(--u) * 8.5); top: calc(var(--u) * 8.5); transform: translate(-50%, -50%); }
+/* FUNDO VAZIO (24/11/2026, dono): `sm2-moldura-modal--vazio` = SEM textura (pedra/runas/fundo de lote), só o turquesa escuro LISO `--sm2-viewport-bg` a 100%.
+   Reutilizável em qualquer moldura (`ModalFrame fundoVazio` / `ModalSheet fundoVazio`): Nova tarefa, Novo hábito e Missões usam ESTA mesma classe. */
+.sm2-moldura-modal--vazio .sm2-moldura-modal__fundo { background-image: none; background-color: var(--sm2-viewport-bg, #0E2422); opacity: 1; }
+.sm2-moldura-modal--vazio .sm2-moldura-modal__subfolha::before { background: none; }
 /* Folha de baixo na moldura dono (`ModalSheet moldura="dono"`): a linha do ✕ vira o medalhão — centrada nele, sem a margem/posição relativa da folha comum. */
 .sm2-moldura-sheet .sm2-modal-fechar-linha.sm2-moldura-dono__fechar { position: absolute; margin: 0; left: calc(var(--u) * 8.5); top: calc(var(--u) * 8.5); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; transform: translate(-50%, -50%); }
 .sm2-moldura-modal__conteudo {
