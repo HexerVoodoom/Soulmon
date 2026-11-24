@@ -509,9 +509,6 @@ export function CambistaSheet({ language, credits, onExchangeCredits, onRecoverP
             </p>
             <CurrencyBalance currency="credits" value={credits} language={language} />
           </div>
-          <p style={{ ...sm2Hint, margin: 0 }}>
-            {isPt ? 'Filtre por até 3 elementos base: aparecem só as essências que contêm todos eles.' : 'Filter by up to 3 base elements: only essences that contain all of them are listed.'}
-          </p>
           <ElementBaseSlots slots={slots} isPt={isPt} onChange={(i, id) => setSlots(v => v.map((x, j) => (j === i ? id : x)))} />
           <ul data-cambista-essence-list style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2, maxHeight: 320, overflowY: 'auto' }}>
             {elementsMatchingBases(slots, ESSENCE_ELEMENT_IDS).map(id => {

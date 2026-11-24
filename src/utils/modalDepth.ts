@@ -37,12 +37,14 @@ function subscribe(l: () => void): () => void {
  * (`GroveFolha`, portal no `<body>`) abre de dentro da `AreaSheet` do Salão, e contar a `AreaSheet` desabilitava o
  * ÚNICO voltar da folha — o jogador ficava preso (hotfix 13/11/2026). `el` fora de qualquer modal: todo modal conta.
  */
-export function modalsAbove(el?: Element | null): number {
+export function modalsAbove(el?: Element | null, ignorarDentroDe?: Element | null): number {
   if (typeof document === 'undefined') return 0;
   const proprio = el?.closest?.(SEL) ?? null;
   let n = 0;
   document.querySelectorAll(SEL).forEach(m => {
     if (el && m.contains(el)) return;
+    // Tela interna da MESMA folha (ex.: Porta da Hexsmith dentro da `AreaSheet`): não conta como "outro modal por cima".
+    if (ignorarDentroDe && ignorarDentroDe.contains(m)) return;
     if (proprio && !(proprio.compareDocumentPosition(m) & Node.DOCUMENT_POSITION_FOLLOWING)) return;
     n++;
   });
@@ -57,13 +59,13 @@ export const modalDepth = (): number => modalsAbove(null);
  * desabilitado; o voltar de dentro do próprio modal só esmaece se outro modal
  * abrir sobre ele — nunca por causa do modal de BAIXO que o abriu (ver `modalsAbove`).
  */
-export function useBackDimmed(ref: RefObject<Element | null>): boolean {
+export function useBackDimmed(ref: RefObject<Element | null>, ignorarDentroDe?: (el: Element | null) => Element | null): boolean {
   const [dimmed, setDimmed] = useState(false);
   useEffect(() => {
-    const read = () => setDimmed(modalsAbove(ref.current) > 0);
+    const read = () => setDimmed(modalsAbove(ref.current, ignorarDentroDe?.(ref.current)) > 0);
     read();
     return subscribe(read);
-  }, [ref]);
+  }, [ref, ignorarDentroDe]);
   return dimmed;
 }
 

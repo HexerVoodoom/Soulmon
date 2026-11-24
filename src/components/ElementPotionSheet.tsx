@@ -4,7 +4,8 @@ import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { potionArt } from '../utils/potionArt';
 import { essenceName } from '../utils/essences';
 import { ElementBaseSlots, ElementIcon as Icon, elName, emptySlots } from './ElementBaseSlots';
-import { isPotionUnlocked, canAffordPotion, potionCost, potionIngredients, potionKey, potionListFor, selectedBases, type PotionRecipe } from '../utils/elementPotion';
+import { ingredienteRelevante, ordenarPorRelevancia } from '../utils/hexsmith';
+import { elementComposition, isPotionUnlocked, canAffordPotion, potionCost, potionIngredients, potionKey, potionListFor, selectedBases, type PotionRecipe } from '../utils/elementPotion';
 import type { Language } from '../utils/i18n';
 import { Icon as UiIcon } from './ui/Icon';
 import { ELEMENTO_NEUTRO_ID } from '../utils/elementoNeutro';
@@ -86,6 +87,8 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
     : (big ? <Icon id={id} size={32} /> : <Icon id={id} size={24} />));
   const confirmDisabled = !sel || !canAffordPotion(essences, sel, inventory);
 
+  /** Elementos relevantes ao que se está criando: ele mesmo e as bases que o compõem. */
+  const relevantes = (id: string): ReadonlySet<string> => new Set([id, ...(elementComposition(id) ?? [])]);
   const row = (r: PotionRecipe) => {
     if (!isPotionUnlocked(r.id, unlocked)) {
       return (
@@ -114,7 +117,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
               <li data-ing-neutro-essence data-ok={n.neutro >= n.neutroNeed ? 'true' : 'false'}><Icon id={ELEMENTO_NEUTRO_ID} size={24} /><span style={{ flex: 1 }}>{essenceName(ELEMENTO_NEUTRO_ID, isPt)}</span><span className="sm2-num">{Math.min(n.neutro, n.neutroNeed)}/{n.neutroNeed}</span></li>
             </>
           ); })()}
-          {r.potions.map(p => (
+          {ordenarPorRelevancia(r.potions, p => ingredienteRelevante({ tipo: 'pocao', elemento: p.id }, relevantes(r.id))).map(p => (
             <li key={`p-${p.id}`} data-ing-potion={p.id} data-ok={p.have >= p.need ? 'true' : 'false'}>
               {art(p.id, false)}<span style={{ flex: 1 }}>{t.potionOf(p.id)}</span><span className="sm2-num">{p.have}/{p.need}</span>
             </li>
