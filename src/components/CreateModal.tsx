@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { ACTIVITY_CATEGORIES } from '../types/categories';
 import { Icon } from './ui/Icon';
+import { categoryIconArt } from '../assets/soulmon/icons/categories';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { InfoTip } from './ui/InfoTip';
 import {
@@ -8,13 +9,13 @@ import {
   ActivityCategory, type BranchType, type AttributePoints,
 } from '../types/attributes';
 import { CATEGORY_ICONS, CATEGORY_ICON_NAME, categoryLabel } from '../types/category-icons';
-import { canSelectWeekdays } from '../types/progression';
 import { Language, useTranslation } from '../utils/i18n';
 import { WEEKDAY_INDEXES, weekdayFull, weekdayShort } from '../utils/weekdays';
 import { ROUTINE_PRESETS, presetDeRotina, type RoutinePreset } from '../types/taskModel';
 import {
   CheckRow, Chip, Field, ModalSheet, Segment, sm2Button, sm2Hint, sm2Label,
 } from './form/FormKit';
+import { DaySquares, type WeekDay } from './DaySquares';
 import {
   useItemForm, useHabitSchedule, anchorSentence, todayIso,
   type Step, type ScheduleKind,
@@ -297,7 +298,9 @@ export function CategoryChips({
       <div role="group" aria-label={isPt ? 'Categoria' : 'Category'} style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {CATEGORIES.map(cat => (
           <Chip key={cat} selected={category === cat} onToggle={() => setCategory(cat)} style={{ padding: '0 12px' }}>
-            <Icon name={CATEGORY_ICON_NAME[cat]} size={20} fill={category === cat ? 1 : 0} tone="inherit" />
+            {categoryIconArt(cat)
+              ? <img data-cat-icon={cat} src={categoryIconArt(cat)} alt={categoryLabel(cat, isPt)} width={24} height={24} draggable={false} style={{ flexShrink: 0, objectFit: 'contain' }} />
+              : <Icon name={CATEGORY_ICON_NAME[cat]} size={20} fill={category === cat ? 1 : 0} tone="inherit" />}
             {categoryLabel(cat, isPt)}
           </Chip>
         ))}
@@ -428,16 +431,16 @@ export function EffortFields({
 
 export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask, onSaveActivity, language = 'en-US', evolutionStage = 'rookie', activitiesCount = 0, activitiesCap = 2, capIsDemoBoundary = false, onUnlock }: CreateModalProps) {
   const isPt = language === 'pt-BR';
-  const showWeekdayGrid = canSelectWeekdays(evolutionStage);
   const t = useTranslation(language);
 
   /* Hábito = TODO DIA (sempre no Hoje). Tarefa = pontual OU em dias específicos
      (a cada X dias, dias da semana). A tarefa em dias específicos é gravada como
      atividade com `schedule`; o Hoje a mostra só nos dias dela (14/10/2026). */
   const [kind, setKind] = useState<'habit' | 'task'>(initialKind === 'task' ? 'task' : 'habit');
-  const [taskOnDays, setTaskOnDays] = useState(false);
-  const isSingleExecution = kind === 'task' && !taskOnDays;
-  const setIsSingleExecution = (single: boolean) => { setKind(single ? 'task' : 'habit'); setTaskOnDays(false); };
+  /* "Uma vez" (checkbox do Quando): tarefa pontual. Desmarcado = dias da semana (ou o schedule do quick-add). */
+  const [oneTime, setOneTime] = useState(false);
+  const isSingleExecution = kind === 'task' && oneTime;
+  const setIsSingleExecution = (single: boolean) => { setKind(single ? 'task' : 'habit'); setOneTime(single); };
   // Captura rápida: uma linha vira o formulário inteiro. Não é enfeite — se
   // cadastrar custa três telas, a pessoa para de cadastrar, e um app de tarefas
   // onde ninguém cadastra não é usado errado, é desinstalado.
@@ -482,6 +485,8 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
   const isAtCap = kind === 'habit' && Number.isFinite(activitiesCap) && activitiesCount >= activitiesCap; // teto infinito = sem teto (nunca imprime "até Infinity")
   const isBlocked = isAtCap;
   const currentEmoji = CATEGORY_ICONS[category];
+  /** Sem dia marcado e sem "Uma vez" não há quando: Salvar fica bloqueado. */
+  const quandoInvalido = kind === 'task' && !isSingleExecution && !sched.isValid;
 
   const handleSave = () => {
     if (!name.trim()) return;
@@ -502,22 +507,21 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
         lastTouchedAt: nowIso,
       });
     } else {
-      if (taskOnDays && !sched.isValid) {
+      // HÁBITO = todo dia, sem perguntar. Só a TAREFA lê o Quando (dias marcados).
+      const isHabit = kind === 'habit';
+      if (!isHabit && !sched.isValid) {
         return;
       }
-      // Hábito = todo dia, sem escolha. Só a TAREFA em dias específicos lê o agendador.
-      const schedule: Schedule = taskOnDays
-        ? sched.buildSchedule()
-        : { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] };
+      const schedule: Schedule = isHabit ? { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] } : sched.buildSchedule();
       onSaveActivity({
         name,
         category,
         emoji: currentEmoji,
         steps,
-        weekDays: taskOnDays ? sched.buildWeekDays() : [0, 1, 2, 3, 4, 5, 6],
+        weekDays: isHabit ? [0, 1, 2, 3, 4, 5, 6] : sched.buildWeekDays(),
         alarm: customAlarmTime ? { time: customAlarmTime } : undefined,
         schedule,
-        anchor: taskOnDays ? undefined : sched.buildAnchor(),
+        anchor: kind === 'habit' ? sched.buildAnchor() : undefined,
       });
     }
     onClose();
@@ -541,7 +545,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
     if (parsed.effort) setEffort(parsed.effort);
     if (parsed.schedule) {
       setKind('task');
-      setTaskOnDays(true);
+      setOneTime(false);
       sched.applySchedule(parsed.schedule);
     } else if (parsed.date) {
       setIsSingleExecution(true);
@@ -567,7 +571,6 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
   };
 
   // Habit e Task: tudo visível (sem 'Mais opções'), um só campo de nome (a captura).
-  const habitMode = kind === 'habit';
 
   const txt = {
     kindLabel: isPt ? 'Tipo' : 'Type',
@@ -577,6 +580,8 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
       ? 'Hábito: acontece todo dia e aparece sempre no Hoje. Tarefa: pontual ou em dias específicos, do seu jeito.'
       : 'Habit: happens every day and always shows in Today. Task: one-off or on specific days, your way.',
     oneTime: isPt ? 'Uma vez' : 'One-time',
+    allDays: isPt ? 'Marcar todos' : 'Mark all',
+    quandoHint: isPt ? 'Marque ao menos um dia ou "Uma vez".' : 'Pick at least one day or "One-time".',
     onDays: isPt ? 'Dias específicos' : 'Specific days',
     frequency: isPt ? 'Quando' : 'When',
     when: isPt ? 'Quando pretendo fazer' : 'When I plan to do it',
@@ -617,8 +622,8 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
         <button
           type="button"
           onClick={handleSave}
-          disabled={!name.trim() || (taskOnDays && !sched.isValid) || isBlocked}
-          style={{ ...sm2Button('primary', !name.trim() || (taskOnDays && !sched.isValid) || isBlocked), flex: 1.4 }}
+          disabled={!name.trim() || quandoInvalido || isBlocked}
+          style={{ ...sm2Button('primary', !name.trim() || quandoInvalido || isBlocked), flex: 1.4 }}
           aria-describedby={isAtCap ? 'sm-create-cap-hint' : undefined}
         >
           {isAtCap ? txt.limitReached : txt.save}
@@ -683,23 +688,47 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
             <div>
               <label style={sm2Label}>{txt.kindLabel}</label>
               <div role="radiogroup" aria-label={txt.kindLabel} style={{ display: 'flex', gap: 8 }}>
-                <Segment selected={kind === 'habit'} onSelect={() => { setKind('habit'); setTaskOnDays(false); }} label={txt.habit} />
+                <Segment selected={kind === 'habit'} onSelect={() => { setKind('habit'); setOneTime(false); }} label={txt.habit} />
                 <Segment selected={kind === 'task'} onSelect={() => { setKind('task'); }} label={txt.task} />
               </div>
               <HintTip language={language} label={isPt ? 'Hábito ou tarefa?' : 'Habit or task?'}>{txt.kindHint}</HintTip>
             </div>
 
+            {/* QUANDO — 7 quadrados Dom→Sáb (desmarcados na criação), "Marcar todos" ao lado
+                do título e "Uma vez" abaixo, que desliga os quadrados. */}
             {kind === 'task' && (
-              <div>
-                <label style={sm2Label}>{txt.frequency}</label>
-                <div role="radiogroup" aria-label={txt.frequency} style={{ display: 'flex', gap: 8 }}>
-                  <Segment selected={!taskOnDays} onSelect={() => setTaskOnDays(false)} label={txt.oneTime} />
-                  <Segment selected={taskOnDays} onSelect={() => setTaskOnDays(true)} label={txt.onDays} />
-                </div>
+            <div data-quando>
+              <label style={{ ...sm2Label, marginBottom: 0 }}>{txt.frequency}</label>
+              {/* Uma linha só de controles: Marcar todos + Uma vez lado a lado (quebra só se faltar espaço). */}
+              <div data-quando-controles>
+                {sched.kind === 'weekdays' && (
+                  <CheckRow
+                    checked={sched.weekDays.length === 7}
+                    onChange={(v) => sched.setWeekDays(v ? [0, 1, 2, 3, 4, 5, 6] : [])}
+                  >
+                    {txt.allDays}
+                  </CheckRow>
+                )}
+                <CheckRow checked={isSingleExecution} onChange={(v) => (v ? setIsSingleExecution(true) : setOneTime(false))}>
+                  {txt.oneTime}
+                </CheckRow>
               </div>
+              {sched.kind === 'weekdays' ? (
+                <DaySquares
+                  mode="multi"
+                  language={language}
+                  days={sched.weekDays as WeekDay[]}
+                  onToggle={(d) => sched.toggleWeekDay(d)}
+                  groupLabel={txt.frequency}
+                  disabled={isSingleExecution}
+                />
+              ) : (
+                <HabitScheduleFields sched={sched} language={language} />
+              )}
+              {quandoInvalido && <p data-quando-hint style={sm2Hint}>{txt.quandoHint}</p>}
+            </div>
             )}
 
-            {taskOnDays && showWeekdayGrid && <HabitScheduleFields sched={sched} language={language} />}
             {kind === 'habit' && <HabitAnchorFields sched={sched} language={language} />}
 
             {isSingleExecution && (
@@ -747,7 +776,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
 
             <div>
               <label style={sm2Label} htmlFor="sm-create-alarm">
-                {isSingleExecution ? txt.alarm : habitMode ? txt.frequency : isPt ? 'Horário (opcional)' : 'Time (optional)'}
+                {isSingleExecution ? txt.alarm : kind === 'habit' ? txt.frequency : isPt ? 'Horário (opcional)' : 'Time (optional)'}
               </label>
               {isSingleExecution && hasDeadline && (
                 <div role="radiogroup" aria-label={txt.alarm} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>

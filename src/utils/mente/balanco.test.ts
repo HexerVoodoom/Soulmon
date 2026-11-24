@@ -271,7 +271,7 @@ describe('jogos longos × teto diário de minijogo', () => {
       }
       return Infinity;
     };
-    expect(MINIGAME_BITS_PER_DAY).toBe(150);
+    expect(MINIGAME_BITS_PER_DAY).toBe(180);
     expect(andaresAteTeto(1)).toBeGreaterThan(MAX_FLOORS);
   });
 

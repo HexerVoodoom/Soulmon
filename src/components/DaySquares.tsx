@@ -37,9 +37,11 @@ export interface DaySquaresProps {
   language: Language;
   /** Rótulo do grupo para leitor de tela. */
   groupLabel?: string;
+  /** Quadrados inertes (ex.: "Uma vez" marcado no Quando). */
+  disabled?: boolean;
 }
 
-export function DaySquares({ days, onToggle, mode, language, groupLabel }: DaySquaresProps) {
+export function DaySquares({ days, onToggle, mode, language, groupLabel, disabled }: DaySquaresProps) {
   const l = language === 'pt-BR' ? 'pt' : 'en';
   return (
     <div
@@ -47,6 +49,7 @@ export function DaySquares({ days, onToggle, mode, language, groupLabel }: DaySq
       role="group"
       aria-label={groupLabel ?? (l === 'pt' ? 'Dias da semana' : 'Days of the week')}
       data-day-squares={mode}
+      aria-disabled={disabled || undefined}
     >
       {WEEK_DAYS.map(d => {
         const on = days.includes(d);
@@ -57,6 +60,7 @@ export function DaySquares({ days, onToggle, mode, language, groupLabel }: DaySq
             className="sm2-day-square"
             data-day={d}
             aria-pressed={on}
+            disabled={disabled}
             aria-label={LONGOS[l][d]}
             onClick={() => onToggle(d)}
           >

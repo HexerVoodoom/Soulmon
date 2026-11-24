@@ -241,7 +241,6 @@ export const GUILD_COPY = {
   // ── Bosque: só o que a fatia A desenha (§3) ────────────────────────────
   'guild.bosque.titulo': ['Bosque', 'Grove'],
   // Clan Hall: a árvore mora no Grove; aqui só a porta.
-  'guild.arvore.ver': ['Ver a árvore no Bosque', 'See the tree in the Grove'],
   // O panorama (18/10/2026): tela cheia, 4 árvores, uma por estação.
   'guild.bosque.entrar': ['Entrar no bosque', 'Enter the grove'],
   // D-49..D-53 (19/10/2026): o Bosque é UM cenário (Clã e panorama); os membros andam nele. Balões = banco FIXO, sem IA,

@@ -924,7 +924,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                   ? <RewardLine bits={rewardBits} hearts={gotHeart ? 1 : 0} language={isPt ? 'pt-BR' : 'en-US'} />
                   : <span className="sm2-num">{rewardMsg}</span>}
               </p>
-              {capBits && <p style={phaseLine} data-dungeon-bits-cap>{isPt ? 'Teto diário de Bits atingido — a descida segue, só sem Bits.' : 'Daily Bits cap reached — the descent goes on, just without Bits.'}</p>}
             </div>
           )}
           {phase === 'floor-clear' && (
@@ -949,7 +948,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                   <p style={phaseLine}>{isPt ? 'A próxima descida ficou mais difícil.' : 'The next descent got harder.'}</p>
                 </div>
               )}
-              {capBits && <p style={phaseLine} data-dungeon-bits-cap>{isPt ? 'Teto diário de Bits atingido — a descida segue, só sem Bits.' : 'Daily Bits cap reached — the descent goes on, just without Bits.'}</p>}
             </div>
           )}
           {phase === 'ended' && (
@@ -1012,7 +1010,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                       {isPt ? 'Isto aconteceu enquanto você esteve fora; ele já voltou para casa.' : 'This happened while you were away; he is back home now.'}
                     </p>
                   )}
-                  {capBits && <p style={phaseLine} data-dungeon-bits-cap>{isPt ? 'Teto diário de Bits atingido — a descida segue, só sem Bits.' : 'Daily Bits cap reached — the descent goes on, just without Bits.'}</p>}
                   {espera > 0 && (
                     <p style={phaseLine} data-dungeon-recovering>
                       {isPt ? `Recuperando… pode descer de novo em ${formatarEspera(espera, true)}.` : `Recovering… ready to go down again in ${formatarEspera(espera, false)}.`}

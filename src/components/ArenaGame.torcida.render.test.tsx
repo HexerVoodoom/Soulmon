@@ -389,7 +389,7 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
     });
   });
 
-  describe('Bits mostrados = Bits creditados (teto diário de 150)', () => {
+  describe('Bits mostrados = Bits creditados (teto diário de 180)', () => {
     // O funil do App devolve o creditado; o ArenaGame mostra isso, não o pedido de 50.
     const vencerCom = async (creditado: number) => {
       H.foeHp = 0.01;

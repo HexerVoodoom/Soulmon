@@ -13,6 +13,10 @@
 /widget-frames/*.png
   Cache-Control: public, max-age=31536000, immutable
 
+# Indice do pre-download do onboarding (gerado no build): sempre o do deploy atual
+/prefetch-index.json
+  Cache-Control: no-cache, no-store, must-revalidate
+
 # Never cache the service worker
 /sw.js
   Cache-Control: no-cache, no-store, must-revalidate

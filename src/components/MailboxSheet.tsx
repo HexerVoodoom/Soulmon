@@ -192,7 +192,7 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
                     )}
                     {isGuildWar(m) && onWatchWar && (
                       <button type="button" data-mail-war-watch disabled={ocupado} onClick={onWatchWar}
-                        style={{ ...sm2Button('primary', ocupado, 'sm'), flex: 1 }}>{isPt ? 'Assistir' : 'Watch'}</button>
+                        style={{ ...sm2Button('primary', ocupado, 'sm'), flex: 1 }}>{isPt ? 'Assistir batalha' : 'Watch Battle'}</button>
                     )}
                     {isGuildInvite(m) && onJoinGuild && (
                       <div data-mail-guild-invite style={{ display: 'flex', gap: 8 }}>

@@ -2912,8 +2912,8 @@ __name(vantagemElemental, "vantagemElemental");
 function aplicarElementosDuelo(me, opp, escala = 1) {
   const advMe = vantagemElemental(me.fx?.elVantagem ?? me.fx?.elBasica, opp.fx?.elDefesa ?? opp.fx?.elVantagem ?? opp.fx?.elBasica);
   const advOpp = vantagemElemental(opp.fx?.elVantagem ?? opp.fx?.elBasica, me.fx?.elDefesa ?? me.fx?.elVantagem ?? me.fx?.elBasica);
-  const com = /* @__PURE__ */ __name((c, adv) => adv === 0 ? c : { ...c, bonus: (1 + c.bonus) / (1 - escala * adv / 10) - 1 }, "com");
-  return { meCombatant: com(me.combatant, advMe), oppCombatant: com(opp.combatant, advOpp) };
+  const com2 = /* @__PURE__ */ __name((c, adv) => adv === 0 ? c : { ...c, bonus: (1 + c.bonus) / (1 - escala * adv / 10) - 1 }, "com");
+  return { meCombatant: com2(me.combatant, advMe), oppCombatant: com2(opp.combatant, advOpp) };
 }
 __name(aplicarElementosDuelo, "aplicarElementosDuelo");
 
@@ -11337,23 +11337,23 @@ var GAUGE_SIM = Object.freeze({
 });
 function progressoDoDia(p, day2) {
   const taxa = FAIXA_P[p.faixa];
-  let dias = Math.max(0, Math.floor((dayStart(day2) - dayStart(SIM_ANCORA_DIA)) / DAY_MS));
+  let dias2 = Math.max(0, Math.floor((dayStart(day2) - dayStart(SIM_ANCORA_DIA)) / DAY_MS));
   let i2 = ESTAGIOS.indexOf(p.ancora.estagio);
   let pontos = p.ancora.pontos;
   while (i2 < 4) {
     const { teto, meta } = GAUGE_SIM[ESTAGIOS[i2]];
     const faltam = Math.ceil(Math.max(0, meta - pontos) / (taxa * teto));
-    if (dias < faltam) {
+    if (dias2 < faltam) {
       const estagio = ESTAGIOS[i2];
-      const atual = Math.min(meta, pontos + dias * taxa * teto);
+      const atual = Math.min(meta, pontos + dias2 * taxa * teto);
       const span = STAGE_FIRST_LEVEL[ESTAGIOS[i2 + 1]] - STAGE_FIRST_LEVEL[estagio];
       return { level: Math.min(STAGE_FIRST_LEVEL[estagio] + span - 1, STAGE_FIRST_LEVEL[estagio] + Math.floor(atual / meta * span)), stage: estagio };
     }
-    dias -= faltam;
+    dias2 -= faltam;
     pontos = 0;
     i2++;
   }
-  return { level: Math.min(MAX_LEVEL2, STAGE_FIRST_LEVEL.ultra + Math.floor(pontos + dias * taxa)), stage: "ultra" };
+  return { level: Math.min(MAX_LEVEL2, STAGE_FIRST_LEVEL.ultra + Math.floor(pontos + dias2 * taxa)), stage: "ultra" };
 }
 __name(progressoDoDia, "progressoDoDia");
 var SIM_FORMA_MAX = "ultra";
@@ -14155,13 +14155,13 @@ async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date())
   const cartoes = await lerCartoes(env, g, /* @__PURE__ */ new Date(), cartoesProntos ?? {});
   const cart = g.members.map((m) => cartoes[m]);
   const buffs = await vistaDosBuffs(env, g, cartoes);
-  const dias = cart.map((c, i2) => {
+  const dias2 = cart.map((c, i2) => {
     const proprios = checkinsDoCartao(c, semana);
     return proprios.length > 0 ? proprios : g.checkins?.[g.members[i2]] || [];
   });
   const fios = cart.map(fioDoCartao);
   const firmou = fios.map((f) => !!f?.days?.includes(hoje));
-  const veio = dias.map((d, i2) => d.includes(hoje) || firmou[i2]);
+  const veio = dias2.map((d, i2) => d.includes(hoje) || firmou[i2]);
   const membros = await Promise.all(g.members.map(async (m, i2) => {
     const memberId = await idOpacoDoMembro(env, g.id, m);
     return {
@@ -14910,8 +14910,8 @@ function isDayCompleteInSave(state, day2) {
   const acts = Array.isArray(state.activities) ? state.activities : [];
   for (const a of acts) {
     if (!a || typeof a !== "object") continue;
-    const dias = Array.isArray(a.weekDays) ? a.weekDays : [];
-    if (dias.length > 0 && !dias.includes(wd)) continue;
+    const dias2 = Array.isArray(a.weekDays) ? a.weekDays : [];
+    if (dias2.length > 0 && !dias2.includes(wd)) continue;
     if (dateOf(a.lastCompletedDate) !== day2) return false;
   }
   return true;
@@ -15396,7 +15396,7 @@ async function spendSparMatch(env, id, day2, lido) {
 __name(spendSparMatch, "spendSparMatch");
 
 // api/_avatares.js
-var AVATAR_IDS = /* @__PURE__ */ new Set(["ativo-arena-duelo", "ativo-arena-feira", "ativo-arena", "ativo-config", "ativo-conta", "ativo-cuidados", "ativo-exploracao-caderno", "ativo-exploracao-oficina", "ativo-exploracao-trilha", "ativo-exploracao", "ativo-f-arqueira", "ativo-f-barda", "ativo-f-cacadora", "ativo-f-cura", "ativo-f-feras", "ativo-f-ferreira", "ativo-f-ferreiro", "ativo-f-forja", "ativo-f-guarda", "ativo-f-lua", "ativo-f-mercenaria", "ativo-f-navegadora", "ativo-f-sacerdotisa", "ativo-f-treino", "ativo-f-venenos", "ativo-hall-amigos", "ativo-hall-guilda", "ativo-hall", "ativo-jogos-mente", "ativo-jogos-refugio", "ativo-jogos", "ativo-laboratorio-pet", "ativo-laboratorio-stats", "ativo-laboratorio", "ativo-loja-background", "ativo-loja-decoracao", "ativo-loja-itens", "ativo-mercado-conquistas", "ativo-mercado", "ativo-onboarding", "ativo-oraculo", "ativo-sono", "ativo-desafiante-espina", "ativo-desafiante-mare", "ativo-desafiante-quartzo", "agua-enguia-escriba", "agua-geleia-barqueira", "agua-koi-dragao-sabio", "agua-ostra-mercadora", "akasha-baleia-estrela-arauto", "akasha-garca-veu-guia", "akasha-geleia-fantasma-arquivista", "akasha-mariposa-escriba-de-luz", "ar-arraia-nuvem-mercadora", "ar-cegonha-morcego-meteorologista", "ar-coruja-papagaio-mensageiro", "ar-sprite-vento-espirito", "campina-abelha-apicultora", "campina-coelho-bardo", "campina-espantalho-golem-vigia", "campina-ovelha-nuvem-tecela", "cavernas-aranha-cristal-guia", "cavernas-lesma-estalactite", "cavernas-morcego-sabio-eco", "cavernas-toupeira-lapidaria", "deserto-escaravelho-caravaneiro", "deserto-fenec-esfinge-vidente", "deserto-golem-cacto-guarda", "deserto-verme-areia-mercador", "floresta-cervo-espirito-guardiao", "floresta-esquilo-correio", "floresta-javali-casca", "floresta-raposa-druida", "fogo-fenix-filhote-curandeiro", "fogo-golem-obsidiana", "fogo-raposa-brasa-mensageira", "fogo-salamandra-cozinheira", "gelo-geleia-congelada-confeiteira", "gelo-lebre-neve-arquivista", "gelo-mamute-pequeno-carregador", "gelo-raposa-gelo-cacadora", "industrial-aranha-tecela", "industrial-caranguejo-argila-pedreiro", "industrial-castor-engenheiro", "industrial-espirito-forno-vidraceiro", "luz-cervo-lanterna", "luz-geleia-pomba", "luz-leoa-solar-sacerdotisa", "luz-vagalume-coro", "oceano-cavalo-marinho-mensageiro", "oceano-nautilo-estudioso", "oceano-peixe-pescador-lampiao", "oceano-tartaruga-marinha-anciao", "pantano-crocodilo-barqueiro", "pantano-garca-lanterna", "pantano-geleia-turfa-curandeira", "pantano-sapo-erbolario", "picos-aguia-lagarto-batedora", "picos-cabra-pedra-monge", "picos-carneiro-trovao-arauto", "picos-espirito-tempestade-aprendiz", "planta-geleia-musgo-enfermeira", "planta-louva-deus-florista", "planta-planta-carnivora-cozinheira", "planta-urso-arvore-jardineiro", "sombra-corvo-morcego-negociante", "sombra-espectro-tinta-gentil", "sombra-gato-sombra-cartografo", "sombra-mariposa-arquivista", "terra-besouro-rinoceronte-guarda", "terra-golem-argila-oleiro", "terra-tartaruga-pedra-anciao", "terra-texugo-toupeira-mineiro", "extra-aranha-fiandeira-a", "extra-aranha-fiandeira-b", "extra-dragao-cogumelo", "extra-ferreira-coelho-robo-a", "extra-ferreira-coelho-robo-b", "extra-ferreira-eletrica", "extra-filhote-de-mel", "extra-lanterna-fantasma", "extra-medusa-pescadora-a", "extra-medusa-pescadora-b"]);
+var AVATAR_IDS = /* @__PURE__ */ new Set(["ativo-arena-duelo", "ativo-arena-feira", "ativo-arena", "ativo-config", "ativo-conta", "ativo-cuidados", "ativo-exploracao-caderno", "ativo-exploracao-oficina", "ativo-exploracao-trilha", "ativo-exploracao", "ativo-f-arqueira", "ativo-f-barda", "ativo-f-cacadora", "ativo-f-cura", "ativo-f-feras", "ativo-f-ferreira", "ativo-f-ferreiro", "ativo-f-forja", "ativo-f-guarda", "ativo-f-lua", "ativo-f-mercenaria", "ativo-f-navegadora", "ativo-f-sacerdotisa", "ativo-f-treino", "ativo-f-venenos", "ativo-hall-amigos", "ativo-hall-guilda", "ativo-hall", "ativo-jogos-mente", "ativo-jogos-refugio", "ativo-jogos", "ativo-laboratorio-pet", "ativo-laboratorio-stats", "ativo-laboratorio", "ativo-loja-background", "ativo-loja-decoracao", "ativo-loja-itens", "ativo-mercado-conquistas", "ativo-mercado", "ativo-onboarding", "ativo-oraculo", "ativo-sono", "ativo-desafiante-espina", "ativo-desafiante-mare", "ativo-desafiante-quartzo", "agua-enguia-escriba", "agua-geleia-barqueira", "agua-koi-dragao-sabio", "agua-ostra-mercadora", "akasha-baleia-estrela-arauto", "akasha-garca-veu-guia", "akasha-geleia-fantasma-arquivista", "akasha-mariposa-escriba-de-luz", "ar-arraia-nuvem-mercadora", "ar-cegonha-morcego-meteorologista", "ar-coruja-papagaio-mensageiro", "ar-sprite-vento-espirito", "campina-abelha-apicultora", "campina-coelho-bardo", "campina-espantalho-golem-vigia", "campina-ovelha-nuvem-tecela", "cavernas-aranha-cristal-guia", "cavernas-lesma-estalactite", "cavernas-morcego-sabio-eco", "cavernas-toupeira-lapidaria", "deserto-escaravelho-caravaneiro", "deserto-fenec-esfinge-vidente", "deserto-golem-cacto-guarda", "deserto-verme-areia-mercador", "floresta-cervo-espirito-guardiao", "floresta-esquilo-correio", "floresta-javali-casca", "floresta-raposa-druida", "fogo-fenix-filhote-curandeiro", "fogo-golem-obsidiana", "fogo-raposa-brasa-mensageira", "fogo-salamandra-cozinheira", "gelo-geleia-congelada-confeiteira", "gelo-lebre-neve-arquivista", "gelo-mamute-pequeno-carregador", "gelo-raposa-gelo-cacadora", "industrial-aranha-tecela", "industrial-caranguejo-argila-pedreiro", "industrial-castor-engenheiro", "industrial-espirito-forno-vidraceiro", "luz-cervo-lanterna", "luz-geleia-pomba", "luz-leoa-solar-sacerdotisa", "luz-vagalume-coro", "oceano-cavalo-marinho-mensageiro", "oceano-nautilo-estudioso", "oceano-peixe-pescador-lampiao", "oceano-tartaruga-marinha-anciao", "pantano-crocodilo-barqueiro", "pantano-garca-lanterna", "pantano-geleia-turfa-curandeira", "pantano-sapo-erbolario", "picos-aguia-lagarto-batedora", "picos-cabra-pedra-monge", "picos-carneiro-trovao-arauto", "picos-espirito-tempestade-aprendiz", "planta-geleia-musgo-enfermeira", "planta-louva-deus-florista", "planta-planta-carnivora-cozinheira", "planta-urso-arvore-jardineiro", "sombra-corvo-morcego-negociante", "sombra-espectro-tinta-gentil", "sombra-gato-sombra-cartografo", "sombra-mariposa-arquivista", "terra-besouro-rinoceronte-guarda", "terra-golem-argila-oleiro", "terra-tartaruga-pedra-anciao", "terra-texugo-toupeira-mineiro", "extra-aranha-fiandeira-a", "extra-aranha-fiandeira-b", "extra-dragao-cogumelo", "extra-ferreira-coelho-robo-a", "extra-ferreira-coelho-robo-b", "extra-ferreira-eletrica", "extra-filhote-de-mel", "extra-lanterna-fantasma", "extra-medusa-pescadora-a", "extra-medusa-pescadora-b", "founder-retrato"]);
 function avatarIdOrNull(raw) {
   return typeof raw === "string" && AVATAR_IDS.has(raw) ? raw : null;
 }
@@ -15479,7 +15479,9 @@ var FRAME_IDS = /* @__PURE__ */ new Set([
   "frame-neve-coroa-de-pinheiro",
   "frame-neve-geada-cristalina",
   "frame-ruinas-concreto-e-vergalhao",
-  "frame-ruinas-sucata-florida"
+  "frame-ruinas-sucata-florida",
+  // Conjunto Fundador (23/11/2026): moldura de concessão (2º dia com tarefa). Espelho de `fundadorCatalogo.ts`.
+  "founder-moldura"
 ]);
 function frameIdOrNull(raw) {
   return typeof raw === "string" && FRAME_IDS.has(raw) ? raw : null;
@@ -15563,23 +15565,23 @@ async function recordMissionEvent(store, saveId, kind, dia, nowMs = Date.now()) 
     await store.put(key(saveId, week, kind), JSON.stringify({ ...atual, [iso]: n + 1 }), { expirationTtl: LEDGER_TTL });
     return true;
   }
-  const dias = (
+  const dias2 = (
     /** @type {string[]} */
     atual
   );
-  if (dias.includes(iso)) return false;
-  await store.put(key(saveId, week, kind), JSON.stringify([...dias, iso].sort()), { expirationTtl: LEDGER_TTL });
+  if (dias2.includes(iso)) return false;
+  await store.put(key(saveId, week, kind), JSON.stringify([...dias2, iso].sort()), { expirationTtl: LEDGER_TTL });
   return true;
 }
 __name(recordMissionEvent, "recordMissionEvent");
 async function recordJournalDays(store, saveId, caderno, nowMs = Date.now()) {
   if (!Array.isArray(caderno)) return;
-  const dias = /* @__PURE__ */ new Set();
+  const dias2 = /* @__PURE__ */ new Set();
   for (const e of caderno) {
     const d = isObj(e) ? toIsoDay(e.day) : null;
-    if (d && diaAceito(d, nowMs, true)) dias.add(d);
+    if (d && diaAceito(d, nowMs, true)) dias2.add(d);
   }
-  for (const d of dias) await recordMissionEvent(store, saveId, "j", d, nowMs);
+  for (const d of dias2) await recordMissionEvent(store, saveId, "j", d, nowMs);
 }
 __name(recordJournalDays, "recordJournalDays");
 async function confirmadoSemana(store, saveId, week, ids3) {
@@ -20037,8 +20039,8 @@ async function guardarBackupAntesDeRegressao(store, saveId, raw, agora = Date.no
     } catch {
       chaves = [];
     }
-    const ultimo = chaves[chaves.length - 1];
-    if (ultimo?.metadata?.h === h) return true;
+    const ultimo2 = chaves[chaves.length - 1];
+    if (ultimo2?.metadata?.h === h) return true;
     const nome = `${prefixo}${String(agora).padStart(13, "0")}`;
     await store.put(nome, raw, { expirationTtl: SAVEBAK_TTL_SECONDS, metadata: { h, t: agora } });
     const todas = [...chaves, { name: nome }];
@@ -20778,6 +20780,57 @@ function enforceEssences(incoming, stored, incomingSpent, storedSpent) {
 }
 __name(enforceEssences, "enforceEssences");
 
+// api/_fundador.js
+var FUNDADOR_PREMIOS = ["founder-fundo", "founder-moldura", "founder-retrato", "furn-cristal-fundador"];
+var FUNDADOR_DIAS_MAX = 1e5;
+var ISO = /^\d{4}-\d{2}-\d{2}$/;
+var dias = /* @__PURE__ */ __name((v) => typeof v === "number" && Number.isFinite(v) ? Math.min(FUNDADOR_DIAS_MAX, Math.max(0, Math.floor(v))) : 0, "dias");
+var ultimo = /* @__PURE__ */ __name((v) => typeof v === "string" && ISO.test(v) ? v : void 0, "ultimo");
+var premios = /* @__PURE__ */ __name((v) => Array.isArray(v) ? FUNDADOR_PREMIOS.filter((id) => v.includes(id)) : [], "premios");
+function enforceFundador(state, gravado) {
+  const temEntrada = "fundadorDias" in state || "fundadorUltimoDia" in state || "fundadorPremios" in state || "fundadorAvisados" in state;
+  const temGravado = !!gravado && ("fundadorDias" in gravado || "fundadorUltimoDia" in gravado || "fundadorPremios" in gravado || "fundadorAvisados" in gravado);
+  if (!temEntrada && !temGravado) return state;
+  const d = Math.max(dias(state.fundadorDias), dias(gravado?.fundadorDias));
+  const u = [ultimo(state.fundadorUltimoDia), ultimo(gravado?.fundadorUltimoDia)].filter(Boolean).sort().pop();
+  const novoP = premios(state.fundadorPremios);
+  const velhoP = premios(gravado?.fundadorPremios);
+  const p = FUNDADOR_PREMIOS.filter((id) => novoP.includes(id) || velhoP.includes(id));
+  const temPremiosEmAlgum = Array.isArray(state.fundadorPremios) || Array.isArray(gravado?.fundadorPremios);
+  if (Array.isArray(state.fundadorAvisados) || Array.isArray(gravado?.fundadorAvisados)) {
+    const a = premios(state.fundadorAvisados), b = premios(gravado?.fundadorAvisados);
+    state.fundadorAvisados = FUNDADOR_PREMIOS.filter((id) => a.includes(id) || b.includes(id));
+  }
+  state.fundadorDias = d;
+  if (u) state.fundadorUltimoDia = u;
+  else delete state.fundadorUltimoDia;
+  if (temPremiosEmAlgum) state.fundadorPremios = p;
+  else delete state.fundadorPremios;
+  return state;
+}
+__name(enforceFundador, "enforceFundador");
+var com = /* @__PURE__ */ __name((l, id) => {
+  const a = Array.isArray(l) ? l.filter((x2) => typeof x2 === "string") : [];
+  return a.includes(id) ? a : [...a, id];
+}, "com");
+function grantFundadorOnServer(stored) {
+  const ja = premios(stored.fundadorPremios);
+  const completo = FUNDADOR_PREMIOS.every((id) => ja.includes(id)) && stored.ownedBackgrounds?.includes?.("founder-fundo") && stored.ownedFrames?.includes?.("founder-moldura") && stored.ownedFurniture?.includes?.("furn-cristal-fundador");
+  if (completo) return { already: true, state: stored };
+  return {
+    already: false,
+    state: {
+      ...stored,
+      fundadorPremios: [...FUNDADOR_PREMIOS],
+      fundadorDias: Math.max(dias(stored.fundadorDias), 5),
+      ownedBackgrounds: com(stored.ownedBackgrounds, "founder-fundo"),
+      ownedFrames: com(stored.ownedFrames, "founder-moldura"),
+      ownedFurniture: com(stored.ownedFurniture, "furn-cristal-fundador")
+    }
+  };
+}
+__name(grantFundadorOnServer, "grantFundadorOnServer");
+
 // api/_bitsOrcamento.js
 var BITS_ORCAMENTO_POR_DIA = 1500;
 var BITS_ORCAMENTO_DIAS = 15;
@@ -20927,7 +20980,7 @@ function clampCaderno(raw) {
     if (!e || typeof e !== "object") continue;
     if (typeof e.id !== "string" || !/^[a-z0-9-]{1,40}$/.test(e.id)) continue;
     if (typeof e.day !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(e.day)) continue;
-    if (!["tres-coisas", "gratidao", "aprendi", "livre"].includes(e.formato)) continue;
+    if (!["tres-coisas", "gratidao", "aprendi", "importa", "livre"].includes(e.formato)) continue;
     if (typeof e.text !== "string" || !e.text.trim() || !Number.isFinite(Number(e.at))) continue;
     out.push({ id: e.id, day: e.day, formato: e.formato, text: e.text.slice(0, CADERNO_MAX_CHARS), at: Number(e.at) });
     if (out.length >= CADERNO_MAX_ENTRIES) break;
@@ -21100,6 +21153,28 @@ async function onRequestBruto2({ request, env }) {
     const h = await sha256Hex5(serialized);
     const f = firstSeenMeta(prev.metadata).f ?? Date.now();
     await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS2, metadata: { t: Date.now(), f, r: cur + 1, h, ...metaDoOrcamentoGravada(prev.metadata), ...metaDoSaldo(r.state.gamePoints) } });
+    return Response.json({ ok: true, already: false, revision: cur + 1, ...campos(r.state) }, { headers: CORS15 });
+  }
+  if (request.method === "POST" && url.searchParams.get("action") === "fundadorGrant") {
+    if (!(await verifiedAdmin(env, request, saveId)).admin) return Response.json({ error: "forbidden" }, { status: 403, headers: CORS15 });
+    const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    if (typeof prev?.value !== "string") return Response.json({ error: "no-save" }, { status: 404, headers: CORS15 });
+    const cur = revisionOf(prev.metadata);
+    let stored;
+    try {
+      stored = JSON.parse(prev.value);
+    } catch {
+      stored = null;
+    }
+    if (!stored || typeof stored !== "object" || Array.isArray(stored)) return Response.json({ error: "no-save" }, { status: 404, headers: CORS15 });
+    const r = grantFundadorOnServer(stored);
+    const campos = /* @__PURE__ */ __name((st) => ({ fundadorDias: st.fundadorDias, fundadorPremios: st.fundadorPremios, ownedBackgrounds: st.ownedBackgrounds, ownedFrames: st.ownedFrames, ownedFurniture: st.ownedFurniture }), "campos");
+    if (r.already) return Response.json({ ok: true, already: true, revision: cur, ...campos(stored) }, { headers: CORS15 });
+    const serialized = JSON.stringify(r.state);
+    const h = await sha256Hex5(serialized);
+    const f = firstSeenMeta(prev.metadata).f ?? Date.now();
+    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS2, metadata: { t: Date.now(), f, r: cur + 1, h, ...metaDoOrcamentoGravada(prev.metadata), ...metaDoSaldo(r.state.gamePoints) } });
+    console.log(JSON.stringify({ event: "fundador_grant_dev" }));
     return Response.json({ ok: true, already: false, revision: cur + 1, ...campos(r.state) }, { headers: CORS15 });
   }
   if (request.method === "POST" && url.searchParams.get("action") === "hexRename") {
@@ -21356,6 +21431,20 @@ async function onRequestBruto2({ request, env }) {
         const pedidos = Array.isArray(veio?.owned) ? veio.owned : [];
         const ignorados = pedidos.filter((id) => typeof id === "string" && !state.hexsmith.owned.includes(id));
         if (ignorados.length) console.warn("save: HEX fora da posse gravada ignorado", { saveIdPrefix: saveId.slice(0, 8), ignorados: ignorados.slice(0, 10) });
+      }
+    }
+    {
+      const temGravado = typeof prev?.value === "string" && prev.value.includes('"fundador');
+      if (temGravado || "fundadorDias" in state || "fundadorUltimoDia" in state || "fundadorPremios" in state || "fundadorAvisados" in state) {
+        let gravado;
+        if (temGravado) {
+          try {
+            gravado = JSON.parse(prev.value);
+          } catch {
+            gravado = void 0;
+          }
+        }
+        enforceFundador(state, gravado);
       }
     }
     {
@@ -22248,7 +22337,18 @@ var JOURNEY_COMPLETIONS_REWARDED = 4;
 var JOURNEY_EXTRA_COMPLETIONS = 3;
 var JOURNEY_MAX_PAUSES = 3;
 var JOURNEY_MAX_PAUSED_MS = 30 * 6e4;
-var ENV_ELEMENT = { forest: "planta", shore: "agua", cavern: "terra", garden: "fada", workshop: "industrial", observatory: "espaco" };
+var ENV_ELEMENTS = {
+  forest: ["planta", "vida", "vigor", "ar"],
+  shore: ["agua", "eletricidade", "som"],
+  cavern: ["terra", "fogo", "sombra", "morte"],
+  garden: ["fada", "luz", "arcano"],
+  workshop: ["industrial", "marcial", "vileza"],
+  observatory: ["espaco", "tempo", "gravidade"]
+};
+var pickElement = /* @__PURE__ */ __name((env, r) => {
+  const a = ENV_ELEMENTS[env];
+  return a[Math.min(a.length - 1, Math.floor(r * a.length))];
+}, "pickElement");
 var ENV_MATERIALS = {
   forest: ["moss", "laurel", "down", "fang"],
   shore: ["pebble", "prism", "essence", "keepsake"],
@@ -22291,14 +22391,14 @@ function journeyProgress(c, now) {
   return Math.min(1, focusElapsed(c, now) / (JOURNEY_MODES[c.mode].focusMin * 6e4));
 }
 __name(journeyProgress, "journeyProgress");
-function chestLoot(seed, chest, keys, env, elems = 1) {
+function chestLoot(seed, chest, keys, env, elems = ENV_ELEMENTS[env].length) {
   const tier = ESSENCE_BY_ELEMENTS[Math.max(1, Math.min(4, Math.floor(elems) || 1))];
   const rng = mulberry((seed ^ Math.imul(chest.k + 1, 2654435761)) >>> 0);
   const mats = ENV_MATERIALS[env];
   const pick = /* @__PURE__ */ __name((a) => a[Math.min(a.length - 1, Math.floor(rng() * a.length))], "pick");
   const mat = /* @__PURE__ */ __name(() => ({ kind: "material", id: pick(mats), qty: 1 }), "mat");
   const food = /* @__PURE__ */ __name(() => ({ kind: "food", id: pick(JOURNEY_FOODS), qty: 1 }), "food");
-  const ess = /* @__PURE__ */ __name((qty) => ({ kind: "essence", id: ENV_ELEMENT[env], qty }), "ess");
+  const ess = /* @__PURE__ */ __name((qty) => ({ kind: "essence", id: pickElement(env, rng()), qty }), "ess");
   const common = /* @__PURE__ */ __name(() => rng() < tier.common ? [ess(1)] : [Math.floor(rng() * 5) < 4 ? mat() : food()], "common");
   if (chest.type === "common" || !keys.includes(chest.type)) return common();
   switch (chest.type) {
@@ -22323,7 +22423,7 @@ function completionLoot(seed, nth, env) {
   if (nth === 1) return chestLoot(seed, { k: 999, at: 1, type: "common" }, [], env);
   if (nth <= JOURNEY_COMPLETIONS_REWARDED) {
     const rng = mulberry((seed ^ 12648430) >>> 0);
-    return [{ kind: "essence", id: ENV_ELEMENT[env], qty: 1 }, { kind: "food", id: JOURNEY_FOODS[Math.min(JOURNEY_FOODS.length - 1, Math.floor(rng() * JOURNEY_FOODS.length))], qty: 1 }];
+    return [{ kind: "essence", id: pickElement(env, rng()), qty: 1 }, { kind: "food", id: JOURNEY_FOODS[Math.min(JOURNEY_FOODS.length - 1, Math.floor(rng() * JOURNEY_FOODS.length))], qty: 1 }];
   }
   if (nth <= JOURNEY_COMPLETIONS_REWARDED + JOURNEY_EXTRA_COMPLETIONS) return chestLoot(seed, { k: 998, at: 1, type: "common" }, [], env);
   return [];
@@ -22494,7 +22594,7 @@ async function onRequest10({ request, env }) {
 }
 __name(onRequest10, "onRequest");
 
-// ../.wrangler/tmp/pages-mMEvir/functionsRoutes-0.3012683217664591.mjs
+// ../.wrangler/tmp/pages-kUPXWx/functionsRoutes-0.7822844349214946.mjs
 var routes = [
   {
     routePath: "/api/account",

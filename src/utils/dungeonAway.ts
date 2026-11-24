@@ -154,7 +154,7 @@ export function applyRiftLayerPaid<T extends GameState & RiftMonthState>(prev: T
   let s: T = rift.next;
   if (tot.fragments > 0) s = addFragments(s, tot.fragments);
   const antes = s.gamePoints ?? 0;
-  if (tot.bits > 0) s = creditMinigameBits(s, tot.bits, dayKey);
+  if (tot.bits > 0) s = creditMinigameBits(s, tot.bits, dayKey, 0, 'explorar');
   return { next: s, bits: Math.max(0, (s.gamePoints ?? 0) - antes), fragments: tot.fragments };
 }
 
@@ -205,7 +205,7 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
     return w;
   };
   const credit = (pts: number) => {
-    s = creditMinigameBits(s, pts, dayKey, p.rc); // §393: a Agulha de bússola eleva o teto diário, não o ganho
+    s = creditMinigameBits(s, pts, dayKey, p.rc, 'explorar'); // §393: a Agulha de bússola eleva o teto diário, não o ganho
   };
   let ended: AwayEnd = null;
   let stock: PotionStock | undefined = prev.dungeonPotions;

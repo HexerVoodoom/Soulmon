@@ -18,12 +18,12 @@ describe('teto de Bits por categoria (§456)', () => {
     s = pague(s, 'minigames', 10);
     expect(s.gamePoints).toBe(75);
   });
-  it('categorias independentes e a soma nunca passa do teto geral de 150', () => {
+  it('categorias independentes e a soma nunca passa do teto geral de 180', () => {
     let s = novo();
     for (const c of ['minigames', 'explorar', 'arena'] as const) s = pague(s, c, 999);
     expect(minigameBitsToday(s, DAY)).toBe(MINIGAME_BITS_PER_DAY);
-    expect(s.gamePoints).toBe(150);
-    expect(minigameBitsCategoryToday(s, DAY, 'arena')).toBe(0);
+    expect(s.gamePoints).toBe(MINIGAME_BITS_PER_DAY);
+    expect(minigameBitsCategoryToday(s, DAY, 'arena')).toBe(MINIGAME_BITS_PER_DAY - 2 * BITS_PER_CATEGORY_PER_DAY); // 75 + 75 + 30
   });
   it('save antigo (sem cat) lê zero e o crédito acrescenta cat sem perder o total', () => {
     const antigo: S = { gamePoints: 40, minigameBits: { day: DAY, earned: 40 } };
@@ -45,7 +45,7 @@ describe('teto de Bits por categoria (§456)', () => {
   });
   it('minigameBitsGrantedIn respeita o menor dos dois tetos e o extra da Agulha', () => {
     expect(minigameBitsGrantedIn(0, 70, 20)).toBe(5);
-    expect(minigameBitsGrantedIn(140, 0, 20)).toBe(10);
+    expect(minigameBitsGrantedIn(170, 0, 20)).toBe(10);
     expect(minigameBitsGrantedIn(0, 70, 20, 10)).toBe(15);
     expect(minigameBitsGrantedIn(0, 0, Number.NaN)).toBe(0);
   });

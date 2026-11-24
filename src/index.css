@@ -3099,10 +3099,8 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
 
   /* Escala FECHADA: 12/14/16/20/24/32. Piso ABSOLUTO de 12px — não existe
      texto menor no app, nem legenda, nem rodapé de card. */
-  /* Pílulas de moeda do mapa (Bits/Honra/Créditos): largura FIXA e igual; cabe "99.999" a 14px tabular + ícone de 22px. */
-  --sm2-moeda-w: 96px;
-  /* Fundo da pílula: a cor de fundo do TEMA a 80% (não 55: sobre a cachoeira clara do mapa o contraste do texto caía a ~3:1; a 80% fica >= 4,5:1 nos dois temas). Sem moldura, sem borda. */
-  --sm2-moeda-fundo: color-mix(in srgb, var(--sm2-bg) 80%, transparent);
+  /* Pílulas de moeda do mapa (Bits/Honra/Créditos): largura FIXA e igual; cabe "99.999" a 14px tabular + ícone de 22px dentro da moldura `chip-moeda` (tampas de 16px). */
+  --sm2-moeda-w: 128px;
 
   --sm2-text-xs: 12px;
   --sm2-text-sm: 14px;
@@ -4799,6 +4797,8 @@ button[style*="--sm2-btn: ghost"]:active {
   &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
   &:disabled { cursor: default; }
 }
+/* Faixa de áreas do catálogo: todos os chips com a MESMA altura (44), UMA linha, ícone + rótulo; a faixa rola na horizontal. */
+.sm2-catalogo-areas .sm2-form-segment { flex: 0 0 auto !important; flex-direction: row !important; height: 44px; white-space: nowrap; padding: 0 12px !important; gap: 6px !important; }
 .sm2-form-segment {
   &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
 }
@@ -7578,11 +7578,13 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* Mapa do Soulsmith: o título vai na placa da moldura (o do HUD fica só para o nome acessível). */
 [data-forge-view="map"] .sm2-vit-title { opacity: 0; }
 /* Mapa do Soulsmith DENTRO do modal da área (23/11/2026): sem tela cheia; palco na largura do modal, ancorado no topo (chakras ≤53% da arte + folga do balão). */
-/* Sem rolagem (24/11/2026): o contêiner mostra só a faixa 18%..75% da arte (chakras em 30..53%), com o palco puxado para cima em 18% da PRÓPRIA altura; chakras seguem em % do palco. */
-.sm2-vit-map[data-vitra-inline] { position: relative; inset: auto; z-index: auto; inline-size: 100%; aspect-ratio: 852 / 1052; border-radius: var(--sm2-radius-md, 12px); }
-.sm2-vit-map[data-vitra-inline] .sm2-vit-stage { top: 0; width: 100%; transform: translate(-50%, -18%); }
+/* Sem rolagem, cabeça inteira (24/11/2026): o mapa ocupa o que sobra do corpo do modal (flex), o palco é 'contain' ANCORADO NA BASE: block-size = contêiner / 0,95
+   (corta só os ~5% de arco vazio do topo; a cabeça começa em ~6,8%) e nunca maior que a largura permite (a figura encolhe em vez de cortar a cabeça); chakras seguem em % do palco. */
+.sm2-vit-map[data-vitra-inline] { position: relative; inset: auto; z-index: auto; inline-size: 100%; flex: 1 1 0; min-block-size: 0; border-radius: var(--sm2-radius-md, 12px); }
+.sm2-vit-map[data-vitra-inline] .sm2-vit-stage { --vit-h: min(calc(100cqh / .95), calc(100cqw * 1846 / 852)); inset-block: auto 0; inset-inline: 50% auto; block-size: var(--vit-h); inline-size: calc(var(--vit-h) * 852 / 1846); aspect-ratio: auto; transform: translateX(-50%); }
 .sm2-vit-map[data-vitra-inline] .sm2-vit-foot { padding: 16px 12px 12px; }
-[data-area-sheet-body]:has([data-vitra-inline]) { overflow-y: hidden !important; }
+[data-area-sheet-body]:has([data-vitra-inline]) { overflow-y: hidden !important; display: flex; flex-direction: column; }
+[data-area-sheet-body]:has([data-vitra-inline]) > [data-forge-card] { flex: 1 1 0; min-block-size: 0; display: flex; flex-direction: column; }
 /* Balão horizontal sobre o chakra: centrado no palco, largura relativa ao modal (cqw do palco), duas opções lado a lado. */
 .sm2-vit-pop[data-horizontal] { inline-size: calc(100cqw - 16px); max-inline-size: 30rem; }
 .sm2-vit-pop[data-horizontal] .sm2-vit-opts { grid-template-columns: 1fr 1fr; }
@@ -7655,8 +7657,9 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-popup-fechar:focus-visible { outline: 2px solid #e3c06a; outline-offset: 2px; }
 .sm2-area-sheet-inline .sm2-popup-fechar-linha { margin: 0 4px 0 0; }
 .sm2-area-sheet-inline .sm2-popup-titulo { padding: 0 calc(var(--sm2-moldura-pad-x) + 12px); }
-/* P7 23/11: no cristal o título inline não entra no canto (cristal/folha): respiro = canto + 10px dos dois lados. */
-.sm2-moldura-modal--cristal .sm2-popup-titulo { padding: 0 calc(var(--sm2-cristal-canto) + 10px); }
+/* P7: o respiro do título no cristal vem da margem esquerda da `.sm2-popup-cabeca` (canto*.85); sem padding duplo, e o ✕ não encolhe. */
+.sm2-moldura-modal--cristal .sm2-popup-titulo { padding: 0; }
+.sm2-moldura-modal--cristal .sm2-popup-fechar { flex-shrink: 0; }
 /* P3: selo de texto PLACEHOLDER do resultado do chefe que fugiu (no lugar do DRAW). Trocar pela arte do selo FLED (P6). */
 .sm-result-seal-text { display: block; margin: 0 auto; text-align: center; font-family: var(--sm2-font-display, Georgia, serif); font-weight: 800; letter-spacing: .12em; font-size: var(--sm2-text-xl, 1.5rem); color: #e3c06a; text-shadow: 0 2px 0 rgba(0,0,0,.55); }
 .sm2-popup-titulo {
@@ -7674,6 +7677,50 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
    aberto pelo menu sem como voltar). Agora ela sobe (z 4) e cai no vão entre o cristal do canto e a placa de título (x ≈ 7–20u, y ≈ 3–12u). */
 .sm2-moldura-sheet .sm2-modal-fechar-linha { position: relative; z-index: 4; margin: calc(var(--u) * 3.1) 0 0 calc(var(--u) * 7.2); padding: 0 !important; }
 
+/* Pílulas de moeda do HUD do mapa: as 3 IGUAIS (ícone + valor), mesma largura FIXA, sem encolher nem sobrepor (QA 24/11/2026). Gap VISUAL de 6px (4+2): o toque de 44 do botão (min-height 34 + margem negativa do `alvo44`) passa 2px para cada lado, então áreas vizinhas dividem 4px — aceito de propósito, são dicas de moeda, não ações destrutivas. */
+.sm2-moeda-hud {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: calc(var(--sm2-space-1) + var(--sm2-space-half));
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
+}
+.sm2-moeda {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: var(--sm2-moeda-w);
+  min-width: var(--sm2-moeda-w);
+  font-size: var(--sm2-text-sm);
+  line-height: var(--sm2-leading-title);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* A moldura `chip-moeda` (cobre + cristais, miolo teal escuro opaco) em 9-slice, a 1/3 da arte 256x92 (tampas de 16px, bordas de 6px) — a mesma de antes de 24/11/2026,
+   agora com ÍCONE + valor no lugar do nome da moeda. Vai no miolo (e não no botão): o InfoTip fixa `border: none` e `background: none` em linha no botão. Altura 34 = 6 + ícone 22 + 6;
+   o toque de 44 é do botão. O texto é claro: o miolo da moldura é sempre escuro, nos dois temas. */
+.sm2-moeda__in {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 34px;
+  border-style: solid;
+  border-width: 6px 16px;
+  border-image: url('./assets/soulmon/icones-ui/chip-moeda.png') 18 48 18 48 fill / 6px 16px 6px 16px stretch;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sm2-space-1);
+  white-space: nowrap;
+  color: var(--sm2-viewport-ink);
+}
+.sm2-moeda__val {
+  box-sizing: border-box;
+  padding: 0 var(--sm2-space-1);
+  border: 1px solid var(--sm2-bronze-fill);
+  border-radius: var(--sm2-radius-sm);
+  color: var(--sm2-viewport-ink);
+  font-variant-numeric: lining-nums tabular-nums;
+  text-align: end;
+}
 /* MODAL DE RESULTADO DE FORJA (23/11/2026): arte + nome + efeito no popup central; largura vem do `ModalSheet` (<= 328px), nada fixo aqui. */
 .sm2-forja-resultado { display: grid; justify-items: center; gap: var(--sm2-space-2); text-align: center; padding: var(--sm2-space-2) 0; }
 .sm2-forja-resultado-arte { display: inline-flex; align-items: center; justify-content: center; min-width: 56px; min-height: 56px; }
@@ -7686,45 +7733,19 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-encerrar-acoes > button { flex: 1 1 0; min-width: 0; }
 .sm2-encerrar-texto { margin: 0; text-align: center; color: var(--sm2-ink); font-size: var(--sm2-text-sm); }
 
-/* Pílulas de moeda do HUD do mapa: as 3 IGUAIS (ícone + valor), mesma largura FIXA, sem encolher nem sobrepor (QA 24/11/2026). */
-.sm2-moeda-hud {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--sm2-space-3);
-  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
-}
-.sm2-moeda {
-  box-sizing: border-box;
-  flex: 0 0 auto;
-  width: var(--sm2-moeda-w);
-  min-width: var(--sm2-moeda-w);
-  padding: 0 var(--sm2-space-2);
-  font-size: var(--sm2-text-sm);
-  line-height: var(--sm2-leading-title);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-/* O fundo vai no miolo (e não no botão): o InfoTip fixa `background: none` em linha no botão. 32px visuais; o toque de 44 é do botão. */
-.sm2-moeda__in {
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 32px;
-  background: var(--sm2-moeda-fundo);
-  border-radius: var(--sm2-radius-md);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sm2-space-1);
-  white-space: nowrap;
-}
-.sm2-moeda__val {
-  font-variant-numeric: lining-nums tabular-nums;
-  text-align: end;
-}
 /* NOVA TAREFA / NOVO HÁBITO — espaçamento (PR i). Escala única: seções a --sm2-space-4; rótulo↔controle e chips↔energias a --sm2-space-2/-3.
    O corpo é o ÚNICO filho do rolável do `ModalSheet` (que traz o gap 18 próprio): o respiro do topo afasta o campo da barra de título e o de baixo
    (rodapé fixo = 16 + alvo 44 + 16 + safe-area, mais folga) deixa "Quando pretendo fazer"/"Prazo" rolarem para fora de trás de Cancelar/Salvar. */
+/* Textura de pedra do fundo da Nova tarefa/hábito: 6% (era 60%), pelo token `--sm2-moldura-fill-op` da moldura (24/11/2026, dono). */
+.sm2-moldura-sheet:has(.sm2-nova-corpo) { --sm2-moldura-fill-op: .06 !important; }
+/* ESCOLHEDOR Hábito/Tarefa (`CreateChoicePopup.tsx`): bottom sheet simples, ancorado na base, só tokens. */
+.sm2-escolhedor-veu { position: fixed; inset: 0; z-index: 120; background: rgba(4, 18, 20, .55); display: flex; align-items: flex-end; justify-content: center; }
+.sm2-escolhedor { box-sizing: border-box; width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: var(--sm2-space-3); padding: var(--sm2-space-3) var(--sm2-space-4) calc(var(--sm2-space-4) + env(safe-area-inset-bottom, 0px)); background: var(--sm2-surface); border-radius: var(--sm2-radius-lg) var(--sm2-radius-lg) 0 0; color: var(--sm2-ink); }
+.sm2-escolhedor__alca { align-self: center; min-width: 36px; height: 4px; border-radius: 2px; background: var(--sm2-line); }
+.sm2-escolhedor__op { box-sizing: border-box; min-height: 52px; width: 100%; display: flex; align-items: center; gap: var(--sm2-space-3); padding: 0 var(--sm2-space-4); border: 1px solid var(--sm2-line); border-radius: var(--sm2-radius-md); background: var(--sm2-surface-2); color: var(--sm2-ink); font-family: var(--sm2-font-text); font-size: var(--sm2-text-lg); font-weight: 600; cursor: pointer; text-align: center; justify-content: center; }
+.sm2-escolhedor__op img { flex-shrink: 0; image-rendering: pixelated; }
+.sm2-escolhedor__op:active { background: var(--sm2-primary-soft); }
+.sm2-escolhedor__op:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
 .sm2-nova-corpo {
   --sm2-nova-rodape: calc(var(--sm2-space-4) + 44px + var(--sm2-space-4) + env(safe-area-inset-bottom, 0px));
   display: flex; flex-direction: column; gap: var(--sm2-space-4);
@@ -7752,3 +7773,6 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-day-squares { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--sm2-space-half, 2px); inline-size: 100%; box-sizing: border-box; }
 .sm2-day-square { min-block-size: 44px; min-inline-size: 0; padding: 0; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--sm2-line); border-radius: var(--sm2-radius-sm); background-color: var(--sm2-surface); color: var(--sm2-ink); font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); line-height: var(--sm2-leading-body); cursor: pointer; transition: background-color var(--sm2-dur-tap) var(--sm2-ease), color var(--sm2-dur-tap) var(--sm2-ease); }
 .sm2-day-square[aria-pressed="true"] { background-color: var(--sm2-primary-fill); color: var(--sm2-on-primary); border-color: transparent; }
+.sm2-day-square:disabled { opacity: 0.4; cursor: default; }
+[data-quando] { display: flex; flex-direction: column; gap: var(--sm2-space-2); min-inline-size: 0; }
+[data-quando-controles] { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--sm2-space-4); min-inline-size: 0; }

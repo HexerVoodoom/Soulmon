@@ -97,16 +97,16 @@ describe('os helpers: valor, teto, inválido = 0', () => {
     expect(cleanStartShield(1)).toBe(START_SHIELD_MAX); expect(cleanStartShield(-1)).toBe(0);
   });
   it('Agulha de bússola (§393): o extra eleva o TETO só de quem pede; o ganho por luta não muda e a base nunca diminui', () => {
-    expect(minigameBitsCap(0)).toBe(150); expect(minigameBitsCap(30)).toBe(180); expect(minigameBitsCap(-5)).toBe(150); expect(minigameBitsCap(NaN)).toBe(150);
-    expect(minigameBitsGranted(140, 25)).toBe(10); // sem o talento: para em 150
-    expect(minigameBitsGranted(140, 25, 10)).toBe(20); // grau 1: 160
-    expect(minigameBitsGranted(150, 25, 30)).toBe(25); // grau 3: ainda cabem 30
-    expect(minigameBitsGranted(170, 25, 30)).toBe(10); // e para em 180
+    expect(minigameBitsCap(0)).toBe(180); expect(minigameBitsCap(30)).toBe(210); expect(minigameBitsCap(-5)).toBe(180); expect(minigameBitsCap(NaN)).toBe(180);
+    expect(minigameBitsGranted(170, 25)).toBe(10); // sem o talento: para em 180
+    expect(minigameBitsGranted(170, 25, 10)).toBe(20); // grau 1: 190
+    expect(minigameBitsGranted(180, 25, 30)).toBe(25); // grau 3: ainda cabem 30
+    expect(minigameBitsGranted(200, 25, 30)).toBe(10); // e para em 210
     expect(minigameBitsGranted(20, 25, 30)).toBe(25); // longe do teto o ganho é o mesmo (sem multiplicador)
-    expect(remainingMinigameBits({}, 'd', 30)).toBe(180);
-    const a = creditMinigameBits({ gamePoints: 0 }, 400, 'd'); expect(a.gamePoints).toBe(150); // outros jogos: teto base
-    const b = creditMinigameBits<MinigameBitsState & { gamePoints: number }>({ gamePoints: 0 }, 400, 'd', 20); expect(b.gamePoints).toBe(170); expect(b.minigameBits?.earned).toBe(170);
-    const c = creditMinigameBits(b, 50, 'd'); expect(c).toBe(b); // um jogo sem o extra não gasta o que passou de 150
+    expect(remainingMinigameBits({}, 'd', 30)).toBe(210);
+    const a = creditMinigameBits({ gamePoints: 0 }, 400, 'd'); expect(a.gamePoints).toBe(180); // outros jogos: teto base
+    const b = creditMinigameBits<MinigameBitsState & { gamePoints: number }>({ gamePoints: 0 }, 400, 'd', 20); expect(b.gamePoints).toBe(200); expect(b.minigameBits?.earned).toBe(200);
+    const c = creditMinigameBits(b, 50, 'd'); expect(c).toBe(b); // um jogo sem o extra não gasta o que passou de 180
   });
 });
 

@@ -1,0 +1,1 @@
+import{ev as r,j as i,ew as o,ex as x}from"./index-04rbJQXP.js";function u({extraCap:t,children:e}){const s=r(),a=s&&t>0?{...s,bitsCap:x(t)}:s;return i.jsx(o.Provider,{value:a,children:e})}export{u as R};

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Icon } from '../ui/Icon';
+import { categoryIconArt } from '../../assets/soulmon/icons/categories';
 import { PixelIcon } from '../ui/PixelIcon';
 import { ACTIVITY_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { ModalSheet, Segment, sm2Button, sm2Hint, sm2Text, Field } from '../form/FormKit';
@@ -132,7 +133,7 @@ export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd
                 <div
                   role="radiogroup"
                   aria-label={isPt ? 'Área' : 'Area'}
-                  className="sm2-scroll-x-quiet"
+                  className="sm2-scroll-x-quiet sm2-catalogo-areas"
                   style={{ flex: 1, minWidth: 0, display: 'flex', gap: 6, overflowX: 'auto' }}
                 >
                   <Segment selected={area === 'todas'} onSelect={() => setArea('todas')} label={isPt ? 'Todas' : 'All'} />
@@ -141,7 +142,8 @@ export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd
                       key={a}
                       selected={area === a}
                       onSelect={() => setArea(a)}
-                      label={isPt ? LIFE_AREA_LABEL[a].pt : LIFE_AREA_LABEL[a].en}
+                      label={<>{categoryIconArt(a) && <img data-cat-icon={a} src={categoryIconArt(a)} alt="" aria-hidden="true" width={24} height={24} draggable={false} style={{ flexShrink: 0, objectFit: 'contain' }} />}{isPt ? LIFE_AREA_LABEL[a].pt : LIFE_AREA_LABEL[a].en}</>}
+                      ariaLabel={isPt ? LIFE_AREA_LABEL[a].pt : LIFE_AREA_LABEL[a].en}
                     />
                   ))}
                 </div>

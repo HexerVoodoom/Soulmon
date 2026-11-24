@@ -120,8 +120,6 @@ interface GuildSheetProps {
   playerDayTz?: PlayerDayAnchor;
   /** Qual sala abre: o Salão (Bosque/Roda/Mural, o padrão — porta do Hall) ou a Feira (porta da Arena). */
   room?: 'salao' | 'feira' | 'guerra' | 'grove';
-  /** CTA do Clan Hall "Ver a árvore no Bosque": a árvore saiu da Casa e mora só no Grove; quem monta a folha sabe abrir o prédio. */
-  onAbrirBosque?: () => void;
   /** O resgate da Feira foi confirmado pelo servidor: soma os Emblemas pelo MESMO caminho do Torneio
    *  e, se veio a Concha da Maré, a põe em `ownedFurniture`. A folha só chama UMA vez por recibo. */
   onClaimed?: (claim: { emblems: number; trophyId: string | null }) => void;
@@ -167,7 +165,7 @@ type PredioId = 'praca' | 'plantio';
 
 const kindOf = (e: unknown): GuildErrorKind => (e instanceof GuildError ? e.kind : 'server');
 
-export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pendentesDoDia, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin, casa, missao, cla, feira, onAbrirBosque }: GuildSheetProps) {
+export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pendentesDoDia, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin, casa, missao, cla, feira }: GuildSheetProps) {
   const t = useCallback((k: GuildKey, vars?: Record<string, string | number>) => guildText(language, k, vars), [language]);
   /** Saída do clã em DUAS confirmações (dono, 30/10/2026 — revoga o "um toque" do LV-G5: saiu sem querer, era o único
    *  membro e o clã foi apagado com tudo que tinha sido doado). 0 = fechado, 1 = "sair?", 2 = a confirmação final. */
@@ -668,6 +666,10 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             <GroveCasaArvore language={language} casa={g.casa} />
           </div>
         )}
+        {/* O Mural (dono, 24/11/2026) mora com a árvore, no Grove: mesmos dados, só mudou de lugar. */}
+        <div className="sm2-stats-card" data-guild-card="mural">
+          <SalaMural guild={g} t={t} language={language} marcos={marcos} />
+        </div>
       </>
     ) : room === 'feira' ? (
       <>
@@ -840,21 +842,6 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
         </div>
 
         {/* D-57/D-107: o Clan Hall é ADMINISTRATIVO (nome, ficha, membros, código acima; Casa, Prédios e Mural abaixo). O Bosque, a Feira e a Guerra moram nos prédios próprios (Hall e Arena). */}
-        {/* (3) A ÁRVORE saiu do Clan Hall: mora só no Grove. Aqui fica a porta, com a regra de crescimento atrás do "i". */}
-        {g.casa && onAbrirBosque && (
-        <div className="sm2-stats-card" data-guild-card="arvore">
-          <section className="sm2-guild-sec" aria-label={t('guild.bosque.titulo')} data-guild-room="arvore">
-            <div className="sm2-guild-secHd">
-              <h3 className="sm2-stats-lab">{t('guild.bosque.titulo')}</h3>
-              <InfoTip language={language} label={language === 'pt-BR' ? 'Como a árvore cresce' : 'How the tree grows'} style={{ minHeight: 28 }}>{t('guild.casa.regra')}</InfoTip>
-            </div>
-            <button type="button" data-guild-arvore-ver onClick={onAbrirBosque} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-outline" style={{ width: "100%", minHeight: 48 }}>
-              {t('guild.arvore.ver')}
-            </button>
-          </section>
-        </div>
-        )}
-
         {/* (4) BUFFS do clã (comprados pelo anfitrião com o tesouro), num card só deles. */}
         {g.casa && (
         <div className="sm2-stats-card" data-guild-card="buffs">
@@ -888,9 +875,6 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
         </div>
         )}
 
-        <div className="sm2-stats-card" data-guild-card="mural">
-          <SalaMural guild={g} t={t} language={language} marcos={marcos} />
-        </div>
         {/* Saída do clã (LV-G5 revisto em 30/10/2026): sempre ao alcance no rodapé, mas com DUPLA confirmação.
             A 2ª etapa diz o que se perde — com um membro só, o clã e o que foi doado somem para sempre. */}
         <div className="sm2-guild-foot" data-guild-foot>
@@ -1356,7 +1340,6 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           {!missao && <span data-feira-como style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.como')}</span>}
           <span data-feira-ganho style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.ganho')}</span>
           <span data-feira-cabecalho style={{ display: 'block', marginTop: 6 }}>{t(dissipada ? 'guild.feira.dissipado.mundo' : 'guild.feira.aberta.mundo')}</span>
-          <span data-feira-linha style={{ display: 'block', marginTop: 6 }}>{t(`guild.feira.fenomeno.${raid.phenomenon}.linha`)}</span>
           {!dissipada && raid.lastWeek && <span data-feira-semana-passada={raid.lastWeek} style={{ display: 'block', marginTop: 6 }}>{t(raid.lastWeek === 'dissipada' ? 'guild.feira.dissipado.mundo' : 'guild.feira.recuou.mundo')}</span>}
           {missao && <span data-missao-historia style={{ display: 'block', marginTop: 6 }}>{t('guild.missao.historia')}</span>}
           {missao && voltouHoje && fala && (<>
@@ -1368,6 +1351,8 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           <span style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.sobria', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR })}</span>
         </InfoTip>
       </div>
+      {/* 24/11/2026 (dono): a linha curta do fenômeno em curso volta à vista (#1162 a tinha escondido no "i"). */}
+      <p className="sm2-grove-line" data-feira-linha>{t(`guild.feira.fenomeno.${raid.phenomenon}.linha`)}</p>
       {!dissipada && !missao && !desafioAtivo && (
         <button
           type="button"
