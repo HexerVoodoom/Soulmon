@@ -703,7 +703,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
           <UnlockNudge language={language} reason="task-limit" onOpen={onUnlock} />
         </div>
       )}
-      <div className="sm2-btn-arte" style={{ display: 'flex', gap: 12 }}>
+      <div style={{ display: 'flex', gap: 12 }}>
         <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), flex: 1 }}>{txt.cancel}</button>
         {/* Save com 1.4 do Cancel (canvas): o primário é o único e é o maior. */}
         <button
@@ -735,7 +735,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
       footer={footer}
     >
       {/* Um filho só: o respiro do topo/rodapé e o gap entre seções são tokens do CSS (`.sm2-nova-corpo`). */}
-      <div className="sm2-nova-corpo sm2-btn-arte">
+      <div className="sm2-nova-corpo">
       {/* 1. CAPTURA RÁPIDA — o caminho primário. */}
       <div>
         <Field
