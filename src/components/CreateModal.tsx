@@ -692,8 +692,9 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
             {/* QUANDO — 7 quadrados Dom→Sáb (desmarcados na criação), "Marcar todos" ao lado
                 do título e "Uma vez" abaixo, que desliga os quadrados. */}
             <div data-quando>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                <label style={{ ...sm2Label, marginBottom: 0 }}>{txt.frequency}</label>
+              <label style={{ ...sm2Label, marginBottom: 0 }}>{txt.frequency}</label>
+              {/* Uma linha só de controles: Marcar todos + Uma vez lado a lado (quebra só se faltar espaço). */}
+              <div data-quando-controles>
                 {sched.kind === 'weekdays' && (
                   <CheckRow
                     checked={sched.weekDays.length === 7}
@@ -702,6 +703,9 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
                     {txt.allDays}
                   </CheckRow>
                 )}
+                <CheckRow checked={isSingleExecution} onChange={(v) => (v ? setIsSingleExecution(true) : setOneTime(false))}>
+                  {txt.oneTime}
+                </CheckRow>
               </div>
               {sched.kind === 'weekdays' ? (
                 <DaySquares
@@ -715,9 +719,6 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
               ) : (
                 <HabitScheduleFields sched={sched} language={language} />
               )}
-              <CheckRow checked={isSingleExecution} onChange={(v) => (v ? setIsSingleExecution(true) : setOneTime(false))}>
-                {txt.oneTime}
-              </CheckRow>
               {quandoInvalido && <p data-quando-hint style={sm2Hint}>{txt.quandoHint}</p>}
             </div>
 

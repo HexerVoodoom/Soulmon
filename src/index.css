@@ -7754,4 +7754,4 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-day-square[aria-pressed="true"] { background-color: var(--sm2-primary-fill); color: var(--sm2-on-primary); border-color: transparent; }
 .sm2-day-square:disabled { opacity: 0.4; cursor: default; }
 [data-quando] { display: flex; flex-direction: column; gap: var(--sm2-space-2); min-inline-size: 0; }
-[data-quando] > div:first-child { flex-wrap: wrap; }
+[data-quando-controles] { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--sm2-space-4); min-inline-size: 0; }

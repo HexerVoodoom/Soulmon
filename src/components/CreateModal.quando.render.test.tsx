@@ -71,6 +71,12 @@ describe('Quando', () => {
     const q = document.querySelector('[data-quando]') as HTMLElement;
     expect(q).toBeTruthy();
     const grid = document.querySelector('.sm2-day-squares') as HTMLElement;
+    // Marcar todos e Uma vez na MESMA linha de controles, que quebra só se faltar espaço.
+    const linha = document.querySelector('[data-quando-controles]') as HTMLElement;
+    expect(linha.contains(screen.getByLabelText('Marcar todos'))).toBe(true);
+    expect(linha.contains(screen.getByLabelText('Uma vez'))).toBe(true);
+    expect(getComputedStyle(linha).display).toBe('flex');
+    expect(getComputedStyle(linha).flexWrap).toBe('wrap');
     const cols = getComputedStyle(grid).gridTemplateColumns;
     expect(cols).toContain('minmax(0');
     // 7 colunas de 44px + 6 gaps cabem em w menos o gutter de 2×16.
