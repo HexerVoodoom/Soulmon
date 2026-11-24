@@ -63,7 +63,6 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
   const t = {
     title: isPt ? 'Criar poção' : 'Create potion',
     back: isPt ? 'Voltar' : 'Back',
-    hint: isPt ? 'Todas as poções. Filtre por elementos base: só entram as que contêm todos eles.' : 'Every potion. Filter by base elements: only potions that contain all of them are listed.',
     none: isPt ? 'Nenhuma poção com esse filtro.' : 'No potion matches this filter.',
     create: isPt ? 'Criar' : 'Create',
     more: isPt ? 'Mostrar mais' : 'Show more',
@@ -149,7 +148,6 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
 
         {!sel && (
           <>
-            <p style={sm2Hint}>{t.hint}</p>
             <ElementBaseSlots slots={slots} isPt={isPt} onChange={setSlot} />
             {list.length === 0 ? (
               <p style={sm2Text} data-potion-none>{t.none}</p>
