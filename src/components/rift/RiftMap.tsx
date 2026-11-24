@@ -193,7 +193,7 @@ export function RiftMap({ language, save, sprite, onRewind, onTeleport, onClose 
         </div>
       </div>
       {note && <p role="status" data-rift-map-note style={{ ...sm2Text, position: 'absolute', left: 16, right: 16, bottom: 16, margin: 0, padding: '10px 14px', borderRadius: 12, background: 'rgba(8,18,20,.95)', border: '1px solid rgba(80,200,190,.35)', color: '#e6f4f1', textAlign: 'center' }}>{note}</p>}
-      <ModalSheet open={askNode !== null} onClose={() => setAsk(null)} language={language} title={askNode && askNode.index === belowPortalIdx ? t.downTitle : t.askTitle} maxWidth={380}
+      <ModalSheet open={askNode !== null} onClose={() => setAsk(null)} language={language} title={askNode && askNode.index === belowPortalIdx ? t.downTitle : t.askTitle} maxWidth={380} placement="center" titulo="inline"
         footer={askNode && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
             <button type="button" data-rift-ask-yes onClick={() => {
@@ -206,7 +206,7 @@ export function RiftMap({ language, save, sprite, onRewind, onTeleport, onClose 
         )}>
         {askNode && <p style={{ ...sm2Text, margin: 0 }}>{t.askBody(askNode.label, riftSetName(elName(askNode.element, isPt), isPt))}</p>}
       </ModalSheet>
-      <ModalSheet open={sureNode !== null} onClose={() => setSure(null)} language={language} title={t.sureTitle} maxWidth={380}
+      <ModalSheet open={sureNode !== null} onClose={() => setSure(null)} language={language} title={t.sureTitle} maxWidth={380} placement="center" titulo="inline"
         footer={sureNode && (
           <div className="sm2-conta-two">
             <button type="button" data-rift-sure-no onClick={() => setSure(null)} style={sm2Button('outline')}>{t.sureNo}</button>
