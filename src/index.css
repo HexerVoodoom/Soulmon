@@ -7640,3 +7640,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-forja-resultado-nome { font-size: var(--sm2-text-lg); color: var(--sm2-ink); overflow-wrap: anywhere; }
 .sm2-forja-resultado-efeito { margin: 0; color: var(--sm2-muted); overflow-wrap: anywhere; }
 .sm2-forja-resultado-acoes { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sm2-space-2); }
+/* Aviso Sim/Não de encerrar a sessão (15.3): botões lado a lado, cabem em 360 px. */
+.sm2-encerrar-acoes { display: flex; justify-content: center; gap: var(--sm2-space-2); }
+.sm2-encerrar-acoes > button { flex: 1 1 0; min-width: 0; }
+.sm2-encerrar-texto { margin: 0; text-align: center; color: var(--sm2-ink); font-size: var(--sm2-text-sm); }
