@@ -828,7 +828,7 @@ describe('o Mural: marcos e peças de maré', () => {
 
   it('vazio é SILÊNCIO: sem estágio e sem peça, nem o título é desenhado', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 0));
-    await montar();
+    await montar({ room: 'grove' });
     expect(mural()).toBeNull();
     expect(screen.queryByText(PT('guild.mural.titulo'))).toBeNull();
     expect(document.body.textContent).not.toMatch(/nada ainda|nothing yet/i);
@@ -836,7 +836,7 @@ describe('o Mural: marcos e peças de maré', () => {
 
   it('marcos com a DATA que este aparelho viu; estágio que ele NÃO presenciou fica de fora — sem data é silêncio (L3 B3)', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 3));
-    await montar();
+    await montar({ room: 'grove' });
     const itens = Array.from(mural()!.querySelectorAll('li')).map(li => li.textContent!);
     expect(itens).toHaveLength(1);
     expect(itens[0]).toMatch(/^Copa, \d{1,2} de \w+ de \d{4}$/);
@@ -851,7 +851,7 @@ describe('o Mural: marcos e peças de maré', () => {
       { tide: 'T3', size: 'floracao', day: '2026-10-05' },
     ];
     vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1, {}, { ornaments }));
-    await montar();
+    await montar({ room: 'grove' });
     const pecas = Array.from(mural()!.querySelectorAll('[data-mural-mare]')).map(li => li.textContent!);
     expect(pecas).toEqual([
       'Pétala · Floração colhida, 10 de agosto de 2026',
@@ -860,19 +860,19 @@ describe('o Mural: marcos e peças de maré', () => {
     ]);
     cleanup();
     localStorage.clear();
-    await montar({ language: 'en-US' });
+    await montar({ language: 'en-US', room: 'grove' });
     expect(Array.from(mural()!.querySelectorAll('[data-mural-mare]')).map(li => li.textContent!.split(' · ')[0])).toEqual(['Petal', 'Corolla', 'Full bloom']);
   });
 
   it('só peças, sem estágio: o Mural aparece (a peça é permanente)', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 0, {}, { ornaments: [{ tide: 'T1', size: 'petala', day: '2026-08-10' }] }));
-    await montar();
+    await montar({ room: 'grove' });
     expect(mural()).toBeTruthy();
   });
 
   it('nenhum número por pessoa, nenhum nome de membro, ninguém que chegou ou saiu', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 4, {}, { ornaments: [{ tide: 'T1', size: 'floracao', day: '2026-09-01' }] }, {}, [0, 1]));
-    await montar();
+    await montar({ room: 'grove' });
     const txt = mural()!.textContent!;
     expect(txt).not.toMatch(/Ana|Bia|Caio|Dani/);
     expect(txt).not.toMatch(/chegou|saiu|entrou|joined|left/i);
