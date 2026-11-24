@@ -513,3 +513,7 @@ Pastas de trabalho em `E:\Soulmon-assets\p6-*`. Estados: **instalado** (no repo)
 | Botão de aço (opcional), arte da árvore da Casa do Clã | pendente / não existe |
 
 Notas: a cota do ChatGPT foi atingida em 23/11 (retoma ao liberar); arquivo novo em `ui/` exige exceção no guard ZERO PNG (`assets.contract.test.ts`); o corvo ROXO do site não existe no repo.
+
+## P6 — cenários de combate dos 4 elementos novos + botões sm2 (24/11/2026)
+- `combate/elemento/{fantasma,morto_vivo,sangue,furia}.png` (360×640, pixelado a partir de ChatGPT com refs carniceiro/abismo/ácido; 1–2 cristais turquesa discretos; carregados pelo glob de `combatArt.ts`). Aprovados pelo dono em 24/11. Originais: `E:\Soulmon-assets\p6-elementos-novos\cenario-<id>-orig.png`.
+- `ui/sm2/sm2-{primary,outline,danger}-{normal,pressed,disabled}.webp` (9, 703×169, alfa) e peças `sm2-{voltar,fechar,voltar-press,equipado,dia,dia-sel,dia-press,dia-off,chip,chip-sel,energias-vazio,energias-cheio}.webp` (12). Sem consumidor ainda: o P7 liga o `sm2Button`. Guard ZERO PNG ganhou a exceção `ui/sm2/` (§316c revogado). Originais: `E:\Soulmon-assets\p6-botoes-sm2\`.
