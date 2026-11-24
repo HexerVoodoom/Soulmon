@@ -2,6 +2,8 @@
 
 > **Atualização 24/11/2026:** só as linhas C5 e C9 do plano de arte foram revistas. As contagens e a tabela por tela abaixo continuam as de 23/11, e as linhas de `sm2-guild-btn`, `sm2-chat-action-btn` e `sm3-mochila-usar-btn` descrevem classes que já saíram do CSS. Não reconferido por grep nesta consolidação.
 >
+> **Fase 3, lote 2 (24/11/2026, `guild/` e `mercado/`):** conferido botão a botão em `b7f4c57aa`: nenhum `<button` de ação cru sobrou. Restam 26, todos fora da regra do dono: células de jogo da Feira (`FeiraTrailPlay`), setas e ícones sem texto (`GroveVisor`, `PlantioVisor`, `GuildSheet` ajustes, copiar e compartilhar), hotspot (`GroveWalkers`), chips de moeda, cartões de prateleira e miniaturas ampliáveis (`mercado/`), `data-mission-go` (nome da missão como link), e 2 de teste. Os passos −/+ da Essência já usam `sm2Button('outline')`.
+>
 > **Dono:** squad de design (UI) · **Data:** 23/11/2026 · **Verificação:** levantamento estático por `git grep` e extração por script sobre a `origin/main` em `e9a4f12b9`; nada foi rodado nem visto em tela. Números de linha (`arquivo:L`) valem para esse commit e escorregam; o símbolo se reencontra por grep. Este doc fica em `docs/design/` (a regra "sem `arquivo:linha`" do `docsManual` vale só para `docs/manual/`).
 >
 > **Para que serve:** o [DESIGN-GUIDE §3.1](DESIGN-GUIDE.md) tem só categorias com contagem. Aqui está o inventário por tela/modal e a lista de arte a gerar, para responder "todos os botões do jogo estão mapeados?". Resposta curta: **os 700 `<button>` de produção estão listados (apêndice, 222 arquivos)**; só 15 usos de CTA e 16 de Especial têm arte; o resto (≈ 98% dos botões) é CSS/inline sem arte. Lacunas de inspeção na seção E.
