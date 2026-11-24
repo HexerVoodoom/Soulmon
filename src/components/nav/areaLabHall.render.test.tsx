@@ -158,8 +158,8 @@ describe('Centro de Evolução — menu inline (P5)', () => {
     expect(AREA_VIEW).toContain("sm2Button('primary', false, 'lg')} data-lab-choice-evolution");
     expect(AREA_VIEW).toContain("sm2Button('outline', false, 'lg')} data-lab-choice-potion");
     expect(AREA_VIEW).toContain('sm2-lab-choice sm2-btn-arte');
-    expect(AREA_VIEW).toContain("<BackArrow onClick={() => setEvoSub('menu')}");
-    expect(AREA_VIEW).toContain("e.key === 'Escape'");
+    expect(AREA_VIEW).toContain("onClose={voltarDaSubTela ? () => setEvoSub('menu') : close}");
+    expect(AREA_VIEW).not.toContain('<BackArrow');
     expect(AREA_VIEW).not.toMatch(/\{language === 'pt-BR' \? 'Centro de Evolução' : 'Evolution Center'\}/);
     expect(APP).toMatch(/ElementPotionSheet[\s\S]{0,200}inline/);
   });

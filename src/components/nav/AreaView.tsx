@@ -19,7 +19,6 @@ import { restaurantNpcVoice } from '../../utils/restaurantCopy';
 import { lotIndicators } from '../../utils/lotIndicators';
 import { AreaSheet } from './AreaSheet';
 import { ModalSheet, sm2Button } from '../form/FormKit';
-import { BackArrow } from '../ui/BackArrow';
 import { mercadoLots, arenaLots, laboratorioLots, hallLots, type MercadoLotId, type LaboratorioLotId } from '../../utils/areaSheetCopy';
 import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, FORJA_LOT_ART, FORJA_BG, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART, HALL_BG, LABORATORIO_BG } from '../../assets/soulmon/areas';
 import { exploracaoLots, forjaLots, jogosLots } from '../../utils/playAreaLots';
@@ -424,13 +423,6 @@ export function AreaView(props: AreaViewProps) {
   const [riftMapOpen, setRiftMapOpen] = useState(false);
   /** Centro de Evolução: o prédio abre num menu de 2 botões; cada um abre INLINE na mesma folha. */
   const [evoSub, setEvoSub] = useState<'menu' | 'evolution' | 'potion'>(props.initialSheet === 'evolucao' ? 'evolution' : 'menu');
-  // Esc numa sub-tela do Centro de Evolução volta ao menu de 2 botões (o ✕ da folha continua fechando tudo).
-  useEffect(() => {
-    if (evoSub === 'menu' || !props.potionContent) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopImmediatePropagation(); e.preventDefault(); setEvoSub('menu'); } };
-    document.addEventListener('keydown', onKey, true);
-    return () => document.removeEventListener('keydown', onKey, true);
-  }, [evoSub, props.potionContent]);
   /** "Entrar no Rift" na folha: a descida larga SOZINHA do ponto onde parou, sem o lobby nem 2º toque (pedido do dono, 16/11/2026). */
   const [riftAuto, setRiftAuto] = useState(false);
   const lotFlags = useMemo(() => lotIndicators(gsForIndicators), [gsForIndicators]);
@@ -872,6 +864,8 @@ export function AreaView(props: AreaViewProps) {
     const tabOf = LAB_TAB_OF;
     const lots = laboratorioLots(language).filter(l => !(props.demo && isDemoHiddenLot('laboratorio', l.id)));
     const open = lots.find(l => l.id === sheet) ?? null;
+    // O voltar do CANTO (e o Esc) é um só: numa sub-tela do Centro de Evolução volta ao menu de 2 botões; no menu fecha a folha.
+    const voltarDaSubTela = open?.id === 'evolucao' && Boolean(props.potionContent) && evoSub !== 'menu';
     return (
       <AreaScene
         areaId={area}
@@ -880,7 +874,7 @@ export function AreaView(props: AreaViewProps) {
         lots={gated(lots.map(l => ({ ...l, art: LABORATORIO_LOT_ART[l.id], onOpen: () => { const tab = tabOf[l.id]; if (tab) props.onLabTab(tab); if (l.id === 'evolucao') setEvoSub(props.potionContent ? 'menu' : 'evolution'); enter(l.id); } } satisfies AreaLot)))}
         notice={lockNote} onNoticeClose={() => setLockNote(null)}
       >
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={voltarDaSubTela ? () => setEvoSub('menu') : close}>
           {open?.id === 'biblioteca' ? (
             <Suspense fallback={<SheetLoading language={language} />}>
               {props.hallContent('directory')}
@@ -907,15 +901,9 @@ export function AreaView(props: AreaViewProps) {
                   </button>
                 </div>
               ) : open?.id === 'evolucao' && props.potionContent && evoSub === 'potion' ? (
-                <>
-                  <BackArrow onClick={() => setEvoSub('menu')} language={language} label={language === 'pt-BR' ? 'Voltar ao menu' : 'Back to menu'} />
-                  {props.potionContent(() => setEvoSub('menu'))}
-                </>
+                props.potionContent(() => setEvoSub('menu'))
               ) : open?.id === 'evolucao' && props.potionContent && evoSub === 'evolution' ? (
-                <>
-                  <BackArrow onClick={() => setEvoSub('menu')} language={language} label={language === 'pt-BR' ? 'Voltar ao menu' : 'Back to menu'} />
-                  {props.labContent}
-                </>
+                props.labContent
               ) : props.labContent}
             </>
           )}
