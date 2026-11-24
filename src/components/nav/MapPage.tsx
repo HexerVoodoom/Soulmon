@@ -34,8 +34,8 @@ import { MAPA_MUNDO_PINTADO, MAPA_PALCO_STYLE, MAPA_AJUSTE_ESCALA } from '../../
 /** O cristal central pintado no mapa-mundo, em % da imagem. */
 const CRISTAL = [46, 30, 62, 43] as const;
 
-/** Lado do ícone das 3 moedas (px): um pouco maior que os 16 de antes. */
-const MOEDA_ICONE = 22;
+/** Lado do ícone das 3 moedas (px): o miolo do anel de cobre da barra tem ~17px. */
+const MOEDA_ICONE = 16;
 
 export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, credits, bondLevel }: {
   language: Language;

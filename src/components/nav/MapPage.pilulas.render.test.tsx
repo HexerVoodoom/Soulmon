@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { cleanup } from '@testing-library/react';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { MapPage } from './MapPage';
 import { aquecerRender, computed, renderWithCss } from '../../test/renderEnv';
@@ -47,14 +47,16 @@ describe('MapPage: as 3 pílulas de moeda são iguais (24/11/2026)', () => {
     expect(pill).toMatch(/flex:\s*0 0 auto/);
     expect(pill).not.toMatch(/flex:[^;]*var\(--sm2-moeda-w\)/);
     expect(pill).toMatch(/tabular-nums/);
-    // fundo translúcido do tema + raio por token (sem moldura nem borda)
+    // fundo = a BARRA de cobre (P1) em 9-slice horizontal; o texto é claro (a arte é escura nos dois temas)
     const miolo = bloco('.sm2-moeda__in');
-    expect(miolo).toContain('background: var(--sm2-moeda-fundo)');
-    expect(miolo).toContain('border-radius: var(--sm2-radius-md)');
+    expect(miolo).toContain("barra-moeda-p1-cobre.webp') 0 8 0 48 fill / 0 6px 0 37px stretch");
+    expect(miolo).toContain('border-width: 0 6px 0 37px');
     expect(miolo).toContain('min-height: 32px');
-    expect(css).toContain('--sm2-moeda-fundo: color-mix(in srgb, var(--sm2-bg) 80%, transparent)');
+    expect(miolo).toContain('color: var(--sm2-viewport-ink)');
+    expect(bloco('.sm2-moeda__val')).toContain('color: var(--sm2-viewport-ink)');
+    expect(css).not.toContain('--sm2-moeda-fundo');
+    expect(existsSync(join(__dirname, '../../assets/soulmon/icones-ui/barra-moeda-p1-cobre.webp'))).toBe(true);
     expect(bloco('.sm2-moeda-hud')).toMatch(/gap:\s*var\(--sm2-space-3\)/);
-    expect(bloco('.sm2-moeda__in')).toMatch(/gap:\s*var\(--sm2-space-1\)/);
     expect(css).toMatch(/--sm2-moeda-w:\s*96px/);
     for (const s of ['.sm2-moeda', '.sm2-moeda-hud', '.sm2-moeda__in', '.sm2-moeda__val']) {
       expect(bloco(s)).not.toMatch(/all:\s*unset|#[0-9a-f]{3,8}\b/i);

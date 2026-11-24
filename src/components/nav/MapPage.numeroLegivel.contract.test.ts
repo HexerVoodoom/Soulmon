@@ -17,13 +17,16 @@ describe('MapPage — número das pílulas de moeda legível', () => {
   });
 });
 
-/** QA 23/11/2026: o vão entre ícone e número vem do `gap` por token (e não de um espaço solto); 24/11: pílulas iguais, sem rótulo. */
-describe('MapPage — vão entre ícone e valor nas pílulas', () => {
+/** 24/11/2026: o ícone senta no anel de cobre da barra (absoluto, 16px), não num flex com gap; o miolo do valor é centralizado. */
+describe('MapPage — ícone no anel da barra de moeda', () => {
   const css = readFileSync(new URL('../../index.css', import.meta.url), 'utf8');
-  it('.sm2-moeda__in é inline-flex com gap por token', () => {
-    const ini = css.indexOf('\n.sm2-moeda__in {');
+  it('.sm2-moeda__in é inline-flex e o primeiro filho (ícone) é absoluto de 16px', () => {
+    const ini = css.indexOf('.sm2-moeda__in {');
     const bloco = css.slice(css.indexOf('{', ini), css.indexOf('}', ini));
     expect(bloco).toContain('display: inline-flex');
-    expect(bloco).toContain('gap: var(--sm2-space-1)');
+    const ic = css.indexOf('.sm2-moeda__in > :first-child {');
+    const blocoIc = css.slice(css.indexOf('{', ic), css.indexOf('}', ic));
+    expect(blocoIc).toContain('position: absolute');
+    expect(blocoIc).toContain('width: 16px');
   });
 });

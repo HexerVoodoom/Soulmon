@@ -3101,8 +3101,6 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
      texto menor no app, nem legenda, nem rodapé de card. */
   /* Pílulas de moeda do mapa (Bits/Honra/Créditos): largura FIXA e igual; cabe "99.999" a 14px tabular + ícone de 22px. */
   --sm2-moeda-w: 96px;
-  /* Fundo da pílula: a cor de fundo do TEMA a 80% (não 55: sobre a cachoeira clara do mapa o contraste do texto caía a ~3:1; a 80% fica >= 4,5:1 nos dois temas). Sem moldura, sem borda. */
-  --sm2-moeda-fundo: color-mix(in srgb, var(--sm2-bg) 80%, transparent);
 
   --sm2-text-xs: 12px;
   --sm2-text-sm: 14px;
@@ -7705,20 +7703,34 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-/* O fundo vai no miolo (e não no botão): o InfoTip fixa `background: none` em linha no botão. 32px visuais; o toque de 44 é do botão. */
+/* A BARRA de moeda (P1 cobre, escolha do dono 24/11/2026): arte 256x42 em 9-slice horizontal. Esquerda 48px = o anel de cobre onde mora o ícone; direita 8px = tampa;
+   o miolo liso estica. Escala vertical 32/42: 48 -> 37px e 8 -> 6px. O fundo vai no miolo (e não no botão): o InfoTip fixa `background: none` em linha no botão.
+   32px visuais; o toque de 44 é do botão. O texto é sempre claro (a arte é sempre escura, nos dois temas). */
 .sm2-moeda__in {
   box-sizing: border-box;
+  position: relative;
   width: 100%;
   min-height: 32px;
-  background: var(--sm2-moeda-fundo);
-  border-radius: var(--sm2-radius-md);
+  border-style: solid;
+  border-width: 0 6px 0 37px;
+  border-image: url('./assets/soulmon/icones-ui/barra-moeda-p1-cobre.webp') 0 8 0 48 fill / 0 6px 0 37px stretch;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--sm2-space-1);
   white-space: nowrap;
+  color: var(--sm2-viewport-ink);
+}
+/* O ícone senta no anel de cobre (centro ~19px da esquerda, miolo do anel ~17px). */
+.sm2-moeda__in > :first-child {
+  position: absolute;
+  left: -26px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
 }
 .sm2-moeda__val {
+  color: var(--sm2-viewport-ink);
   font-variant-numeric: lining-nums tabular-nums;
   text-align: end;
 }
