@@ -339,10 +339,31 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
     expect(container.querySelector('[data-cambista-essence-list]')).not.toBeNull();
   });
 
-  it('Outros: placeholder, em PT também', () => {
-    const { container } = abrirC({ language: 'pt-BR' });
+  it('Outros (24/11/2026): Recuperar energia/vida, 150 Créditos cada, 1 por semana; "cheio" e saldo bloqueiam; teto semanal vem do servidor', async () => {
+    const buy = vi.fn(async () => ({ ok: false, reason: 'weekly-cap' }));
+    const st = { energy: 2, maxEnergy: 10, hp: 1, maxHp: 3 };
+    const { container } = abrirC({ language: 'pt-BR', credits: 300, onBuyRecovery: buy, recoveryState: st });
     fireEvent.click(screen.getByRole('tab', { name: 'Outros' }));
-    expect(container.querySelector('[data-cambista-other]')!.textContent).toMatch(/Em breve/);
+    const en = container.querySelector('[data-recovery-buy="energy"]') as HTMLButtonElement;
+    const lf = container.querySelector('[data-recovery-buy="life"]') as HTMLButtonElement;
+    expect(container.querySelector('[data-recovery-item="energy"]')!.textContent).toContain('Recuperar energia');
+    expect(en.textContent).toContain('150'); expect(lf.textContent).toContain('150');
+    expect(en.disabled).toBe(false);
+    await act(async () => { fireEvent.click(en); });
+    expect(buy).toHaveBeenCalledWith('energy');
+    expect(container.querySelector('[data-recovery-msg]')!.textContent).toBe('Limite semanal atingido: volta na próxima semana.');
+  });
+
+  it('Outros: sem Créditos ou com energia/coração cheio o botão fica desabilitado (EN)', () => {
+    const base = { energy: 10, maxEnergy: 10, hp: 3, maxHp: 3 };
+    const a = abrirC({ credits: 300, onBuyRecovery: async () => ({ ok: true }), recoveryState: base });
+    fireEvent.click(screen.getByRole('tab', { name: 'Other' }));
+    expect((a.container.querySelector('[data-recovery-buy="energy"]') as HTMLButtonElement).disabled).toBe(true);
+    expect((a.container.querySelector('[data-recovery-buy="life"]') as HTMLButtonElement).disabled).toBe(true);
+    a.unmount();
+    const b = abrirC({ credits: 100, onBuyRecovery: async () => ({ ok: true }), recoveryState: { energy: 1, maxEnergy: 10, hp: 1, maxHp: 3 } });
+    fireEvent.click(screen.getByRole('tab', { name: 'Other' }));
+    expect((b.container.querySelector('[data-recovery-buy="energy"]') as HTMLButtonElement).disabled).toBe(true); // 100 < 150
   });
 });
 

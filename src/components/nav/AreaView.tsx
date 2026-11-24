@@ -264,6 +264,10 @@ export interface AreaViewProps {
   onRecoverPendingBits?: () => void;
   /** Cambista (§205): compra de essência por Créditos (servidor cobra). Sem a prop, a aba fica só vitrine. */
   onBuyEssence?: (element: string, qty: number) => Promise<boolean>;
+  /** Cambista, aba Outros (24/11/2026): Recuperar energia/vida por Créditos; o servidor cobra e conta o teto semanal. */
+  onBuyRecovery?: (kind: 'energy' | 'life') => Promise<{ ok: boolean; reason?: string }>;
+  /** Para o app checar cheio (energia/coração no máximo) antes de oferecer a compra. */
+  recoveryState?: { energy: number; maxEnergy: number; hp: number; maxHp: number };
   essences?: Record<string, number>;
   accountTier?: 'demo' | 'paid';
   onUnlock?: () => void;
@@ -588,7 +592,7 @@ export function AreaView(props: AreaViewProps) {
             )}
             {open?.id === 'restaurante' && <RestauranteSheet language={language} />}
             {open?.id === 'cambista' && (
-              <CambistaSheet language={language} credits={props.credits} onExchangeCredits={props.onExchangeCredits} onRecoverPendingBits={props.onRecoverPendingBits} onGetCredits={props.onGetCredits} accountTier={props.accountTier} onUnlock={props.onUnlock} unlockedElements={props.unlockedElements} essences={props.essences} onBuyEssence={props.onBuyEssence} />
+              <CambistaSheet language={language} credits={props.credits} onExchangeCredits={props.onExchangeCredits} onRecoverPendingBits={props.onRecoverPendingBits} onGetCredits={props.onGetCredits} accountTier={props.accountTier} onUnlock={props.onUnlock} unlockedElements={props.unlockedElements} essences={props.essences} onBuyEssence={props.onBuyEssence} onBuyRecovery={props.onBuyRecovery} recoveryState={props.recoveryState} />
             )}
             {open?.id === 'conquistas' && (
               <ConquistasSheet language={language} missionProgress={ownership.missionProgress} claimed={ownership.missionClaimed} shop={{ ownedBackgrounds: ownership.ownedBackgrounds, balance: props.points, onBuy: id => actions.onBuy(id) === true }} />
