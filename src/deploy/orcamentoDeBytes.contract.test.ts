@@ -227,7 +227,10 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // `elementoDescritores.data` (47 KB, hoje lido no `useMemo` síncrono de `stagesComElemento`) e partir o `App.tsx` (173 KB).
   // 23/11/2026 (REGISTRO §498, perf/catalogos-lazy): 1_125_769 -> 1_095_753 (-30,7 KB): cosmeticosNovos e honraDecor viraram chunk lazy. Linha ABAIXADA, nunca elevada.
   // 23/11/2026 (REGISTRO §499, perf/app-split): 1_095_753 -> 1_062_299 (-33,5 KB): PostponeNudgeSheet, NotificationManager, ReviewResultModal e RewardPreview saíram do App.tsx para chunks lazy. Linha ABAIXADA.
-  'index.js': 1_062_299,
+  // 24/11/2026 (dist em lote, re-medição): 1_062_299 -> 1_072_142 (+9,6 KB), build limpo da main @ 8881642e7. Crescimento JUSTIFICADO pelos pedidos do dono do dia:
+  // moldura cristal nova + quinas, título inline sem placa em ~22 modais, Fundador (modal por prêmio/aviso), popups do Passeio/NPC, Evolution Center e pílulas.
+  // O corte real segue sendo code-split / partir o `App.tsx` (gatilho do §380 acima). Teto e folga inalterados.
+  'index.js': 1_072_142,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
@@ -241,7 +244,10 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // sem split, então os estilos das frentes mergeadas desde 01/11 entram todos aqui). Re-medida com justificativa, NÃO é do corte do JS.
   // 22/11/2026 (REGISTRO §497, perf/dist-orcamento): 223_537 -> 206_369 (-17,2 KB). Um build limpo da main media 256_163 (estourava a folga em ~24 KB); a poda
   // das ~540 classes utilitárias do Tailwind que NENHUM arquivo do repo cita (e de sobras `sm2-*` mortas) levou a 206_369. Linha ABAIXADA, nunca elevada.
-  'index.css': 206_369,
+  // 24/11/2026 (dist em lote, re-medição): 206_369 -> 220_610 (+13,9 KB), build limpo da main @ 8881642e7. Crescimento JUSTIFICADO pelos pedidos do dono do dia:
+  // moldura cristal nova + quinas, título inline sem placa em ~22 modais, Fundador, popups do Passeio/NPC, Evolution Center e pílulas. O CSS é único, sem split.
+  // O corte real segue sendo code-split / partir o `App.tsx`. Teto e folga inalterados.
+  'index.css': 220_610,
   // ⚰️ 'intro-parede.mp4' (4,3 MB) saiu em 04/11/2026: a intro virou 9 painéis ilustrados animados em CSS (~2,1 MB em webp).
   // ⚰️ 'bg-forja.webp' saiu em 05/11/2026: o fundo novo da Forja (main) mede 398 KB, dentro do teto.
   // ⚰️ 'evolution-bg.mp4' (3,7 MB) saiu em 31/10/2026: a cerimônia da evolução foi refeita em CSS (o cristal, REGISTRO §208) e o vídeo foi apagado.
