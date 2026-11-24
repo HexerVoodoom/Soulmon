@@ -99,7 +99,7 @@ export interface StatsPageProps {
   benevolencePoints?: number;
   /** Traço de nascimento do pet (utils/passives.ts). */
   petPassive?: string;
-  /** Ritmo de cuidado lido do histórico (utils/carePattern.ts). */
+  /** Ritmo de cuidado: desde a tarefa 23 mora no Perfil (SoulmonPerfil); a prop segue aceita por compatibilidade. */
   carePattern?: CarePattern | null;
   /** Vitrine da jornada: o que este Soulmon já viveu. */
   journey?: {
@@ -150,11 +150,6 @@ const PASSIVE_ICON: Record<string, string> = {
 };
 /** `event_repeat` também abre "What you repeat most" — dois papéis na mesma
  *  tela, de propósito: os dois dizem "repetição" (R3 da crítica). */
-const PATTERN_ICON: Record<string, string> = {
-  constante: 'event_repeat',
-  explosivo: 'bolt',
-  equilibrado: 'spa',
-};
 
 /** 10.1 (beta-2): a marca da categoria nas listas — a arte própria dela (legível a 24px); sem arte, o emoji da atividade, como antes. */
 function CatMark({ category, emoji }: { category?: string; emoji: string }) {
@@ -181,7 +176,6 @@ export function StatsPage({
   streakDays = 0,
   soulLevelText,
   petPassive,
-  carePattern,
   journey,
   daysTogether,
   birth,
@@ -324,7 +318,7 @@ export function StatsPage({
       {/* Equipamento (PR8b): mudou para o Soulsmith (07/10/2026; da Forja desde #187) — `AreaView`, lote `ferreiro`. */}
 
       {/* ─────────────── Quem ele é ─────────────── */}
-      {(passive || carePattern) && (
+      {passive && (
         <section className="sm2-stats-card">
           <CardHead icon="psychology">{isPt ? 'Quem é o seu Soulmon' : 'Who they are'}</CardHead>
           {passive && traitRow(
@@ -332,11 +326,6 @@ export function StatsPage({
             isPt ? passive.namePt : passive.nameEn,
             isPt ? passive.descPt : passive.descEn,
             PASSIVE_ICON_ART[passive.id],
-          )}
-          {carePattern && traitRow(
-            PATTERN_ICON[carePattern.id] ?? 'auto_awesome',
-            `${isPt ? 'Ritmo: ' : 'Rhythm: '}${isPt ? carePattern.namePt : carePattern.nameEn}`,
-            isPt ? carePattern.descPt : carePattern.descEn,
           )}
         </section>
       )}

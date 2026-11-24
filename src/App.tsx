@@ -8238,6 +8238,7 @@ export default function App() {
                   forge: gameState.forge,
                 }}
                 especialNome={gameState.especialNome ?? ''}
+                carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
               />
             </Suspense>
           )}

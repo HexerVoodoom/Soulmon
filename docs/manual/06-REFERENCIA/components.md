@@ -990,6 +990,10 @@ Sobrepõe o `bitsCap` do `ResultExtrasContext` com o teto diário efetivo da Fen
 **Régua:** `src/components/evolucaoCristal.render.test.tsx` (6 tempos, reduced-motion, artes, cartão) e `EvolutionCeremony.fragmentos.render.test.tsx`.
 **Avisos do arquivo:** o botão de saída é "Seguimos juntos"/"We keep going together" desde `84ae4937` (21/09/2026, copy §3.2) — a MESMA saída relacional do `MilestoneCeremony`. ⚠️ o `CLAUDE.md` (seção "DUAS FILAS") registra que esta cerimônia (z-500) chegou a abrir junto do `EvolveTaskModal`, que reaparecia por baixo cobrando "crie mais atividades" quando ela fechava — achado na auditoria de 06/09/2026, corrigido pela fila de intersticiais declarada no `App.tsx`.
 
+### `src/components/EvolutionRing.tsx`
+
+**Dono de:** o anel circular (SVG) de cada ramo de evolução na `EvolutionPath` (tarefa 23): preenchimento = pontos do ramo ÷ pontos do ramo líder, número ao centro, texto para leitor de tela; só visualiza dado existente, sem regra. Props: `value`, `max`, `color`, `label`. CSS `.sm2-evo-ring*` em `src/index.css`. Teste: `EvolutionRing.render.test.tsx`.
+
 ### `src/components/EvolutionPath.tsx`
 **Sync 16/11/2026 (`b0c1e59c..6b7773143`):** Ultra só abre com as três Megas liberadas e só então a barra acumula (`megasLiberadas`, `ULTRA_MEGA_IDS`, `gaugeTravadaPelasMegas`; `canReachUltra` não olha mais os pontos); prop `glitchtamaBuffAte`; `onSwitchForm(targetStageId, elemento?)` leva o elemento da forma alternativa; ícone de estágio colorido pelo caminho.
 **Dono de:** a página de Evolução — a árvore por galho, o cadeado `evolutionLocked`, a cerimônia manual, o spoiler-guard de formas futuras e o desempate por ritmo de cuidado.
