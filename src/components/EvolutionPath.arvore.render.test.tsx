@@ -116,6 +116,11 @@ describe('árvore do Centro de Evolução', () => {
     const p = span.parentElement as HTMLElement;
     expect(p.style.overflow).toBe('hidden');
     expect(p.style.maxWidth).toBe('100%');
+    expect(p.style.inlineSize).toBe('100%');
+    expect(p.style.minInlineSize).toMatch(/^0(px)?$/);
+    expect(p.style.justifyContent).toBe('safe center');
+    expect(p.style.display).toBe('flex');
+    expect((span.previousElementSibling as HTMLElement).style.flex).toMatch(/none|0 0 auto/);
   });
 });
 

@@ -876,8 +876,8 @@ export function EvolutionPath({
             <span aria-hidden="true" data-testid={`sm-no-${stageId}-interrogacao`} style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', ...sm2Text, fontWeight: 700, fontSize: 'var(--sm2-text-2xl)', color: 'var(--sm2-ink)', textShadow: '0 0 6px var(--sm2-surface-2)' }}>?</span>
           )}
         </div>
-        <p style={{ ...sm2Text, fontWeight: 500, margin: 0, fontSize: 'var(--sm2-evo-nome-fs, var(--sm2-text-sm))', color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-ink)', overflowWrap: 'normal', wordBreak: 'keep-all', whiteSpace: 'nowrap', maxWidth: '100%', minInlineSize: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-          <EstagioIcone forma={stageId} size={16} />
+        <p style={{ ...sm2Text, fontWeight: 500, margin: 0, fontSize: 'var(--sm2-evo-nome-fs, var(--sm2-text-sm))', color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-ink)', overflowWrap: 'normal', wordBreak: 'keep-all', whiteSpace: 'nowrap', maxWidth: '100%', inlineSize: '100%', boxSizing: 'border-box', minInlineSize: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'safe center', gap: 4 }}>
+          <span style={{ flex: 'none', display: 'inline-flex' }}><EstagioIcone forma={stageId} size={16} /></span>
           <span data-testid={`sm-nome-no-${stageId}`} title={hidden ? undefined : evolution.name} style={{ minInlineSize: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto' }}>{hidden ? '???' : evolution.name}</span>
         </p>
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
