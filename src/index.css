@@ -4832,7 +4832,12 @@ html[data-ui="arte"] button[style*="--sm2-btn-kind:danger"] {
   border-width: 0 var(--cap) !important;
   border-radius: 0 !important;
   border-image: var(--arte) 0 75 fill / 0 var(--cap) stretch !important;
-  padding-inline: 8px !important;
+  /* Medido em 360 (#1254): rodapé de 3 botões tinha só 46px de miolo (gema 21px/lado + 8px de padding): padding mínimo e texto 14px para "Cancelar" caber; PT longo quebra em 2 linhas, balanceado e com entrelinha curta para não tocar o cobre. */
+  padding-inline: var(--sm2-space-half, 2px) !important;
+  padding-block: 0 !important;
+  font-size: var(--sm2-text-sm) !important;
+  line-height: 1.15 !important;
+  text-wrap: balance;
   color: var(--sm2-btn-arte-ink) !important;
   text-shadow: 0 1px 2px rgba(4, 18, 20, .55);
 }
