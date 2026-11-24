@@ -253,7 +253,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             {MOLDURA_MODAL ? children : <ModalInfoSlotProvider slot={slot}>{children}</ModalInfoSlotProvider>}
           </div>
           {footer && (
-            <div data-area-sheet-footer style={{ flexShrink: 0, padding: MOLDURA_MODAL ? '10px var(--sm2-moldura-pad-x) calc(var(--sm2-moldura-pad-b) + env(safe-area-inset-bottom, 0px))' : '10px 16px calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid var(--sm2-muted)', background: MOLDURA_MODAL ? 'transparent' : 'var(--sm2-surface)' }}>
+            <div data-area-sheet-footer style={{ flexShrink: 0, padding: MOLDURA_MODAL ? '10px var(--sm2-moldura-pad-x-rodape, var(--sm2-moldura-pad-x)) calc(var(--sm2-moldura-pad-b) + env(safe-area-inset-bottom, 0px))' : '10px 16px calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid var(--sm2-muted)', background: MOLDURA_MODAL ? 'transparent' : 'var(--sm2-surface)' }}>
               {footer}
             </div>
           )}

@@ -7432,7 +7432,8 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
      (topo, base, laterais: z 2, centro vazado, sem toque) e o conteúdo rola por baixo dela; `--sm2-moldura-pad-*` é o respiro que quem rola usa
      para não ficar escondido sob as peças. */
   background: var(--sm2-viewport-bg, #0E2422); min-height: calc(var(--u) * 52);
-  --sm2-moldura-pad-t: calc(var(--u) * 15); --sm2-moldura-pad-b: calc(var(--u) * 9); --sm2-moldura-pad-x: calc(var(--u) * 3.6);
+  --sm2-moldura-pad-t: calc(var(--u) * 15); --sm2-moldura-pad-b: calc(var(--u) * 9); --sm2-moldura-pad-x: calc(var(--u) * 4.8); /* P3/P7 23/11: ornamento (2.1u) + ~10px de respiro (4.8u) */
+  --sm2-moldura-pad-x-rodape: calc(var(--u) * 7.2 + 10px); /* cipo/folha dos cantos de baixo (7.2u) + 10px: o rodapé nunca fica sob o ornamento */
 }
 .sm2-moldura-modal__fundo, .sm2-moldura-modal__lado, .sm2-moldura-modal__topo, .sm2-moldura-modal__base { position: absolute; pointer-events: none; }
 .sm2-moldura-modal__fundo {
@@ -7620,6 +7621,8 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-popup-fechar:focus-visible { outline: 2px solid #e3c06a; outline-offset: 2px; }
 .sm2-area-sheet-inline .sm2-popup-fechar-linha { margin: 0 4px 0 0; }
 .sm2-area-sheet-inline .sm2-popup-titulo { padding: 0 calc(var(--sm2-moldura-pad-x) + 12px); }
+/* P7 23/11: no cristal o título inline não entra no canto (cristal/folha): respiro = canto + 10px dos dois lados. */
+.sm2-moldura-modal--cristal .sm2-popup-titulo { padding: 0 calc(var(--sm2-cristal-canto) + 10px); }
 /* P3: selo de texto PLACEHOLDER do resultado do chefe que fugiu (no lugar do DRAW). Trocar pela arte do selo FLED (P6). */
 .sm-result-seal-text { display: block; margin: 0 auto; text-align: center; font-family: var(--sm2-font-display, Georgia, serif); font-weight: 800; letter-spacing: .12em; font-size: var(--sm2-text-xl, 1.5rem); color: #e3c06a; text-shadow: 0 2px 0 rgba(0,0,0,.55); }
 .sm2-popup-titulo {
