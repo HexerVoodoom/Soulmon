@@ -5516,6 +5516,10 @@ details[open] > .sm2-details-summary .sm2-details-chevron { transform: rotate(18
   font-size: var(--sm2-text-md); color: var(--sm2-ink);
   &::-webkit-calendar-picker-indicator { display: none; }
 }
+/* indicador do relógio nativo (`input[type=time]`): o preflight força `color-scheme: light` nos inputs, então o glifo saía PRETO no tema escuro (P7).
+   O tema vive em `[data-theme]`; `color-scheme` por tema faz o navegador pintar o relógio claro no escuro e escuro no claro. */
+input[type="time"] { color-scheme: light; }
+[data-theme="dark"] input[type="time"] { color-scheme: dark; }
 /* o código de recuperação: chip mono sobre `surface-2` + "Copy"/"Copied" num alvo 44 em `primary-ink` */
 .sm2-conta-code { display: flex; align-items: center; gap: var(--sm2-space-2); min-height: 44px; flex-wrap: wrap; }
 .sm2-conta-cd {
