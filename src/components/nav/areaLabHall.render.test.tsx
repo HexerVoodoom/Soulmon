@@ -155,7 +155,12 @@ describe('Centro de Evolução — menu inline (P5)', () => {
     expect(AREA_VIEW).toContain("data-lab-choice-potion");
     expect(AREA_VIEW).toContain('props.potionContent(() => setEvoSub(');
     expect(AREA_VIEW).not.toContain('labChoice');
-    expect(AREA_VIEW).toMatch(/sm2-kit-btn sm2-kit-btn-primary" data-lab-choice-potion/);
+    expect(AREA_VIEW).toContain("sm2Button('primary', false, 'lg')} data-lab-choice-evolution");
+    expect(AREA_VIEW).toContain("sm2Button('outline', false, 'lg')} data-lab-choice-potion");
+    expect(AREA_VIEW).toContain('sm2-lab-choice sm2-btn-arte');
+    expect(AREA_VIEW).toContain("onClose={voltarDaSubTela ? () => setEvoSub('menu') : close}");
+    expect(AREA_VIEW).not.toContain('<BackArrow');
+    expect(AREA_VIEW).not.toMatch(/\{language === 'pt-BR' \? 'Centro de Evolução' : 'Evolution Center'\}/);
     expect(APP).toMatch(/ElementPotionSheet[\s\S]{0,200}inline/);
   });
   it('CSS: menu, nome+cadeado e desfazer centrado com espaço usam tokens/inline-size (360/375/412)', () => {

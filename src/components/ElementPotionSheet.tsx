@@ -201,7 +201,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
       )}
     </>
   );
-  if (inline) return open ? <div data-element-potion-inline style={{ display: 'grid', gap: 12 }}>{!sel && <button type="button" data-potion-menu-back onClick={onBack} style={{ ...sm2Button('quiet'), justifySelf: 'start' }}>{t.back}</button>}{corpo}{footerNode}</div> : null;
+  if (inline) return open ? <div data-element-potion-inline style={{ display: 'grid', gap: 12 }}>{corpo}{footerNode}</div> : null;
   return (
     <ModalSheet open={open} title={t.title} onClose={onBack} onBack={back} language={language} footer={footerNode}>
       {corpo}

@@ -18,7 +18,7 @@ import { chefsOn, playerWeekday } from '../../utils/restaurant';
 import { restaurantNpcVoice } from '../../utils/restaurantCopy';
 import { lotIndicators } from '../../utils/lotIndicators';
 import { AreaSheet } from './AreaSheet';
-import { ModalSheet } from '../form/FormKit';
+import { ModalSheet, sm2Button } from '../form/FormKit';
 import { mercadoLots, arenaLots, laboratorioLots, hallLots, type MercadoLotId, type LaboratorioLotId } from '../../utils/areaSheetCopy';
 import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, FORJA_LOT_ART, FORJA_BG, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART, HALL_BG, LABORATORIO_BG } from '../../assets/soulmon/areas';
 import { exploracaoLots, forjaLots, jogosLots } from '../../utils/playAreaLots';
@@ -864,6 +864,8 @@ export function AreaView(props: AreaViewProps) {
     const tabOf = LAB_TAB_OF;
     const lots = laboratorioLots(language).filter(l => !(props.demo && isDemoHiddenLot('laboratorio', l.id)));
     const open = lots.find(l => l.id === sheet) ?? null;
+    // O voltar do CANTO (e o Esc) é um só: numa sub-tela do Centro de Evolução volta ao menu de 2 botões; no menu fecha a folha.
+    const voltarDaSubTela = open?.id === 'evolucao' && Boolean(props.potionContent) && evoSub !== 'menu';
     return (
       <AreaScene
         areaId={area}
@@ -872,7 +874,7 @@ export function AreaView(props: AreaViewProps) {
         lots={gated(lots.map(l => ({ ...l, art: LABORATORIO_LOT_ART[l.id], onOpen: () => { const tab = tabOf[l.id]; if (tab) props.onLabTab(tab); if (l.id === 'evolucao') setEvoSub(props.potionContent ? 'menu' : 'evolution'); enter(l.id); } } satisfies AreaLot)))}
         notice={lockNote} onNoticeClose={() => setLockNote(null)}
       >
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={voltarDaSubTela ? () => setEvoSub('menu') : close}>
           {open?.id === 'biblioteca' ? (
             <Suspense fallback={<SheetLoading language={language} />}>
               {props.hallContent('directory')}
@@ -889,16 +891,19 @@ export function AreaView(props: AreaViewProps) {
                 />
               )}
               {open?.id === 'evolucao' && props.potionContent && evoSub === 'menu' ? (
-                <div data-lab-choice className="sm2-lab-choice">
-                  <button type="button" className="sm2-kit-btn sm2-kit-btn-primary" data-lab-choice-evolution onClick={() => setEvoSub('evolution')}>
-                    {language === 'pt-BR' ? 'Centro de Evolução' : 'Evolution Center'}
+                /* O título (placa) já diz "Centro de Evolução": o botão NÃO repete o nome do prédio. Botões COM ARTE do app (`.sm2-btn-arte` + `sm2Button`). */
+                <div data-lab-choice className="sm2-lab-choice sm2-btn-arte">
+                  <button type="button" style={sm2Button('primary', false, 'lg')} data-lab-choice-evolution onClick={() => setEvoSub('evolution')}>
+                    {language === 'pt-BR' ? 'Ver evolução' : 'View evolution'}
                   </button>
-                  <button type="button" className="sm2-kit-btn sm2-kit-btn-primary" data-lab-choice-potion onClick={() => setEvoSub('potion')}>
+                  <button type="button" style={sm2Button('outline', false, 'lg')} data-lab-choice-potion onClick={() => setEvoSub('potion')}>
                     {language === 'pt-BR' ? 'Criar poção' : 'Create Potion'}
                   </button>
                 </div>
               ) : open?.id === 'evolucao' && props.potionContent && evoSub === 'potion' ? (
                 props.potionContent(() => setEvoSub('menu'))
+              ) : open?.id === 'evolucao' && props.potionContent && evoSub === 'evolution' ? (
+                props.labContent
               ) : props.labContent}
             </>
           )}
