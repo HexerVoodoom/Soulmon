@@ -100,9 +100,10 @@ describe('CatalogOnboardingFlow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Sono' }));
     fireEvent.click(screen.getByRole('button', { name: /continuar/i }));
     const voltar = container.querySelector('[data-back-arrow] button')!;
-    // Com a moldura (etapa 3) o título mora na PLACA do topo e a seta, logo abaixo, no miolo (`data-moldura-conteudo`).
-    const titulo = container.querySelector('[data-moldura-placa] h2')!;
+    // 24/11/2026 (dono): sem placa; o título é TEXTO na mesma linha da seta, no miolo (`data-moldura-conteudo`).
+    const titulo = container.querySelector('[data-popup-titulo]')!;
     expect(titulo).toBeTruthy();
+    expect(titulo.parentElement).toBe(voltar.closest('.sm2-popup-cabeca'));
     expect(voltar.closest('[data-moldura-conteudo]')).toBeTruthy();
     fireEvent.click(voltar);
     expect(screen.getByText(/definir metas/i)).toBeTruthy();
