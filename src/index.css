@@ -7710,6 +7710,8 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* NOVA TAREFA / NOVO HÁBITO — espaçamento (PR i). Escala única: seções a --sm2-space-4; rótulo↔controle e chips↔energias a --sm2-space-2/-3.
    O corpo é o ÚNICO filho do rolável do `ModalSheet` (que traz o gap 18 próprio): o respiro do topo afasta o campo da barra de título e o de baixo
    (rodapé fixo = 16 + alvo 44 + 16 + safe-area, mais folga) deixa "Quando pretendo fazer"/"Prazo" rolarem para fora de trás de Cancelar/Salvar. */
+/* Textura de pedra do fundo da Nova tarefa/hábito: 6% (era 60%), pelo token `--sm2-moldura-fill-op` da moldura (24/11/2026, dono). */
+.sm2-moldura-sheet:has(.sm2-nova-corpo) { --sm2-moldura-fill-op: .06 !important; }
 .sm2-nova-corpo {
   --sm2-nova-rodape: calc(var(--sm2-space-4) + 44px + var(--sm2-space-4) + env(safe-area-inset-bottom, 0px));
   display: flex; flex-direction: column; gap: var(--sm2-space-4);

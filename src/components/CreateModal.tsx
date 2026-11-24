@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { ACTIVITY_CATEGORIES } from '../types/categories';
 import { Icon } from './ui/Icon';
+import { categoryIconArt } from '../assets/soulmon/icons/categories';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { InfoTip } from './ui/InfoTip';
 import {
@@ -297,7 +298,9 @@ export function CategoryChips({
       <div role="group" aria-label={isPt ? 'Categoria' : 'Category'} style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {CATEGORIES.map(cat => (
           <Chip key={cat} selected={category === cat} onToggle={() => setCategory(cat)} style={{ padding: '0 12px' }}>
-            <Icon name={CATEGORY_ICON_NAME[cat]} size={20} fill={category === cat ? 1 : 0} tone="inherit" />
+            {categoryIconArt(cat)
+              ? <img data-cat-icon={cat} src={categoryIconArt(cat)} alt={categoryLabel(cat, isPt)} width={24} height={24} draggable={false} style={{ flexShrink: 0, objectFit: 'contain' }} />
+              : <Icon name={CATEGORY_ICON_NAME[cat]} size={20} fill={category === cat ? 1 : 0} tone="inherit" />}
             {categoryLabel(cat, isPt)}
           </Chip>
         ))}

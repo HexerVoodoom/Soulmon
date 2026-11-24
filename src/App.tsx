@@ -603,6 +603,7 @@ import { funTicketStatus, buyFunTickets, ticketBuyRefusal, startFunRound } from 
 import { duelInviteCount, duelInviteExchangeRefusal, duelInvitesPerEnergy, exchangeDuelInvites, spendDuelInvite, DUEL_INVITE_MAX } from './utils/duelInvites';
 import type { CreateAction } from './utils/chatActions';
 import { WakeToEnterProvider } from './components/WakeToEnter';
+import { CreateChoicePopup } from './components/CreateChoicePopup';
 const EvoBanner = lazy(() => import('./components/EvoBanner'));
 const getGuildWarReplay = (...a: Parameters<typeof import('./utils/community').getGuildWarReplay>) => import('./utils/community').then(m => m.getGuildWarReplay(...a));
 const fetchEvoFeed = () => import('./utils/community').then(m => m.getEvoFeed());
@@ -9944,27 +9945,16 @@ export default function App() {
         );
       })()}
 
-      <ModalSheet
+      <CreateChoicePopup
         open={createChoiceOpen}
-        title={language === 'pt-BR' ? 'Novo hábito ou nova tarefa?' : 'New habit or new task?'}
         language={language}
         onClose={() => setCreateChoiceOpen(false)}
-      >
-        <div style={{ display: 'grid', gap: 10 }}>
-          <button type="button" data-create-choice="habit" style={sm2Button('primary')} onClick={() => {
-            setCreateChoiceOpen(false); setCatalogBrowserOpen(true);
-          }}>{language === 'pt-BR' ? 'Novo hábito (todo dia)' : 'New habit (every day)'}</button>
-          <button type="button" data-create-choice="task" style={sm2Button('outline')} onClick={() => {
-            setCreateChoiceOpen(false); setCreateInitialKind('task'); setCreateModalOpen(true);
-          }}>{language === 'pt-BR' ? 'Nova tarefa (pontual ou em dias específicos)' : 'New task (one-off or on specific days)'}</button>
-          {/* Só aparece com algo ainda NÃO comprometido hoje (e depois do onboarding). */}
-          {dayPlanActive && uncommittedNow.length > 0 && (
-            <button type="button" data-create-choice="commit" style={sm2Button('outline')} onClick={() => {
-              setCreateChoiceOpen(false); setCommitMoreOpen(true);
-            }}>{language === 'pt-BR' ? 'Comprometer-me com uma tarefa' : 'Commit to a task'}</button>
-          )}
-        </div>
-      </ModalSheet>
+        onPick={(kind) => {
+          setCreateChoiceOpen(false);
+          if (kind === 'habit') setCatalogBrowserOpen(true); else { setCreateInitialKind('task'); setCreateModalOpen(true); }
+        }}
+        onCommit={dayPlanActive && uncommittedNow.length > 0 ? () => { setCreateChoiceOpen(false); setCommitMoreOpen(true); } : undefined}
+      />
 
       {commitMoreOpen && uncommittedNow.length > 0 && (
         <Suspense fallback={null}>
