@@ -390,7 +390,7 @@ export function CheckRow({
  * Foco preso, Escape fecha e o foco volta para quem abriu (`useDialogA11y`).
  */
 export function ModalSheet({
-  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom', sobreTelas = false, titulo = 'placa',
+  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom', sobreTelas = false, titulo = 'inline',
 }: {
   /** 23/11/2026 (dono, teste A/B): só no popup CENTRAL com moldura. `'placa'` (padrão) = título na placa de bronze sobre o topo; `'inline'` = SEM placa:
    *  fechar redondo no canto superior DIREITO e o título logo abaixo, dentro do modal (até 2 linhas, sem truncar). Exceção documentada ao "fechar à esquerda"
@@ -452,7 +452,7 @@ export function ModalSheet({
   const viaMedalhao = !!acoVoltar && !!onBack && closeSide === 'start' && !sobreTelas && open;
   useAcoVoltarRegistro(acoVoltar, onBack, viaMedalhao);
   const Casca: ElementType = framed ? (centered ? ModalFrame : SheetFrame) : 'div';
-  const inline = framed && centered && titulo === 'inline' && !onBack;
+  const inline = framed && centered && titulo === 'inline';
   if (!open) return null;
   const folha = (
     <ModalInfoSlotProvider slot={slot} inherit={noMiolo}>
@@ -470,7 +470,7 @@ export function ModalSheet({
         ...(noMiolo ? { position: 'relative' as const, flex: 1, minHeight: 0 } : { position: 'fixed' as const, inset: 0 }), zIndex: 120,
         background: noMiolo ? 'transparent' : 'rgba(4, 18, 20, .55)',
         display: 'flex', alignItems: noMiolo ? 'stretch' : centered ? 'center' : 'flex-end', justifyContent: 'center',
-        ...(centered && !noMiolo ? { padding: 'calc(24px + env(safe-area-inset-top, 0px)) 24px calc(24px + env(safe-area-inset-bottom, 0px))', boxSizing: 'border-box' as const } : null),
+        ...(centered && !noMiolo ? { padding: 'calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px))', boxSizing: 'border-box' as const } : null),
       }}
     >
       <Casca
@@ -510,16 +510,16 @@ export function ModalSheet({
         )}
 
         {inline ? (
-          <>
-            {closeSide !== 'none' && (
-              <div className="sm2-popup-fechar-linha">
-                <button type="button" className="sm2-popup-fechar" onClick={onClose} aria-label={isPt ? 'Fechar' : 'Close'}>
-                  <Icon name="close" size={24} tone="inherit" />
-                </button>
-              </div>
-            )}
+          /* 24/11/2026 (dono): SEM placa; título em TEXTO na MESMA linha do ✕ (glifo à direita). Com `onBack` a seta de voltar ocupa o lado esquerdo. */
+          <div className="sm2-popup-cabeca" data-tem-info={info ? '' : undefined}>
+            {onBack ? <BackArrow icon="arrow_back" onClick={onBack} language={language} style={{ margin: '0 0 0 -10px' }} /> : null}
             <h2 className="sm2-popup-titulo" data-popup-titulo>{title}</h2>
-          </>
+            {closeSide !== 'none' && !onBack && (
+              <button type="button" className="sm2-popup-fechar" onClick={onClose} aria-label={isPt ? 'Fechar' : 'Close'}>
+                <Icon name="close" size={24} tone="inherit" />
+              </button>
+            )}
+          </div>
         ) : closeSide === 'start' && !viaMedalhao ? (
           /* I3: o fechar é a mesma peça do voltar (`BackArrow`, ícone `close`),
              no canto superior ESQUERDO, numa linha PRÓPRIA acima do título. */
@@ -561,7 +561,7 @@ export function ModalSheet({
             overflowY: 'auto', ...(framed ? { flex: 1, minHeight: 0 } : null),
             padding: framed && centered
               /* Popup central com moldura: o respiro vem dos tokens da moldura (texto não encosta na placa nem nas bordas). */
-              ? 'calc(var(--sm2-moldura-pad-t) + 8px) calc(var(--sm2-moldura-pad-x) + 12px) 20px'
+              ? 'calc(var(--sm2-moldura-pad-t) + 8px) calc(var(--sm2-moldura-pad-x) + 4px) 20px'
               : footer
                 ? '4px 18px 18px'
                 : '4px 18px calc(18px + env(safe-area-inset-bottom, 0px))',
@@ -575,7 +575,7 @@ export function ModalSheet({
           <div
             style={{
               padding: framed && centered
-                ? '16px calc(var(--sm2-moldura-pad-x) + 12px) calc(var(--sm2-moldura-pad-b) + 8px)'
+                ? '16px calc(var(--sm2-moldura-pad-x) + 4px) calc(var(--sm2-moldura-pad-b) + 8px)'
                 : '16px 16px calc(16px + env(safe-area-inset-bottom, 0px))',
               borderTop: '1px solid var(--sm2-line)',
             }}
