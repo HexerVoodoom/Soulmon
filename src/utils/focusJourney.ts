@@ -35,10 +35,13 @@ export const JOURNEY_EXTRA_COMPLETIONS = 3;
 export const JOURNEY_MAX_PAUSES = 3;
 export const JOURNEY_MAX_PAUSED_MS = 30 * 60_000;
 
-/** Essência por cenário (ids de `CLASS_ELEMENT_ORDER`). */
-export const ENV_ELEMENT: Record<FocusEnvironmentId, string> = {
-  forest: 'planta', shore: 'agua', cavern: 'terra', garden: 'fada', workshop: 'industrial', observatory: 'espaco',
+/** Elementos de cada cenário (ids de `CLASS_ELEMENT_ORDER`): os 20 base, cada um em UM cenário só (dono aprovou, 23/11/2026). O baú sorteia um deles, uniforme. */
+export const ENV_ELEMENTS: Record<FocusEnvironmentId, readonly string[]> = {
+  forest: ['planta', 'vida', 'vigor', 'ar'], shore: ['agua', 'eletricidade', 'som'], cavern: ['terra', 'fogo', 'sombra', 'morte'],
+  garden: ['fada', 'luz', 'arcano'], workshop: ['industrial', 'marcial', 'vileza'], observatory: ['espaco', 'tempo', 'gravidade'],
 };
+/** Sorteio uniforme do elemento do cenário (mesma conta no servidor). */
+const pickElement = (env: FocusEnvironmentId, r: number): string => { const a = ENV_ELEMENTS[env]; return a[Math.min(a.length - 1, Math.floor(r * a.length))]; };
 // Ordem FIXA e igual à do servidor (functions/api/_focusJourney.js): a ordem alimenta o sorteio, então não derivar de UNIQUE_FOODS (que segue a ordem das categorias).
 export const JOURNEY_FOODS: readonly string[] = ['🥩', '🥗', '🍎', '☕', '🧃', '🍚', '🍕', '🍭'];
 
@@ -89,14 +92,14 @@ export function journeyProgress(c: JourneyClock, now: number): number {
 export type JourneyItem = { kind: 'material'; id: MaterialId; qty: number } | { kind: 'food'; id: string; qty: number } | { kind: 'essence'; id: string; qty: number };
 
 /** O que um baú dá. Especial sem a chave dá o comum (D-2). Determinístico pela seed e pelo índice. */
-export function chestLoot(seed: number, chest: JourneyChest, keys: readonly string[], env: FocusEnvironmentId, elems = 1): JourneyItem[] {
+export function chestLoot(seed: number, chest: JourneyChest, keys: readonly string[], env: FocusEnvironmentId, elems = ENV_ELEMENTS[env].length): JourneyItem[] {
   const tier = ESSENCE_BY_ELEMENTS[Math.max(1, Math.min(4, Math.floor(elems) || 1)) as 1 | 2 | 3 | 4];
   const rng = mulberry((seed ^ Math.imul(chest.k + 1, 0x9e3779b1)) >>> 0);
   const mats = FOCUS_ENVIRONMENTS.find(e => e.id === env)!.materials as readonly MaterialId[];
   const pick = <T,>(a: readonly T[]): T => a[Math.min(a.length - 1, Math.floor(rng() * a.length))];
   const mat = (): JourneyItem => ({ kind: 'material', id: pick(mats), qty: 1 });
   const food = (): JourneyItem => ({ kind: 'food', id: pick(JOURNEY_FOODS), qty: 1 });
-  const ess = (qty: number): JourneyItem => ({ kind: 'essence', id: ENV_ELEMENT[env], qty });
+  const ess = (qty: number): JourneyItem => ({ kind: 'essence', id: pickElement(env, rng()), qty });
   const common = (): JourneyItem[] => (rng() < tier.common ? [ess(1)] : [Math.floor(rng() * 5) < 4 ? mat() : food()]);
   if (chest.type === 'common' || !keys.includes(chest.type)) return common();
   /* Baú especial paga 1 item raro (teto por sessão = 1 item/baú). */
@@ -115,7 +118,7 @@ export function completionLoot(seed: number, nth: number, env: FocusEnvironmentI
   if (nth === 1) return chestLoot(seed, { k: 999, at: 1, type: 'common' }, [], env);
   if (nth <= JOURNEY_COMPLETIONS_REWARDED) {
     const rng = mulberry((seed ^ 0xc0ffee) >>> 0);
-    return [{ kind: 'essence', id: ENV_ELEMENT[env], qty: 1 }, { kind: 'food', id: JOURNEY_FOODS[Math.min(JOURNEY_FOODS.length - 1, Math.floor(rng() * JOURNEY_FOODS.length))], qty: 1 }];
+    return [{ kind: 'essence', id: pickElement(env, rng()), qty: 1 }, { kind: 'food', id: JOURNEY_FOODS[Math.min(JOURNEY_FOODS.length - 1, Math.floor(rng() * JOURNEY_FOODS.length))], qty: 1 }];
   }
   /* Ciclos extras do Pomodoro (§302): do 5º ao 7º foco do dia, UM item simples (baú comum), sem Bits; depois disso nada. */
   if (nth <= JOURNEY_COMPLETIONS_REWARDED + JOURNEY_EXTRA_COMPLETIONS) return chestLoot(seed, { k: 998, at: 1, type: 'common' }, [], env);
