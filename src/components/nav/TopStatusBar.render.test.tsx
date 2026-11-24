@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { MapPage } from './MapPage';
 import { AreaSheet } from './AreaSheet';
-import { TopStatusBar, TopStatusBarContext, abreviar, type TopStatusBarData } from './TopStatusBar';
+import { TopStatusBar, TopStatusBarContext, abreviar, formatEnergia, type TopStatusBarData } from './TopStatusBar';
 import { aquecerRender, computed, renderWithCss } from '../../test/renderEnv';
 
 beforeAll(aquecerRender, 60_000);
@@ -43,6 +43,12 @@ describe('TopStatusBar: ordem, abreviação e rótulos', () => {
     expect(abreviar(999, 'en-US')).toBe('999');
     expect(abreviar(5000, 'pt-BR', 10000)).toBe('5.000');
     expect(abreviar(12000, 'pt-BR', 10000)).toBe('12k');
+  });
+
+  it('formatEnergia: 6/6 → 6/6; 10/10 → 10; 7/12 → 7', () => {
+    expect(formatEnergia(6, 6)).toBe('6/6');
+    expect(formatEnergia(10, 10)).toBe('10');
+    expect(formatEnergia(7, 12)).toBe('7');
   });
 
   it('aria-label por slot (PT e EN) e toque >= 44 de altura', () => {

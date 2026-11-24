@@ -41,6 +41,11 @@ export function abreviar(n: number, language: Language, de = 1000): string {
   return `${language === 'pt-BR' ? txt.replace('.', ',') : txt}k`;
 }
 
+/** Energia no slot: "atual/teto"; com teto de 2+ dígitos (>= 10) só o atual, para nunca cortar nos 60 px. */
+export function formatEnergia(atual: number, teto: number): string {
+  return teto >= 10 ? String(atual) : `${atual}/${teto}`;
+}
+
 const PUSH_VAR = '--sm2-topbar-push';
 
 export function TopStatusBar({ data, covered = false }: { data?: TopStatusBarData; covered?: boolean }) {
@@ -86,7 +91,7 @@ export function TopStatusBar({ data, covered = false }: { data?: TopStatusBarDat
     >
       <div className="sm2-topbar__grupo sm2-topbar__grupo--esq">
         {slot('coracoes', isPt ? `Corações: ${d.hearts}` : `Hearts: ${d.hearts}`, <PixelIcon name="hp" size={18} />, String(d.hearts), tip('hp'), 'sm', 'left')}
-        {slot('energia', isPt ? `Energia: ${d.energy} de ${d.maxEnergy}` : `Energy: ${d.energy} of ${d.maxEnergy}`, <PixelIcon name="energia" size={18} />, `${d.energy}/${d.maxEnergy}`, tip('energy'), 'md', 'left')}
+        {slot('energia', isPt ? `Energia: ${d.energy} de ${d.maxEnergy}` : `Energy: ${d.energy} of ${d.maxEnergy}`, <PixelIcon name="energia" size={18} />, formatEnergia(d.energy, d.maxEnergy), tip('energy'), 'md', 'left')}
       </div>
       <div className="sm2-topbar__grupo sm2-topbar__grupo--dir">
         {slot('credito', isPt ? `${d.credits.toLocaleString(lang)} Créditos — como conseguir` : `${d.credits.toLocaleString(lang)} Credits — how to get`, <CreditIcon size={18} />, abreviar(d.credits, lang),
