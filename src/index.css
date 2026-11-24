@@ -3048,6 +3048,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-viewport-bg: #071413;
   --sm2-pergaminho-ink: #050E0D;
   --sm2-viewport-ink: #E9F5F2;
+  --sm2-topbar-fundo: #1E3A3A;
   --sm2-viewport-ring: #C68642;
   --sm2-viewport-ring-deep: #241507;
   --sm2-viewport-danger: #FF8B8B;
@@ -3109,7 +3110,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-topbar-slot-lg: 66px;
   --sm2-topbar-cap: 10px;
   --sm2-topbar-icone-x: 5px;
-  --sm2-topbar-icone-gap: 3px;
+  --sm2-topbar-icone-gap: 1px;
   --sm2-topbar-fundo: #1E3A3A;
 
   --sm2-text-xs: 12px;
@@ -7729,6 +7730,8 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   min-width: 0;
   pointer-events: auto;
 }
+.sm2-topbar__grupo--esq { justify-content: flex-start; }
+.sm2-topbar__grupo--dir { justify-content: flex-end; }
 .sm2-topbar__slot {
   box-sizing: border-box;
   flex: 0 1 auto;
