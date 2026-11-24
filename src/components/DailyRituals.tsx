@@ -35,7 +35,8 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Poin
 import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
 import type { Activity, CompletedTask, Task } from '../contexts/GameStateContext';
-import { normalizeSchedule } from '../types/taskModel';
+import { normalizeSchedule, weekDaysForSchedule } from '../types/taskModel';
+import { DaySquares, type WeekDay } from './DaySquares';
 import { isActive, isHaunted } from '../utils/taskTriage';
 import type { HabitRhythm } from '../utils/habitRhythm';
 import type { PlayerDayAnchor } from '../utils/playerDay';
@@ -177,6 +178,8 @@ export function DailyRituals({
   /* A4: busca + filtro + ordem do `View all`. */
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<AllFilter>('all');
+  /* P2: filtro por DIA da semana (null = Todos, o padrão). Só filtra a vista; nunca toca no schedule salvo. */
+  const [dia, setDia] = useState<WeekDay | null>(null);
   const [ordem, setOrdem] = useState<AllSort>('az');
   /* D-10: a seta inverte a ordem atual (A–Z ↔ Z–A, mais recente ↔ mais antiga, mais feito ↔ menos feito). */
   const [invertida, setInvertida] = useState(false);
@@ -240,13 +243,13 @@ export function DailyRituals({
     return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short' });
   };
   const todasLinhas: AllLine[] = [
-    ...ativas.map((t): AllLine => ({ key: `t:${t.id}`, kind: 'task', name: t.name, preview: quandoDe(t), created: createdStamp(t.id, t.createdAt), done: 0, onEdit: () => onEditTask(t.id) })),
+    ...ativas.map((t): AllLine => ({ key: `t:${t.id}`, kind: 'task', name: t.name, preview: quandoDe(t), days: diasDaTarefa(t), created: createdStamp(t.id, t.createdAt), done: 0, onEdit: () => onEditTask(t.id) })),
     ...atividades.map((a): AllLine => ({
       key: `h:${a.id}`, kind: activityBucket(a) === 'habit' ? 'habit' : 'task', name: a.name,
-      preview: frequencyLabel(a, isPt, diasCurtos), created: createdStamp(a.id), done: habitRhythms?.[a.id]?.totalDone ?? 0, onEdit: () => onEditActivity(a.id),
+      preview: frequencyLabel(a, isPt, diasCurtos), days: weekDaysForSchedule(normalizeSchedule(a as Parameters<typeof normalizeSchedule>[0])), created: createdStamp(a.id), done: habitRhythms?.[a.id]?.totalDone ?? 0, onEdit: () => onEditActivity(a.id),
     })),
   ];
-  const linhasTodas = filterAndSortLines(todasLinhas, busca, filtro, ordem, language, invertida);
+  const linhasTodas = filterAndSortLines(todasLinhas, busca, filtro, ordem, language, invertida, dia);
   /* D-07: Tasks em cima, Habits embaixo (cada grupo com o seu cabeçalho; a ordem escolhida vale dentro do grupo). */
   const gruposTodas = groupLines(linhasTodas);
 
@@ -414,6 +417,7 @@ export function DailyRituals({
             filtro={filtro} onFiltro={setFiltro}
             ordem={ordem} onOrdem={setOrdem}
             invertida={invertida} onInvertida={setInvertida}
+            dia={dia} onDia={setDia}
           />
           {linhasTodas.length > 0 ? (
             <>
@@ -431,6 +435,8 @@ export function DailyRituals({
               {/* QA L05-09: cada vazio diz a SUA causa (busca, filtro de tarefas, filtro de hábitos), em vez de um "Nothing found." só. */}
               {busca.trim()
                 ? (isPt ? `Nada encontrado para “${busca.trim()}”.` : `Nothing found for “${busca.trim()}”.`)
+                : dia !== null
+                  ? (isPt ? 'Nada neste dia.' : 'Nothing on this day.')
                 : filtro === 'tasks'
                   ? (isPt ? 'Nenhuma tarefa por aqui.' : 'No tasks here.')
                   : filtro === 'habits'
@@ -549,7 +555,14 @@ export type AllFilter = 'all' | 'tasks' | 'habits';
 export type AllSort = 'az' | 'created' | 'done';
 export const ALL_SORT_CYCLE: readonly AllSort[] = ['az', 'created', 'done'];
 export const nextAllSort = (s: AllSort): AllSort => ALL_SORT_CYCLE[(ALL_SORT_CYCLE.indexOf(s) + 1) % ALL_SORT_CYCLE.length];
-export interface AllLine { key: string; kind: 'task' | 'habit'; name: string; preview: string; created?: number; done?: number; onEdit: () => void }
+/** `days` = os dias da semana (Dom=0…Sáb=6) em que o item ocorre; ausente/`null` = qualquer dia. Só leitura: vem do schedule, nunca volta para ele. */
+export interface AllLine { key: string; kind: 'task' | 'habit'; name: string; preview: string; days?: readonly number[] | null; created?: number; done?: number; onEdit: () => void }
+
+/** Tarefa "uma vez": com data (`startDate`) ocorre só no dia da semana dela; sem data está aberta e vale em qualquer dia. */
+export function diasDaTarefa(t: { startDate?: string }): number[] | null {
+  const d = t.startDate ? parseDayValue(t.startDate) : null;
+  return d && !Number.isNaN(d.getTime()) ? [d.getDay()] : null;
+}
 
 /** Quando o item nasceu (ms): `createdAt` da tarefa; senão o carimbo que vai no id (`task-1760000000000`, `activity-…`). 0 = desconhecido. */
 export function createdStamp(id: string, createdAt?: string): number {
@@ -564,12 +577,13 @@ export function createdStamp(id: string, createdAt?: string): number {
  * Padrão de cada ordem: A–Z; criação com o MAIS RECENTE primeiro; mais feito primeiro. `invertida` vira a lista do avesso (D-10).
  * Empate cai no nome, então a ordem não pula entre renders.
  */
-export function filterAndSortLines(lines: AllLine[], busca: string, filtro: AllFilter, ordem: AllSort, language: Language, invertida = false): AllLine[] {
+export function filterAndSortLines(lines: AllLine[], busca: string, filtro: AllFilter, ordem: AllSort, language: Language, invertida = false, dia: WeekDay | null = null): AllLine[] {
   const norm = (x: string) => x.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const q = norm(busca.trim());
   const loc = language === 'pt-BR' ? 'pt-BR' : 'en';
   const out = lines.filter(l =>
     (filtro === 'all' || (filtro === 'tasks' ? l.kind === 'task' : l.kind === 'habit'))
+    && (dia === null || !l.days || l.days.includes(dia))
     && (!q || norm(l.name).includes(q)));
   const porNome = (a: AllLine, b: AllLine) => a.name.localeCompare(b.name, loc);
   const cmp = ordem === 'az' ? porNome
@@ -585,10 +599,11 @@ export function groupLines(lines: AllLine[]): { tasks: AllLine[]; habits: AllLin
 }
 
 /** Busca + filtro + ordem do `View all` (A4). */
-function AllFilters({ language, busca, onBusca, filtro, onFiltro, ordem, onOrdem, invertida, onInvertida }: {
+function AllFilters({ language, busca, onBusca, filtro, onFiltro, ordem, onOrdem, invertida, onInvertida, dia, onDia }: {
   language: Language; busca: string; onBusca: (v: string) => void;
   filtro: AllFilter; onFiltro: (v: AllFilter) => void; ordem: AllSort; onOrdem: (v: AllSort) => void;
   invertida: boolean; onInvertida: (v: boolean) => void;
+  dia: WeekDay | null; onDia: (v: WeekDay | null) => void;
 }) {
   const isPt = language === 'pt-BR';
   const chip = (ativo: boolean): CSSProperties => ({ ...sm2Button(ativo ? 'primary' : 'outline', false, 'sm'), padding: '0 12px' });
@@ -609,6 +624,16 @@ function AllFilters({ language, busca, onBusca, filtro, onFiltro, ordem, onOrdem
         aria-label={isPt ? 'Buscar por nome' : 'Search by name'}
         style={{ minHeight: 44, boxSizing: 'border-box', padding: '0 12px', borderRadius: 10, border: '1px solid var(--sm2-line)', background: 'var(--sm2-surface)', color: 'var(--sm2-ink)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-md)' }}
       />
+      <div data-all-day-filter style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <button type="button" data-all-day="all" aria-pressed={dia === null} onClick={() => onDia(null)} style={{ ...chip(dia === null), alignSelf: 'flex-start' }}>{isPt ? 'Todos' : 'All days'}</button>
+        <DaySquares
+          mode="single-filter"
+          language={language}
+          days={dia === null ? [] : [dia]}
+          onToggle={d => onDia(dia === d ? null : d)}
+          groupLabel={isPt ? 'Filtrar por dia da semana' : 'Filter by day of the week'}
+        />
+      </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {filtros.map(([k, rot]) => (
           <button key={k} type="button" data-all-filter={k} aria-pressed={filtro === k} onClick={() => onFiltro(k)} style={chip(filtro === k)}>{rot}</button>

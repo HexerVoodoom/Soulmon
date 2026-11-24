@@ -97,7 +97,7 @@ describe('2.3 View all', () => {
     // D-07: Tasks em cima, Habits embaixo (antes era uma seção única "All"); a busca por texto vale para a tela toda.
     const sec = within(tela);
     expect(sec.getByText('Reunião de segunda')).toBeTruthy();
-    expect(sec.getByText('Mon')).toBeTruthy();
+    expect(Array.from(tela.querySelectorAll('li.sm2-ritual')).some(li => li.textContent?.includes('Reunião de segunda') && li.textContent.includes('Mon'))).toBe(true); // o botão de dia "Mon" também existe agora (P2)
     expect(sec.getByText('Aula de terça')).toBeTruthy();
     expect(sec.getByText('Trocar filtro')).toBeTruthy();
     expect(sec.getByText('Every 30 days')).toBeTruthy();
