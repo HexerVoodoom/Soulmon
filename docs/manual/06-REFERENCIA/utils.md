@@ -4215,7 +4215,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 
 ### `src/utils/stepsInvite.ts`
 **Dono de:** QUANDO aparece o convite curto dos passos (REGISTRO §283): só com contador no aparelho, `stepsConsent` ausente e onboarding concluído.
-**Exports:** `shouldShowStepsInvite({ available, consent, onboarded })`.
+**Exports:** `shouldShowStepsInvite({ available, consent, onboarded })`, `shouldShowStepsSettingsEntry(available)` (o cartão de Configurações segue visível com contador no aparelho, inclusive para quem recusou o convite: é a porta para mudar de ideia, o convite não volta).
 **Chamado por:** `src/App.tsx`
 **Régua:** `src/utils/stepsInvite.test.ts`.
 

@@ -360,7 +360,7 @@ import { type TriageAction } from './components/TriagePile';
 import { dreamTwin, grantDreamTwin } from './utils/dreamDecorTwin';
 import { sanitizeSoulTestAnswers } from './utils/soulTestAnswers';
 import { shouldShowRestSetup } from './utils/restSetup';
-import { shouldShowStepsInvite } from './utils/stepsInvite';
+import { shouldShowStepsInvite, shouldShowStepsSettingsEntry } from './utils/stepsInvite';
 import { chatSettingsFor, personalityProfileFromSave } from './utils/personality';
 import {
   needsCheckIn, checkInPlan, completeCheckIn,
@@ -9657,9 +9657,10 @@ export default function App() {
               exatamente o que a Parte 3 do plano proíbe.
 
               Some por completo quando não há sensor (PWA, a maior parte da
-              base) e quando a pessoa já disse não: `'declined'` é definitivo,
-              porque insistir depois de um "não" é assédio. */}
-          {pane === 'settings' && stepsAvailable === true && gameState.stepsConsent !== 'declined' && (
+              base). Quem disse "agora não" no convite continua vendo o cartão AQUI
+              (é a porta para mudar de ideia sozinho): o convite não volta, o cartão
+              só espera ser aberto. */}
+          {pane === 'settings' && shouldShowStepsSettingsEntry(stepsAvailable) && (
             <div style={{ marginTop: 16 }}>
               <StepsCard
                 steps={stepsToday}

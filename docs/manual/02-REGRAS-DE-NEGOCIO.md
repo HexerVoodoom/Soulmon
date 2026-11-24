@@ -3883,8 +3883,8 @@ opt-in, só `READ_STEPS`. Google Fit segue proibido (cadastros novos fechados de
   saneamento de entrada).
 - **`null` não vira 0**: leitura que falhou preserva o registro anterior — zerar
   o dia apagaria passo que a pessoa deu.
-- **`'declined'` é definitivo** e mora no save: sem essa marca o cartão voltaria
-  a cada abertura para quem já disse não.
+- **`'declined'` é definitivo para o CONVITE** e mora no save: sem essa marca o convite voltaria
+  a cada abertura para quem já disse não. O cartão de Configurações, pedido pela própria pessoa, segue acessível para ela mudar de ideia.
 - **O dia dos passos é o do APARELHO** (`stepsDayKey` = `toDateString()`), e não
   o do jogador ([§5](#dia-do-jogador)). É a única leitura diária do save fora das
   sete famílias ancoradas — cabe aqui porque o número não pontua e subcontar não
@@ -3902,7 +3902,7 @@ erro nem medidor vazio: quem joga na PWA não fica atrás de nada.
 **Onde a UI mostra.** O convite curto `src/components/StepsInviteModal.tsx` (uma vez, depois do onboarding) e `src/components/StepsCard.tsx`, em Configurações,
 logo abaixo da Janela de Descanso — é preferência de privacidade, não conteúdo
 de jogo. Some por completo quando `isStepsAvailable()` responde `false` (o caso
-da PWA) ou quando `stepsConsent === 'declined'`. Aceitar e recusar são botões do
+da PWA). Quem recusou o convite continua vendo o cartão (`shouldShowStepsSettingsEntry`): é a porta para ativar depois, sem convite novo. Aceitar e recusar são botões do
 mesmo tamanho, lado a lado.
 
 ---
