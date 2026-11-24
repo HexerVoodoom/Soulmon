@@ -1,6 +1,6 @@
 // Allowlist UNICA de UTM: o cliente (src/scripts/app.ts) importa este mesmo arquivo.
 export const FONTES = ['instagram', 'reddit', 'youtube', 'tiktok', 'discord', 'facebook', 'whatsapp', 'outro'];
-export const MEIOS = ['social', 'cpc', 'paid', 'comunidade', 'grupo', 'video', 'outro'];
+export const MEIOS = ['social', 'cpc', 'paid', 'comunidade', 'grupo', 'video', 'shorts', 'outro'];
 // Sem @ e sem comecar por - ou _ (o CSV de exportacao recusa campo que comeca com = + - @).
 export const CAMPANHA = /^[a-z0-9][a-z0-9_-]{0,39}$/;
 
