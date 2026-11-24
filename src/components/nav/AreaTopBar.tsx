@@ -66,7 +66,7 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
       style={{
         visibility: covered ? 'hidden' : undefined,
         display: 'flex', alignItems: 'center', gap: 'var(--sm2-space-2)',
-        minHeight: 48, margin: overScene ? 'var(--sm2-topbar-push, 0px) 0 var(--sm2-space-3)' : '0 0 var(--sm2-space-3)',
+        minHeight: 48, margin: overScene ? 'max(env(safe-area-inset-top, 0px), var(--sm2-topbar-push, 0px)) 0 var(--sm2-space-3)' : '0 0 var(--sm2-space-3)',
         ...(overScene ? { position: 'relative', zIndex: 2 } : null),
       }}
     >
@@ -109,7 +109,7 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
             border: '2px solid var(--sm2-line)',
             borderRadius: '50%',
           }),
-          position: 'fixed', zIndex: 45,
+          position: 'fixed', zIndex: 47, // acima da barrinha do topo (z 46): ela nunca cobre o voltar
           top: CORNER_RING_TOP, left: CORNER_RING_SIDE,
           padding: 0, cursor: 'pointer',
           color: overScene ? SCENE_INK : 'var(--sm2-ink)',

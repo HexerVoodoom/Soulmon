@@ -9,7 +9,7 @@ import type { CSSProperties } from 'react';
  * de voltar das páginas do menu — usa ESTAS medidas, de um dono só, e nunca
  * digita `top`/`left` por conta própria.
  *
- *  · caixa de toque: 56×56, a 6px do topo físico da tela (SEM safe-area, ordem do dono 24/11/2026) e `--sm2-space-3` da lateral;
+ *  · caixa de toque: 56×56, a 6px abaixo do MAIOR entre a safe-area e `--sm2-topbar-push` (Home: o inset; com a barrinha, colada no topo físico, só a barrinha — dono 24/11/2026) e `--sm2-space-3` da lateral;
  *  · anel visível: 44×44 (borda 2px), centrado na caixa → 6px de folga dos dois lados.
  */
 export const CORNER_BOX = 56;
@@ -19,12 +19,12 @@ export const CORNER_RING = 44;
 export const CORNER_ICON_SCALE = 1.375;
 const CORNER_RING_INSET = (CORNER_BOX - CORNER_RING) / 2;
 
-/** `top` da caixa de toque de 56. Soma `--sm2-topbar-push` (a altura da barrinha do topo quando ela está montada: Mapa e prédios; 0 nas demais telas). */
-export const CORNER_BOX_TOP = 'calc(6px + var(--sm2-topbar-push, 0px))';
+/** `top` da caixa de toque de 56. Usa o MAIOR entre a safe-area e `--sm2-topbar-push` (a altura da barrinha do topo quando ela está montada: Mapa e prédios; 0 nas demais telas). */
+export const CORNER_BOX_TOP = `calc(6px + max(env(safe-area-inset-top, 0px), var(--sm2-topbar-push, 0px)))`;
 /** Lateral da caixa de toque de 56. */
 export const CORNER_SIDE = 'var(--sm2-space-3)';
 /** `top` do ANEL de 44 (= caixa + folga) — para quem desenha só o anel. */
-export const CORNER_RING_TOP = `calc(${6 + CORNER_RING_INSET}px + var(--sm2-topbar-push, 0px))`;
+export const CORNER_RING_TOP = `calc(${6 + CORNER_RING_INSET}px + max(env(safe-area-inset-top, 0px), var(--sm2-topbar-push, 0px)))`;
 /** Lateral do ANEL de 44. */
 export const CORNER_RING_SIDE = `calc(var(--sm2-space-3) + ${CORNER_RING_INSET}px)`;
 

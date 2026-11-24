@@ -130,10 +130,11 @@ describe('CornerLink', () => {
     expect(btn.style.border === 'none' || btn.style.border === '' || btn.style.borderStyle === 'none').toBe(true);
   });
 
-  it('B2: os dois links moram no TOPO (nunca embaixo), SEM safe-area (ordem do dono, 24/11/2026)', () => {
+  it('B2: os dois links moram no TOPO (nunca embaixo), somando a safe-area (Home) — a barrinha do topo é que a dispensa', () => {
     const r = renderWithCss(<CornerLink icon="mapa" side="right" label="Map" onClick={() => {}} />);
     const btn = r.container.querySelector('button')!;
-    expect(btn.style.top).not.toContain('safe-area-inset-top');
+    expect(btn.style.top).toContain('safe-area-inset-top');
+    expect(btn.style.top).toContain('--sm2-topbar-push');
     expect(btn.style.bottom).toBe('');
   });
 
@@ -180,7 +181,7 @@ describe('AreaTopBar', () => {
   it('H9: o voltar fica FIXO na âncora do canto — a mesma do anel da casinha, em qualquer tela', () => {
     const casinha = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} />);
     const caixa = casinha.container.querySelector('button')!;
-    expect(caixa.style.top).not.toContain('safe-area-inset-top');
+    expect(caixa.style.top).toContain('safe-area-inset-top');
     // o jsdom normaliza `calc()`: compara pelo MESMO caminho de normalização
     const norm = (prop: 'top' | 'left', v: string) => { const el = document.createElement('div'); el.style[prop] = v; return el.style[prop]; };
     expect(casinha.container.querySelector('[data-corner-ring]')).not.toBeNull(); // anel de volta na casinha (28/10/2026)
@@ -196,7 +197,8 @@ describe('AreaTopBar', () => {
       r.unmount();
     }
     // o anel da casinha = caixa de 56 + 6px de folga → mesmas coordenadas do voltar
-    expect(CORNER_RING_TOP).toContain('12px'); // sem safe-area (dono, 24/11/2026): 6 + 6 de folga do topo físico
+    expect(CORNER_RING_TOP).toContain('12px'); // 6 + 6 de folga
+    expect(CORNER_RING_TOP).toContain('safe-area-inset-top');
     expect(CORNER_RING_SIDE).toContain('+ 6px');
   });
 
@@ -276,7 +278,27 @@ describe('Home: header e canto do Mapa somam o MESMO inset de topo', () => {
     const css = readFileSync('src/index.css', 'utf8');
     const hud = css.split('\n').find(l => l.startsWith('.sm2-hud {')) ?? '';
     expect(hud).toContain('padding-top: env(safe-area-inset-top, 0px)');
-    // 24/11/2026 (dono): o canto e a barrinha do topo NÃO somam mais a safe-area.
-    expect(CORNER_BOX_TOP).not.toContain('safe-area-inset-top');
+    // 24/11/2026 (dono): a Home MANTÉM o inset nos cantos; só a barrinha (Mapa e prédios) não soma —
+    // `max(inset, --sm2-topbar-push)`: sem barrinha (push 0) vale o inset; com ela vale só a barrinha.
+    expect(CORNER_BOX_TOP).toContain('max(env(safe-area-inset-top, 0px), var(--sm2-topbar-push, 0px))');
+    expect(CORNER_RING_TOP).toContain('max(env(safe-area-inset-top, 0px), var(--sm2-topbar-push, 0px))');
+    expect(CORNER_BOX_TOP).not.toContain('+ var(--sm2-topbar-push'); // não soma: é o MAIOR dos dois
+  });
+  it('Home: top dos links de canto (push 0) == calc de ANTES do #1229, para qualquer inset', () => {
+    const LEGADO_BOX = 'calc(env(safe-area-inset-top, 0px) + 6px + var(--sm2-topbar-push, 0px))';
+    const LEGADO_RING = 'calc(env(safe-area-inset-top, 0px) + 12px + var(--sm2-topbar-push, 0px))';
+    // avalia os dois calc() com inset I e push P (só +, max, px)
+    const aval = (css: string, inset: number, push: number) => {
+      const js = css.split('env(safe-area-inset-top, 0px)').join(String(inset)).split('var(--sm2-topbar-push, 0px)').join(String(push))
+        .replace(/calc/g, '').replace(/max/g, 'Math.max').replace(/px/g, '');
+      return Function(`return (${js})`)() as number;
+    };
+    for (const inset of [0, 24, 38, 47]) {
+      expect(aval(CORNER_BOX_TOP, inset, 0)).toBe(aval(LEGADO_BOX, inset, 0));
+      expect(aval(CORNER_RING_TOP, inset, 0)).toBe(aval(LEGADO_RING, inset, 0));
+    }
+    expect(aval(CORNER_BOX_TOP, 38, 38)).toBe(44); // Home com inset 38: caixa em 44 = .sm2-hud (38) + 6
+    // com a barrinha (push 52, colada no topo físico): só a barrinha, sem somar o inset
+    expect(aval(CORNER_BOX_TOP, 38, 52)).toBe(58);
   });
 });

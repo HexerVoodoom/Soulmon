@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useLayoutEffect, type ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import { InfoTip } from '../ui/InfoTip';
 import { CreditIcon } from '../ui/CreditIcon';
@@ -45,16 +45,23 @@ export function formatEnergia(atual: number, teto: number): string {
 }
 
 const PUSH_VAR = '--sm2-topbar-push';
+/** Barras montadas AGORA (a da cena e a da folha coexistem): o push só sai da raiz quando a ÚLTIMA desmonta — antes a primeira a sair zerava o push e o voltar do prédio subia para trás da barra (bug do dono, ao abrir o NPC). */
+let barrasMontadas = 0;
 
 export function TopStatusBar({ data, covered = false }: { data?: TopStatusBarData; covered?: boolean }) {
   const ctx = useContext(TopStatusBarContext);
   const d = data ?? ctx;
   const on = d != null;
-  useEffect(() => {
+  // Layout effect: o push existe ANTES da 1ª pintura (o index.css também o define por `:root:has([data-topbar])`, sem depender de JS).
+  useLayoutEffect(() => {
     if (!on) return;
     const root = document.documentElement;
+    barrasMontadas += 1;
     root.style.setProperty(PUSH_VAR, 'var(--sm2-topbar-h)');
-    return () => { root.style.removeProperty(PUSH_VAR); };
+    return () => {
+      barrasMontadas -= 1;
+      if (barrasMontadas <= 0) { barrasMontadas = 0; root.style.removeProperty(PUSH_VAR); }
+    };
   }, [on]);
   if (!d) return null;
   const isPt = d.language === 'pt-BR';
