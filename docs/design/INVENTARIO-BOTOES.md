@@ -490,7 +490,7 @@ Formato: `arquivo (N): linha código rótulo; …`. Códigos na legenda da seç�
 - `src/components/ui/AvatarFrame.tsx` (3): 177 B; 181 P; 192 B
 - `src/components/ui/BackArrow.tsx` (1): 50 B
 - `src/components/ui/BackCircleButton.tsx` (1): 32 B
-- `src/components/ui/BlockedActionModal.tsx` (2): 23 K; 34 B
+- `src/components/ui/BlockedActionModal.tsx` (2): 23 P (lote 1 fase 3, 24/11); 34 B
 - `src/components/ui/BotaoEspecial.tsx` (1): 26 B
 - `src/components/ui/ChevronAcao.tsx` (2): 9 B; 28 B
 - `src/components/ui/CtaButton.tsx` (4): 56 B; 61 B; 67 B; 92 B
@@ -499,3 +499,5 @@ Formato: `arquivo (N): linha código rótulo; …`. Códigos na legenda da seç�
 - `src/components/ui/LockBadge.tsx` (1): 65 B
 - `src/components/ui/ScreenSkeleton.tsx` (1): 70 B Tentar de novo
 - `src/components/ui/Viewport.tsx` (1): 19 B
+
+> **Lote 1 da fase 3 (24/11/2026), `ui` e `pixel`:** migrado 1 botão (`ui/BlockedActionModal.tsx:23`, OK, `sm2-kit-btn-primary` para `sm2Button('primary')`). Ficam crus de propósito: `ui/ScreenSkeleton.tsx:70` (RETRY_STYLE; o componente evita importar o FormKit para não pesar o chunk de entrada), `pixel/PixelKit.tsx:116` (é o próprio `PixelButton`, primitiva `sm2-kit-btn`), `pixel/EvolveButton.tsx:56` (botão com arte própria), além de só-ícone (BackArrow, BackCircleButton, ChevronAcao, InfoTip, LockBadge, `sm3-add`, expandir), chips/abas/checkbox/switch/cartões (AvatarFrame, PixelKit, RitualPanel) e links de texto (`sm2-blocked-link`, `sm2-ritual-edit`). O levantamento "9 + 7" contava `<button` sem `sm2Button` na mesma linha; a maioria já usa `sm2Button` em linha seguinte.

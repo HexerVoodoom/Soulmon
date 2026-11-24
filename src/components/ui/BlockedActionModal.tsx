@@ -4,7 +4,7 @@
  * em "pode ser obtido em <lugar>" é tocável e leva o jogador até lá (`requestGoToBuilding`, ouvido pelo `App`).
  */
 import { useCallback, useState, type ReactNode } from 'react';
-import { ModalSheet } from '../form/FormKit';
+import { ModalSheet, sm2Button } from '../form/FormKit';
 import { explainBlocked, requestGoToBuilding, type BlockedReason } from '../../utils/blockedAction';
 import type { BuildingId } from '../../utils/gates';
 import type { Language } from '../../utils/i18n';
@@ -20,7 +20,7 @@ export function BlockedActionModal({ reason, onClose, language, onGo }: {
   const ex = reason ? explainBlocked(reason, isPt) : null;
   return (
     <ModalSheet open={!!ex} title={ex?.title ?? ''} onClose={onClose} language={language} placement="center" titulo="inline" sobreTelas maxWidth={380}
-      footer={<button type="button" className="sm2-kit-btn sm2-kit-btn-primary" style={{ width: '100%' }} data-blocked-ok onClick={onClose}>OK</button>}>
+      footer={<button type="button" style={{ ...sm2Button('primary'), width: '100%' }} data-blocked-ok onClick={onClose}>OK</button>}>
       {ex && reason && (
         <div data-blocked-action={reason.kind} style={{ display: 'grid', gap: 8 }}>
           {ex.lines.length > 0 && (
