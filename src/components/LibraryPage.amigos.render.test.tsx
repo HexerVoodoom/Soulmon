@@ -287,7 +287,10 @@ describe('C7 — Amigos: adicionar pelo nome', () => {
     unmount();
     renderWithCss(<LibraryPage {...props(['pid-lia'])} canGiftToday embedded view="friends" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
-    await screen.findByRole('button', { name: 'Enviar 20 Bits para Lia' });
+    const presente = await screen.findByRole('button', { name: 'Enviar 20 Bits para Lia' });
+    // 24/11/2026: o presente usa o aperto de mãos (arte pixel), não o glifo vetorial
+    expect(presente.querySelector('img[data-lib-act-art]')).not.toBeNull();
+    expect(presente.querySelector('.material-symbols-outlined, svg')).toBeNull();
     // sem o remover na linha: ele só aparece no modo "Remover amigos"
     expect(screen.queryByRole('button', { name: /Remover Lia/ })).toBeNull();
   });
