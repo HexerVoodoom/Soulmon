@@ -848,7 +848,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
               <h3 className="sm2-stats-lab">{t('guild.bosque.titulo')}</h3>
               <InfoTip language={language} label={language === 'pt-BR' ? 'Como a árvore cresce' : 'How the tree grows'} style={{ minHeight: 28 }}>{t('guild.casa.regra')}</InfoTip>
             </div>
-            <button type="button" data-guild-arvore-ver onClick={onAbrirBosque} className={"sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-outline"}>
+            <button type="button" data-guild-arvore-ver onClick={onAbrirBosque} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-outline" style={{ width: "100%", minHeight: 48 }}>
               {t('guild.arvore.ver')}
             </button>
           </section>
