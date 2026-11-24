@@ -100,6 +100,7 @@ Palavras do dono: "Modal de pop up tá bem ruim. Precisa ter altura mínima maio
 
 **Rodada 5 (arte, 23/11): sprites do lote 5 aprovados.** O dono aprovou os 12 sprites (4 rookies + 4 champions + 4 ultimates) e os 8 nomes: Spectrel→Spectrane→Spectrarch (fantasma), Revenox→Revenoxar→Revenolord (morto-vivo), Hemolisk→Hemocarax→Hemocolossa (sangue), Furiosk→Furiozar→Furiotitan (fúria). Instalados em `novos-arquivo/combinados/` e `combinados-formas/`, registrados por `buildFormasLote5`; faltam só ícones, FX, poções/chips e cenários (P6). REGISTRO §510.
 
+**Rodada 5 (decisão, 23/11): besourinho de feedback.** O besourinho (`HomeFeedbackButton`) fica VISÍVEL no beta e é ocultado só na versão final. Flag de build `VITE_HIDE_FEEDBACK_BUTTON=1` (`src/utils/feedbackFlag.ts`; padrão = visível); só renderização, o save não muda. Teste: `HomeFeedbackButton.flag.render.test.tsx`.
 
 ## Rodada 5 (cont.) e rodada 6 — 23 e 24/11/2026 (consolidação dos relatórios das sessões, 24/11)
 

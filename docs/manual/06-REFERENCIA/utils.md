@@ -4388,6 +4388,12 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê. Sincronização
 **Exports:** `FeedbackType`, `FEEDBACK_TYPES`, `FEEDBACK_MAX` (2000), `buildFeedbackPayload(type, message, language)`, `sendFeedback(type, message, language, fetchImpl?)` → `{ ok, delivered }` ou `{ ok: false, reason: invalid | rate | server | network }`; nunca lança.
 **Quem usa:** `components/nav/HomeFeedbackButton.tsx`.
 
+### `src/utils/feedbackFlag.ts`
+**Dono de:** a flag de versão do botão de feedback/bug da Home (24/11/2026): visível por padrão (beta); `VITE_HIDE_FEEDBACK_BUTTON=1` (ou `true`) o esconde só na versão final. Não toca o save.
+**Exports:** `isFeedbackButtonVisible()`.
+**Quem usa:** `components/nav/HomeFeedbackButton.tsx`.
+**Régua:** `components/nav/HomeFeedbackButton.flag.render.test.tsx`.
+
 ### `src/utils/recargaPorChunk.ts`
 
 Chunk velho depois de deploy: `installChunkReloadHandlers` (chamado em `main.tsx`) escuta `vite:preloadError` e `unhandledrejection` de import dinâmico e faz UM `location.reload()` por sessão (`recarregarUmaVez`, guarda em `sessionStorage`; sem storage não recarrega). Exports: `ehErroDeChunk`, `recarregarUmaVez`, `installChunkReloadHandlers`, `CHAVE_RECARGA_CHUNK`. Teste: `recargaPorChunk.test.ts`.
