@@ -7752,3 +7752,6 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-day-squares { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--sm2-space-half, 2px); inline-size: 100%; box-sizing: border-box; }
 .sm2-day-square { min-block-size: 44px; min-inline-size: 0; padding: 0; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--sm2-line); border-radius: var(--sm2-radius-sm); background-color: var(--sm2-surface); color: var(--sm2-ink); font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); line-height: var(--sm2-leading-body); cursor: pointer; transition: background-color var(--sm2-dur-tap) var(--sm2-ease), color var(--sm2-dur-tap) var(--sm2-ease); }
 .sm2-day-square[aria-pressed="true"] { background-color: var(--sm2-primary-fill); color: var(--sm2-on-primary); border-color: transparent; }
+.sm2-day-square:disabled { opacity: 0.4; cursor: default; }
+[data-quando] { display: flex; flex-direction: column; gap: var(--sm2-space-2); min-inline-size: 0; }
+[data-quando] > div:first-child { flex-wrap: wrap; }
