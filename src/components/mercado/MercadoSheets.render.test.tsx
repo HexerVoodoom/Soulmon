@@ -237,47 +237,47 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
 
   it('Essências: tocar na linha abre o modal com imagem, nome, custo unitário e "You have N" (só aqui)', () => {
     const [fogo] = BASE_ELEMENT_IDS;
-    const { dlg } = abrirModal(fogo, { credits: 10, essences: { [fogo]: 7 } });
+    const { dlg } = abrirModal(fogo, { credits: 30, essences: { [fogo]: 7 } });
     expect(q(dlg, '[data-essence-art] img')).not.toBeNull();
-    expect(q(dlg, '[data-essence-unit]').textContent).toBe('1');
+    expect(q(dlg, '[data-essence-unit]').textContent).toBe('3');
     expect(q(dlg, '[data-essence-have]').textContent).toBe('7');
     expect(dlg.textContent).toMatch(/You have 7/);
   });
 
   it('Essências: seletor − / + atualiza o custo total (desconto por grupo de 5) e o botão "Buy N · custo"', () => {
     const [fogo] = BASE_ELEMENT_IDS;
-    const { dlg } = abrirModal(fogo, { credits: 20 });
+    const { dlg } = abrirModal(fogo, { credits: 60 });
     const qty = q(dlg, '[data-essence-qty]') as HTMLInputElement;
     expect(qty.getAttribute('role')).toBe('spinbutton');
     expect(qty.value).toBe('1');
     expect((q(dlg, '[data-essence-minus]') as HTMLButtonElement).disabled).toBe(true);
-    expect(q(dlg, '[data-purchase-ok]').textContent).toBe('Buy 1 · 1 Credit');
+    expect(q(dlg, '[data-purchase-ok]').textContent).toBe('Buy 1 · 3 Credits');
     for (let i = 0; i < 4; i++) fireEvent.click(q(dlg, '[data-essence-plus]'));
     expect(qty.value).toBe('5');
-    expect(q(dlg, '[data-essence-total]').textContent).toBe('4 Credits');
-    expect(q(dlg, '[data-purchase-ok]').textContent).toBe('Buy 5 · 4 Credits');
+    expect(q(dlg, '[data-essence-total]').textContent).toBe('13 Credits');
+    expect(q(dlg, '[data-purchase-ok]').textContent).toBe('Buy 5 · 13 Credits');
     fireEvent.click(q(dlg, '[data-essence-minus]'));
     expect(qty.getAttribute('aria-valuenow')).toBe('4');
-    expect(q(dlg, '[data-essence-total]').textContent).toBe('4 Credits');
+    expect(q(dlg, '[data-essence-total]').textContent).toBe('12 Credits');
     fireEvent.change(qty, { target: { value: '12' } });
     expect(qty.getAttribute('aria-valuenow')).toBe('12');
-    expect(q(dlg, '[data-essence-total]').textContent).toBe('10 Credits');
+    expect(q(dlg, '[data-essence-total]').textContent).toBe('32 Credits');
     fireEvent.change(qty, { target: { value: '1000' } });
-    expect(qty.getAttribute('aria-valuenow')).toBe('25');
+    expect(qty.getAttribute('aria-valuenow')).toBe('22'); // 60 Créditos pagam 22 (4×13 + 2×3)
   });
 
   it('Essências: digitar N grande vale até o que o saldo paga, sem limite por compra', () => {
     const [fogo] = BASE_ELEMENT_IDS;
-    const { dlg } = abrirModal(fogo, { credits: 800 });
+    const { dlg } = abrirModal(fogo, { credits: 2600 });
     const qty = q(dlg, '[data-essence-qty]') as HTMLInputElement;
     fireEvent.change(qty, { target: { value: '1000' } });
     expect(qty.getAttribute('aria-valuenow')).toBe('1000');
-    expect(q(dlg, '[data-essence-total]').textContent).toBe('800 Credits');
+    expect(q(dlg, '[data-essence-total]').textContent).toBe('2600 Credits');
   });
 
   it('Essências: o máximo respeita o saldo e o teto de estoque; + desabilita no limite', () => {
     const [fogo] = BASE_ELEMENT_IDS;
-    const a = abrirModal(fogo, { credits: 3 });
+    const a = abrirModal(fogo, { credits: 9 });
     expect(q(a.dlg, '[data-essence-qty]').getAttribute('aria-valuemax')).toBe('3');
     fireEvent.change(q(a.dlg, '[data-essence-qty]'), { target: { value: '99' } });
     expect(q(a.dlg, '[data-essence-qty]').getAttribute('aria-valuenow')).toBe('3');
