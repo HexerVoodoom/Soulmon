@@ -59,7 +59,6 @@ import type { FunTicketStatus } from '../../utils/funTickets';
 import { FunTicketCostContext, TicketFan } from '../play/TicketFan';
 import { conviteDueloFan } from '../arena/conviteDueloArt';
 import { setActive, trackMinigame } from '../../utils/usageTime';
-import type { PasseioAchado } from '../play/PasseioSheet';
 import {
   usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame, loadZipGame, loadSeloGame,
   loadRespiracaoGame,
@@ -304,8 +303,6 @@ export interface AreaViewProps {
     onChange: (f: (c: CrossingsState) => CrossingsState) => void;
     /** A semente do sorteio das missões do dia (o id do save). */
     seed?: string;
-    /** O que o Soulmon encontrou no passeio de ontem (REGISTRO §66): o MESMO achado do resumo do dia, agora também aqui. */
-    achado?: PasseioAchado | null;
     /** Concluir o passeio (cena + recompensas na hora, REGISTRO §413). */
     onDone?: () => void;
     /** A missão foi escolhida (o `App` mostra "Tarefa criada"). */
@@ -738,7 +735,6 @@ export function AreaView(props: AreaViewProps) {
                 onChange={props.passeio?.onChange ?? (() => {})}
                 todayKey={play.todayKey}
                 seed={props.passeio?.seed}
-                achado={props.passeio?.achado}
                 onDone={props.passeio?.onDone ? () => { close(); props.passeio?.onDone?.(); } : undefined}
                 onPicked={() => { close(); props.passeio?.onPicked?.(); }}
               />
