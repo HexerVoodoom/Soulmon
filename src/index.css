@@ -3105,9 +3105,7 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   --sm2-topbar-margem: 8px;
   --sm2-topbar-gap: 4px;
   --sm2-topbar-slot-h: 36px;
-  --sm2-topbar-slot-sm: 54px;
-  --sm2-topbar-slot-md: 58px;
-  --sm2-topbar-slot-lg: 70px;
+  --sm2-topbar-slot-w: 76px;
   --sm2-topbar-cap: 10px;
   --sm2-topbar-icone-x: 4px;
   --sm2-topbar-icone-gap: 2px;
@@ -7757,9 +7755,9 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
    aberto pelo menu sem como voltar). Agora ela sobe (z 4) e cai no vão entre o cristal do canto e a placa de título (x ≈ 7–20u, y ≈ 3–12u). */
 .sm2-moldura-sheet .sm2-modal-fechar-linha { position: relative; z-index: 4; margin: calc(var(--u) * 3.1) 0 0 calc(var(--u) * 7.2); padding: 0 !important; }
 
-/* BARRINHA DO TOPO (24/11/2026, P2 + arte da P6; `components/nav/TopStatusBar.tsx`): faixa fina FIXA no topo do Mapa e dos prédios. ESQUERDA: Corações | Energia. DIREITA (colada ao canto): Créditos | Honra | Bits.
+/* BARRINHA DO TOPO (24/11/2026, P2 + arte da P6; `components/nav/TopStatusBar.tsx`): faixa fina FIXA no topo do Mapa e dos prédios. ESQUERDA: Bits | Energia. DIREITA (colada ao canto): Honra | Créditos. 4 slots de 76 e o meio vazio.
    Margem 8, vão 4 (tokens --sm2-topbar-*); a folga central sobra por conta do `space-between`. Cada valor tem a bordinha de bronze em 9-slice HORIZONTAL (arte @2x 132x56: tampas de 20 = 10 CSS px; esticável 66 a 84; na vertical a arte de 28 estica para 36).
-   O fundo é a faixa de 412x40 (@2x), esticada na largura, com o fio de cobre embaixo; a safe-area do topo entra como padding e a cor de base. Toque: o botão do InfoTip tem 44 de altura (alvo44), a faixa só 40. */
+   O fundo é a faixa de 412x40 (@2x), esticada na largura, com o fio de cobre embaixo; SEM safe-area (colada no topo físico, ordem do dono 24/11/2026). Toque: o botão do InfoTip tem 44 de altura (alvo44), a faixa 52. */
 .sm2-topbar {
   position: fixed;
   top: 0;
@@ -7767,13 +7765,12 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   right: 0;
   z-index: 46;
   box-sizing: border-box;
-  height: calc(var(--sm2-topbar-h) + env(safe-area-inset-top, 0px));
-  padding: env(safe-area-inset-top, 0px) var(--sm2-topbar-margem) 0;
+  height: var(--sm2-topbar-h);
+  padding: 0 var(--sm2-topbar-margem);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sm2-topbar-gap);
-  /* O fundo (a faixa + a cor de base) só cobre a faixa dos itens, de baixo para cima: a área da safe-area/barra de status fica TRANSPARENTE (sem faixa vazia em cima). */
   background-image: url('./assets/soulmon/icones-ui/barrinha-faixa-fundo.png'), linear-gradient(var(--sm2-topbar-fundo), var(--sm2-topbar-fundo));
   background-repeat: no-repeat;
   background-position: left bottom, left bottom;
@@ -7792,6 +7789,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-topbar__grupo--esq { justify-content: flex-start; }
 .sm2-topbar__grupo--dir { justify-content: flex-end; }
 .sm2-topbar__slot {
+  width: var(--sm2-topbar-slot-w);
   box-sizing: border-box;
   flex: 0 1 auto;
   min-width: 0;
@@ -7801,9 +7799,6 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   font-variant-numeric: lining-nums tabular-nums;
   white-space: nowrap;
 }
-.sm2-topbar__slot--sm { width: var(--sm2-topbar-slot-sm); }
-.sm2-topbar__slot--md { width: var(--sm2-topbar-slot-md); }
-.sm2-topbar__slot--lg { width: var(--sm2-topbar-slot-lg); }
 .sm2-topbar__in {
   box-sizing: border-box;
   width: 100%;
@@ -7835,7 +7830,6 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-escolhedor__op--forte { font-weight: 700; }
 .sm2-escolhedor__op.sm2-escolhedor__op--forte { background: var(--sm2-primary-fill); border-color: var(--sm2-primary-fill); color: var(--sm2-on-primary); }
 .sm2-escolhedor__op.sm2-escolhedor__op--forte:active { background: var(--sm2-primary-deep); }
-@media (max-width: 340px) { .sm2-topbar__slot--lg { width: var(--sm2-topbar-slot-sm); } }
 /* MODAL DE RESULTADO DE FORJA (23/11/2026): arte + nome + efeito no popup central; largura vem do `ModalSheet` (<= 328px), nada fixo aqui. */
 .sm2-forja-resultado { display: grid; justify-items: center; gap: var(--sm2-space-2); text-align: center; padding: var(--sm2-space-2) 0; }
 .sm2-forja-resultado-arte { display: inline-flex; align-items: center; justify-content: center; min-width: 56px; min-height: 56px; }
