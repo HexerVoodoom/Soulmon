@@ -5,12 +5,12 @@ const CAP = 1_000_000;
 
 describe('essencePackPrice (§479)', () => {
   it('1 e 5 mantêm os preços de antes; grupos de 5 com 10% off, resto no unitário', () => {
-    expect(essencePackPrice('fogo', 1)).toBe(1);
-    expect(essencePackPrice('fogo', 5)).toBe(4);
-    expect(essencePackPrice('vapor', 5)).toBe(9);
-    expect(essencePackPrice('fogo', 12)).toBe(10);
+    expect(essencePackPrice('fogo', 1)).toBe(3); // ×3 (dono, 24/11/2026)
+    expect(essencePackPrice('fogo', 5)).toBe(13);
+    expect(essencePackPrice('vapor', 5)).toBe(27);
+    expect(essencePackPrice('fogo', 12)).toBe(32);
     expect(essencePackPrice('fogo', 0)).toBe(0);
-    expect(essencePackPrice('fogo', 999_999)).toBe(199_999 * 4 + 4);
+    expect(essencePackPrice('fogo', 999_999)).toBe(199_999 * 13 + 12);
     expect(essencePackPrice('fogo', CAP + 1)).toBe(0);
   });
 });

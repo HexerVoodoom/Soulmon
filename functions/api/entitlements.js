@@ -7,6 +7,7 @@
 //   POST /api/entitlements?action=spend         { id, amount, reason }
 //   POST /api/entitlements?action=ad            { id }
 //   POST /api/entitlements?action=buy-essence   { id, element, qty: inteiro ≥1, opId }  ← CAMBISTA (§205, qty livre e sem limite por compra §479)
+//   POST /api/entitlements?action=buy-recovery  { id, kind: "energy"|"life", opId }  ← EXCHANGER (24/11/2026; 150 Créditos cada, 1 de cada por semana ISO, no servidor)
 //   POST /api/entitlements?action=buy-bits      { id, pack, opId, replayOnly?, zone?, off? }  ← PACOTES DE BITS (§373; `_bitsPacks.js`)
 //        `replayOnly: true` (§386): só o replay de um pedido já atendido; desconhecido = 409 `no-op`, nada comprado
 //   POST /api/entitlements?action=grant         { saveId }   ← CORTESIA (admin)
@@ -61,6 +62,7 @@ import { isPlayPurchaseVoided, isSteamPurchaseVoided, isSteamOwnershipVoided } f
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { kv } from './_kv.js';
 import { isKnownEssenceElement, essencePackPrice, ESSENCE_MAX_PER_ELEMENT } from './_essenceShop.js';
+import { buyRecovery } from './_recoveryShop.js';
 import { bondLevelFor } from './_bond.js';
 import { gateFor } from './_gates.js';
 import { verifiedAdmin, adminPublicView, logAdminSession } from './_admin.js';
@@ -268,6 +270,19 @@ async function onRequestPostBruto({ request, env }) {
     if (!admin) await store?.put(replayKey, JSON.stringify(out), { expirationTtl: 24 * 60 * 60 });
     log('essence-buy', saveId, { element, qty, price, admin });
     return json(out);
+  }
+
+  if (action === 'buy-recovery') {
+    // EXCHANGER (24/11/2026): "Recuperar energia"/"Recuperar vida" por Créditos. Preço, teto SEMANAL (1 de cada, semana ISO) e idempotência
+    // são do servidor (`_recoveryShop.js`); o cliente só manda `kind` + `opId` e aplica o efeito quando `ok` (e checa "cheio" antes).
+    const r = await buyRecovery(env, saveId, body?.kind, body?.opId, { admin });
+    if (!r.ok) {
+      log('recovery-buy.refused', saveId, { reason: r.reason });
+      return json({ ok: false, reason: r.reason }, r.status);
+    }
+    if (admin) logAdminSession('buy-recovery');
+    log('recovery-buy', saveId, { kind: r.kind, price: r.price, admin });
+    return json({ ok: true, kind: r.kind, restores: r.restores, price: r.price, leftThisWeek: r.leftThisWeek, ...(r.replay ? { replay: true } : {}), ...view(r.ent) });
   }
 
   if (action === 'buy-bits') {

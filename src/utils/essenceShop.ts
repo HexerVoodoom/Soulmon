@@ -11,9 +11,12 @@ export type EssencePackSize = (typeof ESSENCE_PACK_SIZES)[number];
 /** Teto de estoque por elemento (espelho de `ESSENCE_MAX_PER_ELEMENT`; também o maior N aceito numa compra). */
 const ESSENCE_STOCK_CAP = 1_000_000;
 
+/** 24/11/2026 (dono): TODAS as essências custam 3× o que custavam (3 / 6 / 9 Créditos). Espelho: `functions/api/_essenceShop.js`. */
+export const ESSENCE_PRICE_FACTOR = 3;
+
 export function essenceUnitPrice(id: string): number {
   const n = elementComposition(id)?.length ?? 0;
-  return n <= 0 ? 0 : Math.min(3, n);
+  return n <= 0 ? 0 : Math.min(3, n) * ESSENCE_PRICE_FACTOR;
 }
 
 /**

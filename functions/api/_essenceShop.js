@@ -39,9 +39,11 @@ export const essenceBaseCount = id => COMPOSITION.get(id)?.length ?? 0;
 export const essenceShopIds = () => [...COMPOSITION.keys()];
 
 /** Preço de 1 essência; 0 = elemento desconhecido. @param {string} id */
+/** 24/11/2026 (dono): TODAS as essências custam 3× (3 / 6 / 9 Créditos). Espelho: `src/utils/essenceShop.ts`. */
+export const ESSENCE_PRICE_FACTOR = 3;
 export function essenceUnitPrice(id) {
   const n = essenceBaseCount(id);
-  return n <= 0 ? 0 : Math.min(3, n);
+  return n <= 0 ? 0 : Math.min(3, n) * ESSENCE_PRICE_FACTOR;
 }
 
 /**

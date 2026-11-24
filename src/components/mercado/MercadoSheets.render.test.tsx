@@ -227,8 +227,8 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
     const { container } = abrirC({ credits: 4, unlockedElements: [fogo, par], essences: { [fogo]: 10 }, onBuyEssence: async () => true });
     fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
     const row = (id: string) => container.querySelector(`[data-essence-row="${id}"]`)!;
-    expect(row(fogo).querySelector('[data-essence-price]')!.textContent).toBe('1');
-    expect(row(par).querySelector('[data-essence-price]')!.textContent).toBe('2');
+    expect(row(fogo).querySelector('[data-essence-price]')!.textContent).toBe('3');
+    expect(row(par).querySelector('[data-essence-price]')!.textContent).toBe('6');
     expect(row(fogo).textContent).not.toMatch(/×\s*\d/);
     expect(container.querySelector('[data-essence-owned]')).toBeNull();
     expect(row(trancado).querySelector('[data-essence-buy]')).toBeNull();
