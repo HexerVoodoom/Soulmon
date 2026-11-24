@@ -7747,3 +7747,8 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-evo-lock { position: absolute; inset-inline-end: 0; inset-block-start: 50%; transform: translateY(-50%); min-inline-size: 44px; min-block-size: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; background: none; box-shadow: none; color: var(--sm2-ink-muted, var(--sm2-ink)); cursor: pointer; }
 .sm2-evo-lock[aria-pressed="true"] { color: var(--sm2-primary-ink); }
 .sm2-evo-revert { display: flex; justify-content: center; margin-block-start: var(--sm2-space-5); }
+
+/* DaySquares — os 7 quadrados Dom→Sáb (filtros da Home e, depois, o "Quando"). 7 colunas iguais: em 360px (328 úteis) cada uma tem ≥ 44px com 2px de vão. */
+.sm2-day-squares { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--sm2-space-half, 2px); inline-size: 100%; box-sizing: border-box; }
+.sm2-day-square { min-block-size: 44px; min-inline-size: 0; padding: 0; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--sm2-line); border-radius: var(--sm2-radius-sm); background-color: var(--sm2-surface); color: var(--sm2-ink); font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); line-height: var(--sm2-leading-body); cursor: pointer; transition: background-color var(--sm2-dur-tap) var(--sm2-ease), color var(--sm2-dur-tap) var(--sm2-ease); }
+.sm2-day-square[aria-pressed="true"] { background-color: var(--sm2-primary-fill); color: var(--sm2-on-primary); border-color: transparent; }
