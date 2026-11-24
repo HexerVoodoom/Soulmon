@@ -22,38 +22,47 @@ function Harness({ outroAberto, onEstado }: { outroAberto: boolean; onEstado: (s
   const [outro, setOutro] = useState(outroAberto);
   const pend = fundadorPendentes(s);
   const vez = pickPresentation({ checkIn: outro, fundador: pend.length > 0 });
-  const fechar = () => setS(prev => { const n = marcarFundadorAvisados(prev, fundadorPendentes(prev)); onEstado(n); return n; });
+  const fechar = (id: string) => setS(prev => { const n = marcarFundadorAvisados(prev, [id]); onEstado(n); return n; });
   return (
     <div>
       {vez === 'checkIn' && <ModalSheet open title="Hoje" language="pt-BR" onClose={() => setOutro(false)} placement="center"><p>outro modal</p></ModalSheet>}
-      {vez === 'fundador' && <FundadorAvisoModal language="pt-BR" premios={pend} dias={0} onClose={fechar} onEquip={fechar} />}
+      {vez === 'fundador' && <FundadorAvisoModal key={pend[0]} language="pt-BR" premio={pend[0]} onClose={() => fechar(pend[0])} onEquip={fechar} />}
     </div>
   );
 }
 
 const botaoX = () => document.querySelector<HTMLButtonElement>('.sm2-popup-fechar')!;
 
-describe('aviso do Fundador fecha de verdade', () => {
+const vistos = () => [...document.querySelectorAll('[data-fundador-aviso]')].map(e => e.getAttribute('data-fundador-aviso'));
+const ORDEM = ['founder-fundo', 'founder-moldura', 'founder-retrato', 'furn-cristal-fundador'];
+
+describe('aviso do Fundador: um modal por prêmio, em sequência, e fecha de verdade', () => {
   for (const [nome, achar] of [['✕', botaoX], ['Fechar', () => document.querySelector<HTMLButtonElement>('[data-fundador-close]')!]] as const) {
-    it(`${nome} fecha, grava os avisados e não reabre`, () => {
+    it(`${nome} fecha cada um, grava só aquele id, abre o próximo e no fim não reabre`, () => {
       let ultimo: FundadorEstado | undefined;
       render(<Harness outroAberto={false} onEstado={s => { ultimo = s; }} />);
-      expect(document.querySelector('[data-fundador-aviso]')).not.toBeNull();
-      fireEvent.click(achar());
-      expect(document.querySelector('[data-fundador-aviso]')).toBeNull();
-      expect(ultimo?.fundadorAvisados?.length).toBe(4);
+      for (let i = 0; i < ORDEM.length; i++) {
+        expect(vistos()).toEqual([ORDEM[i]]); // um por vez, na ordem
+        fireEvent.click(achar());
+        expect(ultimo?.fundadorAvisados).toEqual(ORDEM.slice(0, i + 1)); // aditivo: só o fechado
+      }
+      expect(vistos()).toEqual([]);
       expect(fundadorPendentes(ultimo!)).toEqual([]);
     });
   }
+  it('só os pendentes: sem Fundo/Moldura pendentes, começa no Retrato', () => {
+    const s0 = marcarFundadorAvisados(concederFundador({ evolutionStage: 'rookie' } as FundadorEstado), ['founder-fundo', 'founder-moldura']);
+    expect(fundadorPendentes(s0)).toEqual(['founder-retrato', 'furn-cristal-fundador']);
+  });
   it('com outro modal na vez: o Fundador espera (nunca empilha, nunca fica inerte) e fecha depois', () => {
     render(<Harness outroAberto onEstado={() => {}} />);
     expect(document.querySelector('[data-fundador-aviso]')).toBeNull();
     fireEvent.click(document.querySelector<HTMLButtonElement>('.sm2-popup-fechar, [aria-label="Fechar"]')!);
     const aviso = document.querySelector('[data-fundador-aviso]');
-    expect(aviso).not.toBeNull();
+    expect(aviso).not.toBeNull(); expect(vistos()).toEqual(['founder-fundo']);
     let el: HTMLElement | null = aviso as HTMLElement;
     while (el) { expect(el.hasAttribute('inert')).toBe(false); el = el.parentElement; }
     fireEvent.click(botaoX());
-    expect(document.querySelector('[data-fundador-aviso]')).toBeNull();
+    expect(vistos()).toEqual(['founder-moldura']); // o ✕ do Fundo fechou e o próximo abre em seguida
   });
 });
