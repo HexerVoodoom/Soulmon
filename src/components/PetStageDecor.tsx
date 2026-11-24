@@ -162,7 +162,7 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
                   }}
                 />
                 {DECOR_CHAMA[item.id] && <ChamaTira id={item.id} on={acesa} />}
-                {item.id === 'furn-campfire' && !artApagada && (
+                {item.id === 'furn-campfire' && (
                   <>
                     <span className="sm-decor-quadro" aria-hidden="true">
                       <span className="sm-decor-quadro-i">
