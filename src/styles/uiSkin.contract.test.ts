@@ -62,15 +62,6 @@ const violacoes = () => [...new Set(regrasDeArte(css).filter(r => !noEscopo(r.ca
 /** Congelada em 24/11/2026. Só encolhe. */
 const FORA_DO_ESCOPO_HOJE: readonly string[] = [
   ".sm2-elem-carta => carta-elemento.webp",
-  ".sm2-btn-arte button[style*=\"--sm2-btn-kind:primary\"], .sm2-btn-arte button[style*=\"--sm2-btn-kind: primary\"] => sm2/sm2-primary-normal.webp",
-  ".sm2-btn-arte button[style*=\"--sm2-btn-kind:primary\"]:active:not(:disabled), .sm2-btn-arte button[style*=\"--sm2-btn-kind: primary\"]:active:not(:disabled) => sm2/sm2-primary-pressed.webp",
-  ".sm2-btn-arte button[style*=\"--sm2-btn-kind:primary\"]:disabled, .sm2-btn-arte button[style*=\"--sm2-btn-kind: primary\"]:disabled => sm2/sm2-primary-disabled.webp",
-  ".sm2-btn-arte button[style*=\"--sm2-btn-kind:outline\"], .sm2-btn-arte button[style*=\"--sm2-btn-kind: outline\"] => sm2/sm2-outline-normal.webp",
-  ".sm2-btn-arte button[style*=\"--sm2-btn-kind:outline\"]:active:not(:disabled), .sm2-btn-arte button[style*=\"--sm2-btn-kind: outline\"]:active:not(:disabled) => sm2/sm2-outline-pressed.webp",
-  ".sm2-btn-arte button[style*=\"--sm2-btn-kind:outline\"]:disabled, .sm2-btn-arte button[style*=\"--sm2-btn-kind: outline\"]:disabled => sm2/sm2-outline-disabled.webp",
-  ".sm2-btn-arte button[style*=\"--sm2-btn-kind:danger\"], .sm2-btn-arte button[style*=\"--sm2-btn-kind: danger\"] => sm2/sm2-danger-normal.webp",
-  ".sm2-btn-arte button[style*=\"--sm2-btn-kind:danger\"]:active:not(:disabled), .sm2-btn-arte button[style*=\"--sm2-btn-kind: danger\"]:active:not(:disabled) => sm2/sm2-danger-pressed.webp",
-  ".sm2-btn-arte button[style*=\"--sm2-btn-kind:danger\"]:disabled, .sm2-btn-arte button[style*=\"--sm2-btn-kind: danger\"]:disabled => sm2/sm2-danger-disabled.webp",
   ".sm2-moldura-modal--ranking .sm2-moldura-modal__topo => ranking/ranking-topo.webp",
   ".sm2-moldura-modal--ranking .sm2-moldura-modal__base => ranking/ranking-base.webp",
   ".sm2-moldura-modal--ranking .sm2-moldura-modal__lado--e => ranking/ranking-lado-e.webp",
@@ -129,7 +120,7 @@ const FORA_DO_ESCOPO_HOJE: readonly string[] = [
   ".sm2-moldura-modal--cristal .sm2-moldura-modal__placa::before => moldura-cristal/placa-titulo-esq.webp",
   ".sm2-moldura-modal--cristal .sm2-moldura-modal__placa::after => moldura-cristal/placa-titulo-dir.webp",
 ];
-const TETO = 67;
+const TETO = 58;
 
 describe('duas interfaces — arte só sob html[data-ui="arte"]', () => {
   it('AUTOVERIFICAÇÃO: o parser enxerga regras de arte e distingue o escopo', () => {
