@@ -4,6 +4,7 @@ import { render, fireEvent, cleanup } from '@testing-library/react';
 import { installDomGlobals, renderWithCss } from '../test/renderEnv';
 import { CreateChoicePopup } from './CreateChoicePopup';
 import { CategoryChips } from './CreateModal';
+import { ESCOLHEDOR_ICON_ART } from '../assets/soulmon/icones-ui/interacao';
 import { categoryIconArt } from '../assets/soulmon/icons/categories';
 import { ACTIVITY_CATEGORIES } from '../types/categories';
 
@@ -50,6 +51,10 @@ describe('CreateChoicePopup (bottom sheet)', () => {
     cleanup();
     render(<CreateChoicePopup open language="pt-BR" onClose={() => {}} onPick={() => {}} onCommit={() => {}} />);
     expect(document.querySelectorAll('[data-create-choice]').length).toBe(3);
+    const img = document.querySelector('[data-escolhedor-icone="commit"]')!;
+    expect(img.getAttribute('alt')).toBe('');
+    expect(img.closest('button')!.getAttribute('aria-label')).toBe('Comprometer-me');
+    expect(document.querySelector('[data-create-choice="commit"] .sm2-icon')).toBeNull();
   });
 });
 
@@ -60,4 +65,12 @@ describe('CategoryChips com ícone de categoria', () => {
     expect(document.querySelector('[data-cat-icon="foco"]')!.getAttribute('alt')).toBeTruthy();
   });
   it('id desconhecido não tem arte (cai no vetor)', () => { expect(categoryIconArt('nao-existe')).toBeUndefined(); });
+});
+
+describe('Escolhedor: arte própria (24/11/2026)', () => {
+  it('as 3 opções usam icon-escolher-*', () => {
+    expect(ESCOLHEDOR_ICON_ART.tarefa).toMatch(/icon-escolher-tarefa/);
+    expect(ESCOLHEDOR_ICON_ART.habito).toMatch(/icon-escolher-habito/);
+    expect(ESCOLHEDOR_ICON_ART.compromisso).toMatch(/icon-escolher-compromisso/);
+  });
 });

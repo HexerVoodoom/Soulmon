@@ -1,4 +1,5 @@
 import { Icon } from './Icon';
+import { HonorIcon } from './HonorIcon';
 import { BitsAmount } from './BitsAmount';
 import { RewardIcon } from './RewardPop';
 import { ENERGY_ICON, rewardItemLabel, useRewardItemIcon, type RewardItemKind } from '../../utils/rewardIcons';
@@ -69,7 +70,7 @@ export function RewardPreview({ items, mode, language, size = 20 }: {
     // 29/10/2026 (dono): XP é escrito "EXP" depois do número, sem estrelinha.
     const icon = it.kind === 'xp' ? null
       : it.kind === 'energy' ? <img src={ENERGY_ICON} alt="" width={size} height={size} />
-      : it.kind === 'honor' ? <Icon name="military_tech" size={size} fill={1} />
+      : it.kind === 'honor' ? <HonorIcon size={size} />
       : it.kind === 'custom' ? <span aria-hidden="true" style={{ fontSize: size }}>{it.emoji}</span>
       : <MaterialIcon item={it.item} />;
     return (

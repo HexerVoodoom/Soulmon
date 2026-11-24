@@ -5,6 +5,7 @@ import { bitsPackLeftToday, subscribeBitsPackLeft } from '../../utils/entitlemen
 import { bitsPackBrlEstimate, bitsPackDiscountLabel, bitsPackName, bitsPackBlockedLabel, bitsExchangeFailText, type BitsExchangeOutcome } from '../../utils/bitsPackCopy';
 import { Icon } from '../ui/Icon';
 import { CreditIcon } from '../ui/CreditIcon';
+import { HonorIcon } from '../ui/HonorIcon';
 import { PixelIcon } from '../ui/PixelIcon';
 import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { InfoTip } from '../ui/InfoTip';
@@ -109,7 +110,7 @@ export function CurrencyBalance({ currency, value, language }: { currency: Curre
   if (currency === 'emblems') {
     return (
       <p data-balance="emblems" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
-        <Icon name="military_tech" size={ICON_INLINE} fill={1} tone="gold" />
+        <HonorIcon size={ICON_INLINE} />
         <span className="sm2-num" style={emblemNum}>{value}</span>
         <span style={{ ...unitStyle, marginLeft: 2 }}>{isPt ? 'Honra' : 'Honor'}</span>
       </p>
@@ -634,7 +635,7 @@ export function HowToEarnSheet({ item, currency, language, onClose }: {
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {ways.map(w => (
             <li key={w.key} data-how-to-earn-way={w.key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              {w.key === 'creditos' ? <CreditIcon size={24} /> : <Icon name={w.icon} size={24} tone={isEmblem ? 'gold' : 'primary'} fill={1} />}
+              {w.key === 'creditos' ? <CreditIcon size={24} /> : w.key === 'torneio' && isEmblem ? <HonorIcon size={24} /> : <Icon name={w.icon} size={24} tone={isEmblem ? 'gold' : 'primary'} fill={1} />}
               <span style={{ ...sm2Text, flex: 1, minWidth: 0 }}>{w.text}</span>
             </li>
           ))}
@@ -801,7 +802,7 @@ export function WeeklyMissionList({ language, weeklyMissions, onClaimWeekly, nav
                 aria-label={isPt ? `Receber ${mission.emblems} de Honra` : `Claim ${mission.emblems} Honor`}
                 style={{ ...sm2Button('primary', false, 'sm'), whiteSpace: 'nowrap', flex: 'none', gap: 4 }}
               >
-                <Icon name="military_tech" size={ICON_TAG} fill={1} tone="inherit" />
+                <HonorIcon size={ICON_TAG} />
                 <span className="sm2-num" style={{ ...emblemStyle, color: 'inherit', fontSize: 'var(--sm2-text-md)' }}>+{mission.emblems}</span>
               </button>
             }

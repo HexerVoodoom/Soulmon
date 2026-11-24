@@ -5,6 +5,7 @@ import { useState, type CSSProperties } from 'react';
 import { PixelTabs } from '../pixel/PixelKit';
 import { Icon } from '../ui/Icon';
 import { CreditIcon } from '../ui/CreditIcon';
+import { HonorIcon } from '../ui/HonorIcon';
 import { BitsAmount } from '../ui/BitsAmount';
 import { BitsIcon } from '../ui/BitsIcon';
 import { InfoTip } from '../ui/InfoTip';
@@ -85,7 +86,7 @@ export function CurrencyPills({ tabs, value, onChange, isPt }: {
             onClick={() => onChange(c)}
           >
             {c === 'bits' ? <BitsIcon size={20} />
-              : c === 'emblems' ? <Icon name="military_tech" size={20} fill={1} tone="gold" />
+              : c === 'emblems' ? <HonorIcon size={20} />
               : <CreditIcon size={20} />}
             <span>{currencyLabel(c, isPt)}</span>
           </button>
