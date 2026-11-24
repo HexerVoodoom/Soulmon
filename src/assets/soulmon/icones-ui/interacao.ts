@@ -20,6 +20,7 @@ import statusRaio from './interacao/status-raio.png';
 import iconEscolherTarefa from './interacao/icon-escolher-tarefa.png';
 import iconEscolherHabito from './interacao/icon-escolher-habito.png';
 import iconEscolherCompromisso from './interacao/icon-escolher-compromisso.png';
+import iconSortearDeNovo from './interacao/icon-sortear-de-novo.png';
 
 const porPrefixo = (mods: Record<string, string>, prefixo: string): Readonly<Record<string, string>> => {
   const out: Record<string, string> = {};
@@ -50,3 +51,6 @@ export const REPORT_HEAD_ART: Readonly<Record<'star' | 'nightlight' | 'bedtime' 
 /** Escolhedor Hábito/Tarefa/Compromisso (24/11/2026): arte própria `icon-escolher-*` (P6). */
 export const ESCOLHEDOR_ICON_ART = { tarefa: iconEscolherTarefa, habito: iconEscolherHabito, compromisso: iconEscolherCompromisso } as const;
 export const STATUS_ICON_ART = { cadeado: statusCadeado, raio: statusRaio } as const;
+
+/** Botão "Sortear de novo" (Arena): arte própria `icon-sortear-de-novo` (P6, 24/11/2026). Sem ela, o botão fica com o glifo `sync`. */
+export const SORTEAR_ICON_ART: string | undefined = iconSortearDeNovo;

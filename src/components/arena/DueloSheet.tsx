@@ -6,6 +6,7 @@ import { SCENE_BG, ARENA_BANNER_ATIVO } from '../../utils/fxPackArt';
 import { ARENA_CHOICES, ARENA_REROLL_FREE_PER_HOUR, arenaCardElements, arenaCards, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsThisHour, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
 import { elementIcon } from '../../utils/elementIconArt';
 import { EscolhaLinha, SortearNovos, escolhaCardStyle } from '../ui/EscolhaLinha';
+import { SORTEAR_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { MiniGlass } from '../ui/MiniGlass';
 import { ModalInfo } from '../ui/InfoTip';
 import type { Language } from '../../utils/i18n';
@@ -130,6 +131,7 @@ function EscolhaDeAdversarios({ isPt, onStart, startBlocked, arena }: { isPt: bo
       })}
       <SortearNovos
         buttonProps={{ 'data-arena-reroll': true, 'data-arena-reroll-kind': free > 0 ? 'free' : 'paid' }}
+        iconSrc={SORTEAR_ICON_ART}
         disabled={!canReroll}
         onClick={() => { if (canReroll) arena.onReroll(); }}
         ariaLabel={free > 0 ? (isPt ? `Sortear outros ${ARENA_CHOICES} adversários, ${free} grátis` : `Draw ${ARENA_CHOICES} other opponents, ${free} free`) : (isPt ? `Sortear outros ${ARENA_CHOICES} adversários por ${cost} Bits` : `Draw ${ARENA_CHOICES} other opponents for ${cost} Bits`)}
