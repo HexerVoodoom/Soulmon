@@ -83,10 +83,10 @@ describe('MapPage', () => {
     expect(menu.textContent).toContain('12');
     expect(menu.textContent).toContain('3');
     const nomes = Array.from(menu.querySelectorAll('[data-info-tip]')).map(b => b.getAttribute('aria-label') ?? '');
-    expect(nomes).toHaveLength(5);
-    expect(nomes[2]).toContain('Credits');
-    expect(nomes[3]).toContain('Honor');
-    expect(nomes[4]).toContain('Bits');
+    expect(nomes).toHaveLength(4);
+    expect(nomes[0]).toContain('Bits');
+    expect(nomes[2]).toContain('Honor');
+    expect(nomes[3]).toContain('Credits');
   });
 
   it('fundo isométrico real (imagem de cena, não placeholder de ícone)', () => {
@@ -130,10 +130,10 @@ describe('CornerLink', () => {
     expect(btn.style.border === 'none' || btn.style.border === '' || btn.style.borderStyle === 'none').toBe(true);
   });
 
-  it('B2: os dois links moram no TOPO (nunca embaixo), respeitando a área segura', () => {
+  it('B2: os dois links moram no TOPO (nunca embaixo), SEM safe-area (ordem do dono, 24/11/2026)', () => {
     const r = renderWithCss(<CornerLink icon="mapa" side="right" label="Map" onClick={() => {}} />);
     const btn = r.container.querySelector('button')!;
-    expect(btn.style.top).toContain('safe-area-inset-top');
+    expect(btn.style.top).not.toContain('safe-area-inset-top');
     expect(btn.style.bottom).toBe('');
   });
 
@@ -180,7 +180,7 @@ describe('AreaTopBar', () => {
   it('H9: o voltar fica FIXO na âncora do canto — a mesma do anel da casinha, em qualquer tela', () => {
     const casinha = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} />);
     const caixa = casinha.container.querySelector('button')!;
-    expect(caixa.style.top).toContain('safe-area-inset-top');
+    expect(caixa.style.top).not.toContain('safe-area-inset-top');
     // o jsdom normaliza `calc()`: compara pelo MESMO caminho de normalização
     const norm = (prop: 'top' | 'left', v: string) => { const el = document.createElement('div'); el.style[prop] = v; return el.style[prop]; };
     expect(casinha.container.querySelector('[data-corner-ring]')).not.toBeNull(); // anel de volta na casinha (28/10/2026)
@@ -196,7 +196,7 @@ describe('AreaTopBar', () => {
       r.unmount();
     }
     // o anel da casinha = caixa de 56 + 6px de folga → mesmas coordenadas do voltar
-    expect(CORNER_RING_TOP).toContain('+ 12px');
+    expect(CORNER_RING_TOP).toContain('12px'); // sem safe-area (dono, 24/11/2026): 6 + 6 de folga do topo físico
     expect(CORNER_RING_SIDE).toContain('+ 6px');
   });
 
@@ -276,6 +276,7 @@ describe('Home: header e canto do Mapa somam o MESMO inset de topo', () => {
     const css = readFileSync('src/index.css', 'utf8');
     const hud = css.split('\n').find(l => l.startsWith('.sm2-hud {')) ?? '';
     expect(hud).toContain('padding-top: env(safe-area-inset-top, 0px)');
-    expect(CORNER_BOX_TOP).toContain('env(safe-area-inset-top');
+    // 24/11/2026 (dono): o canto e a barrinha do topo NÃO somam mais a safe-area.
+    expect(CORNER_BOX_TOP).not.toContain('safe-area-inset-top');
   });
 });

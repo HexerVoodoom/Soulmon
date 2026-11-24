@@ -1767,13 +1767,12 @@ export default function App() {
   // R1: camada de tela cheia aberta numa área (folha/jogo/duelo) — esconde o topo sobre a cena.
   const [areaLayerOpen, setAreaLayerOpen] = useState(false);
   /** A barrinha do topo (Mapa e prédios): os mesmos corações e energia do HUD do companheiro (`healthPoints`, `settleEnergy`) e as 3 moedas. */
-  const topBarHearts = Math.floor(gameState.healthPoints);
   const topBarEnergy = settleEnergy(gameState, tickTime(gameState, Date.now())).energyPoints ?? 0;
   const topBarMaxEnergy = maxEnergyOf(gameState);
   const topBarData = useMemo<TopStatusBarData>(() => ({
-    language, hearts: topBarHearts, energy: topBarEnergy, maxEnergy: topBarMaxEnergy,
+    language, energy: topBarEnergy, maxEnergy: topBarMaxEnergy,
     bits: gameState.gamePoints ?? 0, emblems: gameState.emblems ?? 0, credits: gameState.credits ?? 0,
-  }), [language, topBarHearts, topBarEnergy, topBarMaxEnergy, gameState.gamePoints, gameState.emblems, gameState.credits]);
+  }), [language, topBarEnergy, topBarMaxEnergy, gameState.gamePoints, gameState.emblems, gameState.credits]);
   /** A `AreaView` informa se há ATIVIDADE rodando (jogo/duelo/Torneio); `undefined` = não sabemos (portão da carta "Elemento novo" cai no palpite da área inteira). */
   const [areaAtividade, setAreaAtividade] = useState<boolean | undefined>(undefined);
   // J1 (rodada 7): o chunk das áreas (e a folha de jogar) sobe em tempo ocioso — o toque não espera a rede.
@@ -8640,7 +8639,6 @@ export default function App() {
               bits={gameState.gamePoints ?? 0}
               emblems={gameState.emblems ?? 0}
               credits={gameState.credits ?? 0}
-              hearts={topBarData.hearts}
               energy={topBarData.energy}
               maxEnergy={topBarData.maxEnergy}
             />

@@ -150,7 +150,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             display: 'flex', alignItems: 'flex-end', gap: 8,
             // O busto sobe até `NPC_TOP_PAD_PX` (07/10/2026): o ✕ flutua sobre
             // o canto vazio da arte em vez de reservar uma faixa de 60px.
-            padding: `calc(env(safe-area-inset-top, 0px) + ${NPC_TOP_PAD_PX}px + var(--sm2-topbar-push, 0px)) 12px 0 12px`,
+            padding: `calc(${NPC_TOP_PAD_PX}px + var(--sm2-topbar-push, 0px)) 12px 0 12px`,
             boxSizing: 'border-box',
             overflow: 'hidden',
             pointerEvents: 'none',

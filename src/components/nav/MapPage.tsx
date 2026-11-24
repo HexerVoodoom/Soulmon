@@ -28,7 +28,7 @@ import { MAPA_MUNDO_PINTADO, MAPA_PALCO_STYLE, MAPA_AJUSTE_ESCALA } from '../../
 /** O cristal central pintado no mapa-mundo, em % da imagem. */
 const CRISTAL = [46, 30, 62, 43] as const;
 
-export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, credits, hearts = 0, energy = 0, maxEnergy = 0, bondLevel }: {
+export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, credits, energy = 0, maxEnergy = 0, bondLevel }: {
   language: Language;
   /** O Vínculo do usuário: a área só trava se TODOS os prédios dela travam (`areaMinBond`). Sem ele, nada trava. */
   bondLevel?: number;
@@ -38,8 +38,7 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
   bits: number;
   emblems: number;
   credits: number;
-  /** Corações e energia de agora (+ teto) para a barrinha do topo. */
-  hearts?: number;
+  /** Energia de agora (+ teto) para a barrinha do topo. */
   energy?: number;
   maxEnergy?: number;
 }) {
@@ -75,7 +74,7 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
       />
 
       {/* A BARRINHA DO TOPO (P2, 24/11/2026): Corações | Energia à esquerda; Créditos | Honra | Bits à direita, cada valor na bordinha de bronze (`TopStatusBar`). Ocupou o lugar das 3 pílulas do canto inferior direito (⚰️, #1216). */}
-      <TopStatusBar data={{ language, credits, emblems, bits, hearts, energy, maxEnergy }} />
+      <TopStatusBar data={{ language, credits, emblems, bits, energy, maxEnergy }} />
 
       {/* Os distritos vêm pintados no fundo (05/11/2026): cada botão é só o alvo de toque e o rótulo, no palco da imagem. */}
       <div style={{ position: 'absolute', inset: 0, containerType: 'size', pointerEvents: 'none' }}>
