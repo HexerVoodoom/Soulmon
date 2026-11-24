@@ -101,10 +101,13 @@ describe('o fenômeno: 3 estados × 4 tipos, sem número nenhum', () => {
     expect(visor().getAttribute('data-state')).toBe('aberto');
     expect(visor().getAttribute('role')).toBe('img');
     expect(visor().getAttribute('aria-label')).toBe(fill(PT('guild.aria.feira'), { nome: 'Névoa' }));
-    expect(screen.getByText(PT('guild.feira.aberta.mundo'))).toBeTruthy();
+    // o cabeçalho e a linha do fenômeno moram no "i" (dono, 23/11/2026): fora da tela até tocar
+    expect(screen.queryByText(PT('guild.feira.aberta.mundo'))).toBeNull();
+    expect(screen.queryByText(PT('guild.feira.fenomeno.nevoa.linha'))).toBeNull();
     expect(screen.getByRole('heading', { name: 'Névoa' })).toBeTruthy();
-    expect(screen.getByText(PT('guild.feira.fenomeno.nevoa.linha'))).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Como funciona a Feira' }));
+    expect(screen.getByText(PT('guild.feira.aberta.mundo'))).toBeTruthy();
+    expect(screen.getByText(PT('guild.feira.fenomeno.nevoa.linha'))).toBeTruthy();
     expect(screen.getByText(PT('guild.feira.legenda'))).toBeTruthy();
     // A8: para um leigo — o que é (legenda), o que se faz (como) e o que se ganha (ganho), tudo no InfoTip único.
     expect(screen.getByText(PT('guild.feira.como'))).toBeTruthy();
@@ -118,6 +121,8 @@ describe('o fenômeno: 3 estados × 4 tipos, sem número nenhum', () => {
     vi.mocked(getGuild).mockResolvedValue(vista({ ferido: true }));
     await montar();
     expect(visor().getAttribute('data-state')).toBe('ferido');
+    expect(screen.queryByText(PT('guild.feira.aberta.mundo'))).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Como funciona|How the/ }));
     expect(screen.getByText(PT('guild.feira.aberta.mundo'))).toBeTruthy();
     expect(botao()).toBeTruthy();
     // ...mas o NOME ACESSÍVEL do visor diz o estado (M2), com "luz entre as camadas" e NUNCA HP/ferido/metade.
@@ -165,6 +170,7 @@ describe('o fenômeno: 3 estados × 4 tipos, sem número nenhum', () => {
     cleanup();
     await montar({ language: 'en-US' });
     expect(screen.getByRole('heading', { name: nomeEN })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Como funciona|How the/ }));
     expect(screen.getByText(EN(`guild.feira.fenomeno.${p}.linha` as keyof typeof GUILD_COPY))).toBeTruthy();
   });
 
@@ -251,6 +257,8 @@ describe('o resultado da semana que fechou', () => {
   it('dissipada: a frase de "se desfez", sem "campeões" nem nome', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista({ lastWeek: 'dissipada' }));
     await montar();
+    expect(document.querySelector('[data-feira-semana-passada]')).toBeNull(); // mora no "i"
+    fireEvent.click(screen.getByRole('button', { name: /Como funciona|How the/ }));
     const l = document.querySelector('[data-feira-semana-passada="dissipada"]')!;
     expect(l.textContent).toBe(PT('guild.feira.dissipado.mundo'));
   });
@@ -258,8 +266,12 @@ describe('o resultado da semana que fechou', () => {
   it('recuou: a frase de voltar à névoa — não culpa, não absolve, não nomeia ninguém', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista({ lastWeek: 'recuou' }));
     await montar();
+    expect(document.querySelector('[data-feira-semana-passada]')).toBeNull(); // mora no "i"
+    fireEvent.click(screen.getByRole('button', { name: /Como funciona|How the/ }));
     const l = document.querySelector('[data-feira-semana-passada="recuou"]')!;
     expect(l.textContent).toBe(PT('guild.feira.recuou.mundo'));
+    expect(document.body.textContent).not.toMatch(/culpa|falhou|perderam|fault|failed|lost|n[ãa]o foi/i);
+    expect(document.body.textContent).not.toMatch(/Ana|Bia|Caio/);
     expect(sala().textContent).not.toMatch(/culpa|falhou|perderam|fault|failed|lost|n[ãa]o foi/i);
     expect(sala().textContent).not.toMatch(/Ana|Bia|Caio/);
   });

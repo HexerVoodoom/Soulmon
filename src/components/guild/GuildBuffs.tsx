@@ -3,6 +3,7 @@ import type { Language } from '../../utils/i18n';
 import { BUFF_IDS, BUFF_DIAS, buffText, type BuffId } from '../../utils/guildBuffs';
 import { BitsAmount } from '../ui/BitsAmount';
 
+import { sm2Button } from '../form/FormKit';
 /**
  * Os BUFFS DO CLÃ (10/11/2026; substituem a Loja do clã, aposentada). O tesouro é um número do CLÃ (nunca por pessoa);
  * cada Buff vale para a roda inteira por 7 dias. Quem compra é o anfitrião (`euPosso`); os outros só veem o que está ativo.
@@ -41,9 +42,7 @@ export function GuildBuffs({ casa, language, ocupado, now, onComprar }: {
                   data-buff-comprar={id}
                   disabled={ocupado || !pode}
                   aria-disabled={ocupado || !pode ? true : undefined}
-                  onClick={() => onComprar(id)}
-                  className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline"
-                >
+                  onClick={() => onComprar(id)} style={sm2Button('outline', ocupado || !pode, 'sm')}>
                   {buffText(language, ativo ? 'renovar' : 'comprar', { dias: BUFF_DIAS })}
                   <BitsAmount value={preco} size={16} dim={!pode} />
                 </button>

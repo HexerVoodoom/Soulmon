@@ -37,7 +37,7 @@ it('fechar com o item sobre o pet apaga o pet e não usa o item', () => {
     petTargetRef: ref, onTargetChange, petName: 'Bito',
   };
   const { rerender } = renderWithCss(<Mochila open {...props} />);
-  fireEvent.pointerDown(screen.getByRole('button', { name: 'Maçã.exe × 3' }), { clientX: 10, clientY: 400, button: 0 });
+  fireEvent.pointerDown(screen.getByRole('button', { name: 'Maçã.exe × 3' }), { clientX: 10, clientY: 400, button: 0, pointerType: 'mouse' });
   act(() => { fireEvent.pointerMove(document, { clientX: 150, clientY: 150 }); });
   expect(onTargetChange).toHaveBeenLastCalledWith(true);
   rerender(<Mochila open={false} {...props} />);

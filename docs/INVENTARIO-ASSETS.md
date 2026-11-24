@@ -487,3 +487,29 @@ Instalados a partir de `E:/Soulmon-assets/cosmeticos/` por `scripts/instalar-cos
 | `soulmon/jornada/oasis-{shore,cavern,observatory}.webp` | `soulmon/jornada/` | 1024×2048 opaco, WebP q85 | NOVOS (§361): salas de descanso (slot de `journeyArt.ts`); instalador `tools/instalar-oasis-jornada.py`; fontes 887×1774 do `_lote-13-11`, ampliadas por cover+LANCZOS ao padrão dos irmãos (270–311 KB, abaixo do teto de 400 KB) |
 | `soulmon/jornada/oasis-{forest,garden,workshop}.webp` | `soulmon/jornada/` | 1024×2048 opaco, WebP (forest e workshop q85; garden q80 para caber no teto) | NOVOS (§362): as 3 salas de descanso que faltavam (completam as 6 do `journeyArt.ts`); fontes 887×1774 do `_lote-13-11` (forest, workshop) e `_lote-12-11/oasis/garden-2.png`; `tools/instalar-oasis-jornada.py` (cover+LANCZOS; agora desce a qualidade até q70 se passar de 400 KB); 287–368 KB |
 | `soulmon/ui/moldura-cristal/popup-cristal-1024.webp` + `placa-titulo-{esq,meio,dir}.webp` | `soulmon/ui/moldura-cristal/` | 1024² e 110×354/8×354/110×354, alfa real, WebP | NOVOS (23/11/2026, P6, aprovados pelo dono): moldura de POPUP central (`ModalFrame variante="cristal"`, `.sm2-moldura-modal--cristal`). 9-slice `border-image` slice 225 (22%), canto renderizado `clamp(52px, 17,5u, 120px)`; cristais só em topo-esq e baixo-dir; placa de bronze como peça separada (3 partes, meio esticável). Fontes: `E:\Soulmon-assets\p6-popup-cristal\final\` (`CORTES.json`) |
+
+
+## Estado das artes da P6 em 24/11/2026 (consolidação dos relatórios)
+
+Pastas de trabalho em `E:\Soulmon-assets\p6-*`. Estados: **instalado** (no repo), **em PR** (instalação aberta), **gerado, aguardando OK** (existe no disco, o dono ainda não aprovou a instalação), **pendente** (não gerado). Nada abaixo foi reconferido por abrir os arquivos; vem do relato da P6.
+
+| Peça | Estado |
+|---|---|
+| 10 ícones de categoria (#1108) | instalado |
+| Popup cristal + placa de bronze (`soulmon/ui/moldura-cristal/`, #1136) | instalado |
+| Sprites dos 12 Soulmons do lote 5 (Spectrel, Revenox, Hemolisk, Furiosk, 3 estágios; #1158) | instalado (aprovados) |
+| Cristal Fundador animado (cristal-base 256² + chama 5 frames 1280x256) e prints do site beta (home, mapa, combate em 240/480/720, webp + avif) | instalado no site beta (no ar) |
+| Bits 200/500/1000 (#1146) | em PR (aberto) |
+| Botões do Rift: 6 peças + cortes (#1148; guard corrigido em `20eaf01f0`) | em PR (aberto); a branch `feat/p3-rift-botoes` usa webps placeholder |
+| Selo FLED (`p6-selo-fled\fled-512.png`, só EN) | gerado, aguardando OK (hoje é texto) |
+| 4 elementos novos em `p6-elementos-novos`: FX v3 (7 peças), ícones 96², poções 128², chips Hexsmith 128², cenários 360×640, folhas `CONTATO-COMPARA-*` | gerado, aguardando OK |
+| Botões `sm2`: 9 + 12 peças (`p6-botoes-sm2`) | gerado, aguardando OK (pastas e cortes 9-slice por definir) |
+| Cenas do Focus 4 de 6 (`p6-focus-cenas\bloco-{floresta,costa,caverna,jardim}-orig.png`, ~887×1774) | gerado, aguardando OK (instalar como `soulmon/jornada/bloco-<cena>.webp` 1024×2048 é pergunta aberta) |
+| Prêmios beta cristal + chama (`p6-premios-beta`) | site no ar |
+| Ícone de sangue (`el-sangue`, chip, poção, FX defended/impact) | corrigido em 23/11 (branco opaco removido) |
+| v1/v2 lisas e cenários do Gemini | descartado |
+| Cenas do Focus oficina, observatório e A7; slots do Evolution Center; Habit×Task + Focus&Work; Power Reducer; Draw again; Rift camada/portal; luvas da Hacksmith (4); restante do INVENTARIO-BOTOES; BL2b lanterna/fogueira/cogumelo; moldura de modal nova (aguarda print do dono) | pendente |
+| 10 ícones facetados de categoria (incl. Foco e Trabalho), quadrados do seletor de dias ×2 estados + Marcar todos + Uma vez, moldura da caixa de energias (spec da P2 enviada à P6; o código tem slots com fallback) | pendente |
+| Botão de aço (opcional), arte da árvore da Casa do Clã | pendente / não existe |
+
+Notas: a cota do ChatGPT foi atingida em 23/11 (retoma ao liberar); arquivo novo em `ui/` exige exceção no guard ZERO PNG (`assets.contract.test.ts`); o corvo ROXO do site não existe no repo.

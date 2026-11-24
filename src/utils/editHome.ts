@@ -1,6 +1,6 @@
 import { ALL_SHOP_ITEMS, type ShopItem } from './shop';
 import { PET_BACKGROUNDS, visibleBackground } from './backgrounds';
-import { SLOT_ORDER, decorFitsSetting, applyDecorEquip, type SlotId } from './petStage';
+import { SLOT_ORDER, decorFitsSetting, applyDecorEquip, itemCabeNoSlot, type SlotId } from './petStage';
 
 /**
  * EDITAR HOME (dono, 04/11/2026): a lógica pura do editor. O rascunho é um mapa de decoração
@@ -23,7 +23,7 @@ export function decorOptionsForSlot(
   const bg = backgroundId ? PET_BACKGROUNDS[backgroundId] : null;
   if (!bg || !editableSlots(backgroundId).includes(slot)) return [];
   return ALL_SHOP_ITEMS.filter(i =>
-    i.kind === 'furniture' && i.slot === slot && ownedFurniture.includes(i.id)
+    i.kind === 'furniture' && itemCabeNoSlot(i, slot) && ownedFurniture.includes(i.id)
     && decorFitsSetting(i.fits ?? 'any', bg.setting));
 }
 
@@ -55,6 +55,7 @@ export function slotHoldsDrawnItem(slot: SlotId, draft: DecorMap, backgroundId: 
   const bg = backgroundId ? PET_BACKGROUNDS[backgroundId] : null;
   if (!id || !bg || !bg.slots.includes(slot)) return false;
   const item = ALL_SHOP_ITEMS.find(i => i.id === id && i.kind === 'furniture');
+  if (item?.slotsPermitidos && !itemCabeNoSlot(item, slot)) return false;
   return !!item && decorFitsSetting(item.fits ?? 'any', bg.setting);
 }
 

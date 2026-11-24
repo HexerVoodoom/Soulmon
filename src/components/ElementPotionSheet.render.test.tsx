@@ -27,7 +27,7 @@ describe('ElementPotionSheet: lista completa', () => {
     fireEvent.click(first.querySelector('[data-potion-create]')!);
     // §316c: folha de poção é modal branco, fica com o botão padrão do app (não o CTA do site).
     expect(document.querySelector('[data-potion-confirm]')!.hasAttribute('data-cta-button')).toBe(false);
-    expect(document.querySelector('[data-potion-confirm]')!.className).toContain('sm2-kit-btn-primary');
+    expect((document.querySelector('[data-potion-confirm]') as HTMLElement).style.getPropertyValue('--sm2-btn')).toBe('primary');
     fireEvent.click(document.querySelector('[data-potion-confirm]')!);
     expect(onCraft).toHaveBeenCalledWith('agua');
   });
@@ -53,5 +53,21 @@ describe('ElementPotionSheet: lista completa', () => {
     expect(l.every(r => r.potions.length >= 2)).toBe(true);
     const p = l.find(r => r.id === 'pantano');
     if (p) { expect(p.essences[0].need).toBe(50); expect(p.canCraft).toBe(true); }
+  });
+});
+
+describe('ElementPotionSheet: favoritas', () => {
+  it('estrela alterna aria-pressed e leva a poção ao topo; persiste', () => {
+    try { localStorage.removeItem('soulmon:potionFavorites'); } catch { /* */ }
+    render(<ElementPotionSheet {...base} essences={{}} unlocked={['fogo', 'agua']} onCraft={() => {}} />);
+    const ids = () => [...document.querySelectorAll('[data-potion-item]')].map(e => e.getAttribute('data-potion-item'));
+    const antes = ids();
+    const alvo = antes[antes.length - 1]!;
+    const btn = () => document.querySelector(`[data-potion-fav="${alvo}"]`) as HTMLButtonElement;
+    expect(btn().getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(btn());
+    expect(btn().getAttribute('aria-pressed')).toBe('true');
+    expect(ids()[0]).toBe(alvo);
+    expect(localStorage.getItem('soulmon:potionFavorites')).toContain(alvo);
   });
 });

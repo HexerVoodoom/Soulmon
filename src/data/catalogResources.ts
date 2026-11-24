@@ -14,6 +14,7 @@ import type { CatalogResource } from '../types/activityCatalog';
 export const CATALOG_RESOURCE: Readonly<Record<string, CatalogResource>> = {
   'corpo-caminhar': 'steps',
   'mente-gratidao': 'building:forja.caderno',
+  'proposito-refletir-valores': 'building:forja.caderno',
   'criatividade-escrita-livre': 'building:forja.caderno',
   'foco-bloco-25min': 'building:forja.oficina',
   'foco-uma-tarefa-por-vez': 'building:forja.oficina',
@@ -27,10 +28,11 @@ export const resourceOfCatalogId = (catalogId: string | null | undefined): Catal
  * Qual formato do Caderno cada hábito linkado abre ("Ir ao Caderno"): gratidão abre o Jornal de gratidão, escrita livre abre a
  * escrita livre. Sem esta ponte a folha abria no formato do dia (bug reportado pelo dono, 23/11/2026).
  */
-export const CATALOG_CADERNO_FORMATO: Readonly<Record<string, 'gratidao' | 'livre'>> = {
+export const CATALOG_CADERNO_FORMATO: Readonly<Record<string, 'gratidao' | 'livre' | 'importa'>> = {
   'mente-gratidao': 'gratidao',
+  'proposito-refletir-valores': 'importa',
   'criatividade-escrita-livre': 'livre',
 };
 
-export const cadernoFormatoOfCatalogId = (catalogId: string | null | undefined): 'gratidao' | 'livre' | undefined =>
+export const cadernoFormatoOfCatalogId = (catalogId: string | null | undefined): 'gratidao' | 'livre' | 'importa' | undefined =>
   catalogId ? CATALOG_CADERNO_FORMATO[catalogId] : undefined;

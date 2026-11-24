@@ -101,6 +101,7 @@ import type { Language } from '../../utils/i18n';
 import { emitFeat } from '../../utils/feats';
 import { useRequireAwake } from '../WakeToEnter';
 
+import { sm2Button } from '../form/FormKit';
 interface GuildSheetProps {
   saveId: string;
   language: Language;
@@ -470,7 +471,6 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
       onColher={colher}
     />
   );
-  const btn = 'sm2-kit-btn sm2-kit-btn-md';
 
   let corpo: React.ReactNode;
   if (load.status === 'loading') {
@@ -505,7 +505,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
         {semConta && onLogin ? (
           <CtaTextButton onClick={() => void carregar(false)} data-guild-tentar>{t('guild.erro.tentar')}</CtaTextButton>
         ) : (
-          <button type="button" onClick={() => void carregar(false)} data-guild-tentar className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}>
+          <button type="button" onClick={() => void carregar(false)} data-guild-tentar style={{ ...sm2Button('outline', false, 'sm'), width: '100%' }}>
             <Icon name="refresh" size={20} />
             {t('guild.erro.tentar')}
           </button>
@@ -541,9 +541,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             disabled={semNome}
             aria-disabled={semNome ? true : undefined}
             aria-busy={ocupado ? true : undefined}
-            onClick={() => void agir(() => createGuild(saveId, nome.trim(), tz.current), { depois: () => track('guild_create') })}
-            className={`${btn} sm2-kit-btn-primary sm2-guild-btn`}
-          >
+            onClick={() => void agir(() => createGuild(saveId, nome.trim(), tz.current), { depois: () => track('guild_create') })} style={{ ...sm2Button('primary', semNome, 'sm'), width: '100%' }}>
             <Icon name={ocupado ? 'sync' : 'add'} size={20} className={ocupado ? 'animate-spin' : undefined} />
             {t('guild.criar.botao')}
           </button>
@@ -552,9 +550,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
           {!entrando ? (
             <button
               type="button"
-              onClick={() => setEntrando(true)}
-              className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}
-            >
+              onClick={() => setEntrando(true)} style={{ ...sm2Button('outline', false, 'sm'), width: '100%' }}>
               <Icon name="arrow_forward" size={20} />
               {t('guild.entrar.botao.abrir')}
             </button>
@@ -584,9 +580,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
                 disabled={semCodigo}
                 aria-disabled={semCodigo ? true : undefined}
                 aria-busy={ocupado ? true : undefined}
-                onClick={() => void agir(() => joinGuild(saveId, codigo, tz.current), { depois: g => { if (g) track('guild_join', { size: Math.min(12, Math.max(2, g.size)) }); } })}
-                className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}
-              >
+                onClick={() => void agir(() => joinGuild(saveId, codigo, tz.current), { depois: g => { if (g) track('guild_join', { size: Math.min(12, Math.max(2, g.size)) }); } })} style={{ ...sm2Button('outline', semCodigo, 'sm'), width: '100%' }}>
                 <Icon name={ocupado ? 'sync' : 'arrow_forward'} size={20} className={ocupado ? 'animate-spin' : undefined} />
                 {t('guild.entrar.botao')}
               </button>
@@ -752,18 +746,14 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
                 type="button"
                 disabled={semNovoNome}
                 aria-disabled={semNovoNome ? true : undefined}
-                onClick={() => void agir(() => renameGuild(saveId, novoNome.trim(), tz.current))}
-                className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}
-              >
+                onClick={() => void agir(() => renameGuild(saveId, novoNome.trim(), tz.current))} style={{ ...sm2Button('outline', semNovoNome, 'sm'), width: '100%' }}>
                 {t('guild.ajustes.renomear.salvar')}
               </button>
               <button
                 type="button"
                 disabled={ocupado}
                 aria-disabled={ocupado ? true : undefined}
-                onClick={() => void agir(() => newGuildCode(saveId, tz.current))}
-                className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}
-              >
+                onClick={() => void agir(() => newGuildCode(saveId, tz.current))} style={{ ...sm2Button('outline', ocupado, 'sm'), width: '100%' }}>
                 {t('guild.ajustes.codigoNovo')}
               </button>
               <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.ajustes.codigoNovo.nota')}</p>
@@ -798,7 +788,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             {copiado && <span className="sm2-lib-s" aria-hidden="true">{t('guild.codigo.copiado')}</span>}
           </div>
           {/* §321 (13/11/2026, pedido do dono): CONVIDAR pela busca de jogadores. Botão SIMPLES do kit (não a arte do
-              `CtaButton`, decisão do dono), com a MESMA largura dos outros botões da ficha (`sm2-guild-btn` = largura total,
+              `CtaButton`, decisão do dono), com a MESMA largura dos outros botões da ficha (`width: 100%` inline = largura total,
               alvo de 48 px). Clã cheio = o botão fica, apagado, com o porquê (nunca some em silêncio). */}
           <button
             type="button"
@@ -807,9 +797,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             disabled={g.full}
             aria-disabled={g.full ? true : undefined}
             aria-describedby={g.full ? `${ajustesId}-convidar-cheio` : undefined}
-            onClick={() => setConvidando(true)}
-            className={`${btn} sm2-kit-btn-primary sm2-guild-btn`}
-          >
+            onClick={() => setConvidando(true)} style={{ ...sm2Button('primary', g.full, 'sm'), width: '100%' }}>
             {t('guild.convidar.botao')}
           </button>
           {g.full && <p id={`${ajustesId}-convidar-cheio`} className="sm2-lib-s" style={{ margin: 0 }} data-guild-convidar-cheio>{t('guild.convidar.cheio')}</p>}
@@ -878,9 +866,8 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             disabled={ocupado}
             aria-disabled={ocupado ? true : undefined}
             onClick={() => setSairEtapa(1)}
-            className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}
             // D1: sair é vermelho (cor e borda), com o ícone de saída antes do texto.
-            style={{ color: 'var(--sm2-danger-ink)', borderColor: 'var(--sm2-danger-ink)' }}
+            style={{ ...sm2Button('outline', ocupado, 'sm'), color: 'var(--sm2-danger-ink)', borderColor: 'var(--sm2-danger-ink)', flex: '0 0 auto', maxWidth: '62%' }}
             data-guild-sair
           >
             <Icon name="logout" size={20} />
@@ -1015,7 +1002,7 @@ function SalaGuerra({ guild, t, language, war, hoje, ocupado, mySprite, reducedM
       ) : pequena ? (
         <p className="sm2-lib-s" style={{ margin: 0 }} data-guerra-pequena>{t('guild.guerra.pequena')}</p>
       ) : (
-        <button type="button" data-guerra-buscar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={onBuscar} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
+        <button type="button" data-guerra-buscar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={onBuscar} style={{ ...sm2Button('primary', ocupado, 'sm'), width: '100%' }}>
           <Icon name={ocupado ? 'sync' : 'swords'} size={20} className={ocupado ? 'animate-spin' : undefined} />
           {t('guild.guerra.buscar')}
         </button>
@@ -1050,8 +1037,7 @@ function SalaPredios({ t, ids, titulo = 'guild.predios.titulo', aberto, onAbrir,
             data-predio={p.id}
             aria-pressed={aberto === p.id}
             onClick={() => onAbrir(aberto === p.id ? null : p.id)}
-            className={`sm2-kit-btn sm2-kit-btn-md ${aberto === p.id ? 'sm2-kit-btn-primary' : 'sm2-kit-btn-outline'}`}
-            style={{ flex: '1 1 0' }}
+            style={{ ...sm2Button(aberto === p.id ? 'primary' : 'outline', false, 'sm'), flex: '1 1 0' }}
           >
             <Icon name={p.icone} size={20} fill={aberto === p.id ? 1 : 0} />
             {t(p.titulo)}
@@ -1060,7 +1046,7 @@ function SalaPredios({ t, ids, titulo = 'guild.predios.titulo', aberto, onAbrir,
       </div>
       {aberto && render(aberto)}
       {aberto && (
-        <button type="button" data-predio-fechar onClick={() => onAbrir(null)} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline">
+        <button type="button" data-predio-fechar onClick={() => onAbrir(null)} style={sm2Button('outline', false, 'sm')}>
           <Icon name="close" size={20} />
           {t('guild.predios.fechar')}
         </button>
@@ -1116,9 +1102,7 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
                   data-casa-doar={d}
                   disabled={ocupado || bits < d}
                   aria-disabled={ocupado || bits < d ? true : undefined}
-                  onClick={() => onDoar(d)}
-                  className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-outline sm2-guild-btn"
-                >
+                  onClick={() => onDoar(d)} style={{ ...sm2Button('outline', ocupado || bits < d, 'sm'), width: '100%' }}>
                   {t('guild.casa.doar.botao')}
                   <BitsAmount value={d} size={18} />
                 </button>
@@ -1132,7 +1116,7 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} data-casa-meu-slot>
               {DECOR_ART[meu] && <img src={DECOR_ART[meu]} alt="" width={32} height={32} style={{ width: 32, height: 32, imageRendering: 'pixelated' }} />}
               <span className="sm2-lib-s" style={{ flex: 1, minWidth: 0, margin: 0 }}>{nome(meu)}</span>
-              <button type="button" data-casa-tirar disabled={ocupado} aria-disabled={ocupado ? true : undefined} onClick={() => onSlot(null)} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline">
+              <button type="button" data-casa-tirar disabled={ocupado} aria-disabled={ocupado ? true : undefined} onClick={() => onSlot(null)} style={sm2Button('outline', ocupado, 'sm')}>
                 <Icon name="undo" size={20} />
                 {t('guild.casa.slot.tirar')}
               </button>
@@ -1143,7 +1127,7 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
               {livres.length === 0 ? (
                 <p className="sm2-lib-s" style={{ margin: 0 }} data-casa-sem-itens>{t('guild.casa.slot.nenhum')}</p>
               ) : !lista ? (
-                <button type="button" data-casa-escolher disabled={ocupado} onClick={() => setLista(true)} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-outline sm2-guild-btn">
+                <button type="button" data-casa-escolher disabled={ocupado} onClick={() => setLista(true)} style={{ ...sm2Button('outline', ocupado, 'sm'), width: '100%' }}>
                   <Icon name="inventory_2" size={20} />
                   {t('guild.casa.slot.escolher')}
                 </button>
@@ -1151,7 +1135,7 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
                 <ul className="sm2-grove-list" data-casa-itens>
                   {livres.map(id => (
                     <li key={id}>
-                      <button type="button" data-casa-item={id} disabled={ocupado} onClick={() => { setLista(false); onSlot(id); }} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }}>
+                      <button type="button" data-casa-item={id} disabled={ocupado} onClick={() => { setLista(false); onSlot(id); }} style={{ ...sm2Button('outline', ocupado, 'sm'), width: '100%', justifyContent: 'flex-start' }}>
                         {DECOR_ART[id] && <img src={DECOR_ART[id]} alt="" width={24} height={24} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />}
                         {nome(id)}
                       </button>
@@ -1282,6 +1266,9 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
   // A VOLTA GUARDADA (`utils/feiraVolta.ts`): conta como "voltou hoje" mesmo que a releitura da vista venha velha, e guarda o que ele achou até ser visto.
   const hojeJogador = playerDayKey(new Date(), tz);
   const [, relerVolta] = useState(0);
+  // Toque no CTA desabilitado: "Volte amanhã" (dono, 23/11/2026), some sozinho.
+  const [volteAmanha, setVolteAmanha] = useState(false);
+  useEffect(() => { if (!volteAmanha) return; const id = setTimeout(() => setVolteAmanha(false), 2500); return () => clearTimeout(id); }, [volteAmanha]);
   const voltaGuardada = missao ? feiraVoltaDoDia(readFeiraVolta(), hojeJogador) : null;
   // Desafio de hoje JÁ cumprido (luta, desafio ou "já bateu hoje" do servidor): a sala não oferece enfrentar de novo nem reabrir o
   // resultado (bug do dono, 16/11/2026: dois botões, "enfrentar" dava erro e "ver o que achou" entrava no combate e cancelava).
@@ -1314,6 +1301,11 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
     else if (passada) marca(`${semana}:passada:${passada}`, passada === 'dissipada' ? 1 : 2);
   }, [raid, semana, estado, passada]);
 
+  // O dia fechado (dono, 16/11/2026): desafio cumprido, ou a volta já vista. A fala do NPC mora no "i" (dono, 23/11/2026).
+  const desafioAbertoSala = !!feira && feira.resumo.state !== 'rest' && desafioSt === 'open';
+  const encerrado = !!missao && voltouHoje && !voltaPendente && (desafioFeito || (!!voltaGuardada && !desafioAbertoSala));
+  const fala = encerrado ? feiraNpcDia(language, voltaGuardada, feira?.resumo, nextPlayerDayStart(new Date(agora), tz).toLocaleTimeString(language === 'pt-BR' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' })) : null;
+
   if (!raid) {
     // O servidor não mandou a Feira (versão antiga): nada a desenhar, e nada a explicar.
     return <section className="sm2-guild-sec" aria-label={t('guild.feira.titulo')} data-guild-room="feira">{resgate}</section>;
@@ -1324,11 +1316,9 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
     <section className="sm2-guild-sec sm2-stats-card" aria-label={t('guild.feira.titulo')} data-guild-room="feira">
       {resgate}
       {misterioFim && <p className="sm2-lib-s" style={{ margin: 0 }} role="status" data-misterio-fim>{t(misterioFim.kind === 'honra' ? 'guild.misterio.fim.honra' : 'guild.misterio.fim.bits', { n: misterioFim.n })}</p>}
-      {/* O cartão do resgate já diz "se desfez diante da roda": dizer de novo, uma linha acima, é eco (QA L3 B2). */}
-      {!(dissipada && resgateAberto) && (
-        <p className="sm2-stats-t" style={{ margin: 0 }} data-feira-cabecalho>
-          {t(dissipada ? 'guild.feira.dissipado.mundo' : 'guild.feira.aberta.mundo')}
-        </p>
+      {/* Dissipada é ESTADO (a sala não tem botão): a frase curta fica à vista; o resto do texto mora no "i". */}
+      {dissipada && !resgateAberto && (
+        <p className="sm2-stats-t" style={{ margin: 0, textAlign: 'center' }} data-feira-cabecalho-vis>{t('guild.feira.dissipado.mundo')}</p>
       )}
       <FeiraVisor raid={raid} reducedMotion={reducedMotion} label={t(dissipada ? 'guild.aria.feira.dissipado' : raid.ferido ? 'guild.aria.feira.ferido' : 'guild.aria.feira', { nome })} />
       {/* I9 (02/10/2026): "não sei como a Feira funciona" — a explicação (e a linha sóbria da
@@ -1340,15 +1330,19 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           <span data-feira-legenda style={{ display: 'block', marginTop: missao ? 6 : 0 }}>{t('guild.feira.legenda')}</span>
           {!missao && <span data-feira-como style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.como')}</span>}
           <span data-feira-ganho style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.ganho')}</span>
+          <span data-feira-cabecalho style={{ display: 'block', marginTop: 6 }}>{t(dissipada ? 'guild.feira.dissipado.mundo' : 'guild.feira.aberta.mundo')}</span>
+          <span data-feira-linha style={{ display: 'block', marginTop: 6 }}>{t(`guild.feira.fenomeno.${raid.phenomenon}.linha`)}</span>
+          {!dissipada && raid.lastWeek && <span data-feira-semana-passada={raid.lastWeek} style={{ display: 'block', marginTop: 6 }}>{t(raid.lastWeek === 'dissipada' ? 'guild.feira.dissipado.mundo' : 'guild.feira.recuou.mundo')}</span>}
+          {missao && <span data-missao-historia style={{ display: 'block', marginTop: 6 }}>{t('guild.missao.historia')}</span>}
+          {missao && voltouHoje && fala && (<>
+            <span data-feira-npc-hoje style={{ display: 'block', marginTop: 6 }}>{fala.hoje}</span>
+            <span data-feira-npc-cla style={{ display: 'block', marginTop: 6 }}>{fala.cla}</span>
+            <span data-feira-npc-amanha style={{ display: 'block', marginTop: 6 }}>{fala.amanha}</span>
+          </>)}
+          {missao && voltouHoje && !fala && !desafioAtivo && !voltaPendente && <ProximaAcao t={t} language={language} tz={tz} agora={agora} />}
           <span style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.sobria', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR })}</span>
         </InfoTip>
       </div>
-      <p className="sm2-grove-line">{t(`guild.feira.fenomeno.${raid.phenomenon}.linha`)}</p>
-      {!dissipada && raid.lastWeek && !resgateAberto && (
-        <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-semana-passada={raid.lastWeek}>
-          {t(raid.lastWeek === 'dissipada' ? 'guild.feira.dissipado.mundo' : 'guild.feira.recuou.mundo')}
-        </p>
-      )}
       {!dissipada && !missao && !desafioAtivo && (
         <button
           type="button"
@@ -1357,9 +1351,7 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           aria-disabled={ocupado || raid.hitToday ? true : undefined}
           aria-busy={ocupado ? true : undefined}
           aria-label={raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.aria.rodada')}
-          onClick={() => { requireAwake('hall.feira', onRodada); }}
-          className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
-        >
+          onClick={() => { requireAwake('hall.feira', onRodada); }} style={{ ...sm2Button('primary', ocupado || raid.hitToday, 'sm'), width: '100%' }}>
           <Icon name={ocupado ? 'sync' : raid.hitToday ? 'check_circle' : 'arrow_forward'} size={20} className={ocupado ? 'animate-spin' : undefined} />
           {raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.feira.rodada.botao')}
         </button>
@@ -1377,33 +1369,30 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
         if (voltouHoje) {
           // O dia fechado (dono, 16/11/2026): desafio cumprido, ou o que a volta trouxe (mercador, Bits, nada) já visto. O mercador conta o
           // que o jogador achou, o que o clã achou (só o agregado) e que amanhã tem mais — só isso.
-          const desafioAberto = !!feira && feira.resumo.state !== 'rest' && desafioSt === 'open';
-          const encerrado = !voltaPendente && (desafioFeito || (!!voltaGuardada && !desafioAberto));
-          const fala = encerrado ? feiraNpcDia(language, voltaGuardada, feira?.resumo, nextPlayerDayStart(new Date(agora), tz).toLocaleTimeString(language === 'pt-BR' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' })) : null;
           return (
           <>
-          <div data-missao-feita style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {fala ? (
-              <>
-                <p className="sm2-stats-t" style={{ margin: 0 }} data-feira-npc-hoje>{fala.hoje}</p>
-                <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-npc-cla>{fala.cla}</p>
-                <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-npc-amanha>{fala.amanha}</p>
-              </>
-            ) : (
-              <>
-                <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.missao.volta.titulo')}</p>
-                <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-cla>{t('guild.missao.volta.cla')}</p>
-                <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-eu>{t('guild.missao.volta.eu', { nome })}</p>
-              </>
-            )}
-          </div>
           {voltaPendente && missao.onVerAchado && (
-            <button type="button" data-missao-ver-achado onClick={() => { missao.onVerAchado?.(); relerVolta(n => n + 1); }} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
+            <button type="button" data-missao-ver-achado onClick={() => { missao.onVerAchado?.(); relerVolta(n => n + 1); }} style={{ ...sm2Button('primary', false, 'sm'), width: '100%' }}>
               <Icon name="search" size={20} />
               {t('guild.missao.verAchado')}
             </button>
           )}
-          {!desafioAtivo && !voltaPendente && !fala && <ProximaAcao t={t} language={language} tz={tz} agora={agora} />}
+          {!desafioAtivo && !voltaPendente && (
+            <div data-missao-feita style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <p className="sm2-stats-t" style={{ margin: 0, textAlign: 'center' }} data-feira-recuou-curto>{t('guild.feira.recuou.curto')}</p>
+              <button
+                type="button"
+                data-missao-mandar
+                aria-disabled="true"
+                onClick={() => setVolteAmanha(true)}
+                style={{ ...sm2Button('primary', false, 'sm'), opacity: 0.5, width: '100%' }}
+              >
+                <Icon name="search" size={20} />
+                {t('guild.missao.investigar')}
+              </button>
+              {volteAmanha && <p role="status" className="sm2-lib-s" style={{ margin: 0, textAlign: 'center' }} data-feira-volte-amanha>{t('guild.missao.volteAmanha')}</p>}
+            </div>
+          )}
           </>
           );
         }
@@ -1415,17 +1404,14 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
         return (
           <>
             {desafioSt === 'escaped' && <p className="sm2-stats-t" role="status" style={{ margin: 0 }} data-feira-escapou>{t('guild.missao.escapou')}</p>}
-            <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-historia>{t('guild.missao.historia')}</p>
             <button
               type="button"
               data-missao-mandar
               disabled={ocupado || !!missao.state}
               aria-disabled={ocupado || missao.state ? true : undefined}
-              onClick={() => { requireAwake('missao', missao.onSend); }}
-              className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
-            >
+              onClick={() => { requireAwake('missao', missao.onSend); }} style={{ ...sm2Button('primary', ocupado || !!missao.state, 'sm'), width: '100%' }}>
               <Icon name="search" size={20} />
-              {t('guild.missao.mandar')}
+              {t('guild.missao.investigar')}
             </button>
           </>
         );
@@ -1457,9 +1443,7 @@ function ResgateFeira({ t, pending, colhido, erro, ocupado, onColher }: {
             disabled={ocupado}
             aria-disabled={ocupado ? true : undefined}
             aria-busy={ocupado ? true : undefined}
-            onClick={() => onColher(pending.week)}
-            className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
-          >
+            onClick={() => onColher(pending.week)} style={{ ...sm2Button('primary', ocupado, 'sm'), width: '100%' }}>
             <Icon name={ocupado ? 'sync' : 'military_tech'} size={20} fill={ocupado ? 0 : 1} className={ocupado ? 'animate-spin' : undefined} />
             {t('guild.feira.colher.botao')}
           </button>

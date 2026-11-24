@@ -9,6 +9,7 @@
  * Teclado: Tab entra no tabuleiro (um nó com tabindex 0), setas andam entre vizinhos, Enter/Espaço selecionam.
  * Copy (`copy.semFomo`): sem cobrança, sem contagem que apressa. "Vínculo N", nunca "nível".
  */
+import { sm2Button } from './form/FormKit';
 import { useEffect, useRef, useState, useId } from 'react';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { isDemoMode, demoRefusalText } from '../utils/demoMode';
@@ -398,10 +399,9 @@ export default function TalentTree({ language = 'pt-BR', bare = false }: { langu
         {!confirmando ? (
           <button
             type="button"
-            className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-ghost"
+            style={sm2Button('ghost', picks.length === 0, 'sm')}
             disabled={picks.length === 0}
-            onClick={() => { setAviso(null); setConfirmando(true); }}
-          >
+            onClick={() => { setAviso(null); setConfirmando(true); }}>
             <Art nome="talent-respec" size={20} />
             {isPt ? 'Refazer a árvore' : 'Rebuild the tree'} <BitsAmount value={custo} size={16} style={{ color: 'inherit' }} />
           </button>
@@ -411,8 +411,8 @@ export default function TalentTree({ language = 'pt-BR', bare = false }: { langu
               {isPt ? `Refazer custa ${custo} Bits e devolve todos os pontos.` : `Rebuilding costs ${custo} Bits and gives every point back.`}
             </p>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" onClick={() => setConfirmando(false)}>{isPt ? 'Agora não' : 'Not now'}</button>
-              <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" onClick={refazer}>{isPt ? 'Refazer' : 'Rebuild'}</button>
+              <button type="button" style={sm2Button('quiet', false, 'sm')} onClick={() => setConfirmando(false)}>{isPt ? 'Agora não' : 'Not now'}</button>
+              <button type="button" style={sm2Button('primary', false, 'sm')} onClick={refazer}>{isPt ? 'Refazer' : 'Rebuild'}</button>
             </div>
           </div>
         )}
@@ -463,10 +463,10 @@ function TalentModal(p: ModalProps) {
         {p.pickable && (
           <div data-talent-assign style={{ display: 'grid', gap: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }} role="group" aria-label={isPt ? 'Pontos a atribuir' : 'Points to assign'}>
-              <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" data-talent-step="down" disabled={p.qtd <= 0}
+              <button type="button" style={sm2Button('outline', p.qtd <= 0, 'sm')} data-talent-step="down" disabled={p.qtd <= 0}
                 onClick={() => p.setQtd(Math.max(0, p.qtd - 1))} aria-label={isPt ? 'Menos um ponto' : 'One point less'}>−</button>
               <span className="sm2-num" data-talent-qty aria-live="polite" style={{ minWidth: 28, textAlign: 'center', fontSize: 20 }}>{p.qtd}</span>
-              <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" data-talent-step="up" disabled={p.qtd >= p.espaco}
+              <button type="button" style={sm2Button('outline', p.qtd >= p.espaco, 'sm')} data-talent-step="up" disabled={p.qtd >= p.espaco}
                 onClick={() => p.setQtd(Math.min(p.espaco, p.qtd + 1))} aria-label={isPt ? 'Mais um ponto' : 'One point more'}>+</button>
             </div>
             <p className="sm2-stats-s sm2-num" data-talent-preview style={{ margin: 0, textAlign: 'center' }}>
@@ -478,7 +478,7 @@ function TalentModal(p: ModalProps) {
         )}
         {p.takeBack && (
           <div style={{ display: 'grid', gap: 4 }}>
-            <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-ghost" data-talent-respec-one={p.id} disabled={!p.takeBack.can} onClick={p.takeBack.run}
+            <button type="button" style={sm2Button('ghost', !p.takeBack.can, 'sm')} data-talent-respec-one={p.id} disabled={!p.takeBack.can} onClick={p.takeBack.run}
               aria-label={isPt ? `Tirar um ponto de ${p.name} (${p.takeBack.cost} Bits)` : `Take one point back from ${p.name} (${p.takeBack.cost} Bits)`}>
               {isPt ? 'Tirar um ponto' : 'Take one point back'} <BitsAmount value={p.takeBack.cost} size={16} style={{ color: 'inherit' }} />
             </button>
@@ -487,8 +487,8 @@ function TalentModal(p: ModalProps) {
         )}
         {/* §316c (13/11/2026, dono): modal branco e pequeno NÃO usa o CTA do site (pesado demais) — o par padrão do app, em linha. */}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-talent-cancel onClick={p.onCancel}>{isPt ? 'Cancelar' : 'Cancel'}</button>
-          <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-talent-confirm disabled={!p.pickable || p.qtd <= 0} onClick={p.onConfirm}>{isPt ? 'Confirmar' : 'Confirm'}</button>
+          <button type="button" style={sm2Button('quiet', false, 'sm')} data-talent-cancel onClick={p.onCancel}>{isPt ? 'Cancelar' : 'Cancel'}</button>
+          <button type="button" style={sm2Button('primary', !p.pickable || p.qtd <= 0, 'sm')} data-talent-confirm disabled={!p.pickable || p.qtd <= 0} onClick={p.onConfirm}>{isPt ? 'Confirmar' : 'Confirm'}</button>
         </div>
       </div>
     </div>

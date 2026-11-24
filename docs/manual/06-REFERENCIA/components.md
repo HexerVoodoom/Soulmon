@@ -630,6 +630,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Props principais:** `EditHomeProps` — `language`, `ownedFurniture`, `equippedDecor`, `equippedBackground`, `onSave(decor)`, `onClose`, `onOpenShop?`.
 **Exports:** `EditHomeScreen`, `EditHomeProps`.
 **Estado/efeitos relevantes:** `draft` (cópia de `equippedDecor`) e `picking` (espaço aberto); reusa `PetStageDecor` para desenhar o rascunho; Salvar só fica ativo com mudança; o pet fica de fora.
+**Cristal Fundador (§511):** peça com `slotsPermitidos:'chao'` desenha em qualquer espaço de chão (caixa via `slotParaItem`), no máximo uma vez; fora do chão ou duplicada não desenha.
 **Chamado por:** `components/SettingsPage.tsx` (`profile.editHome`, montado no `App.tsx` com `handleSaveHomeDecor`, que grava o mesmo `equippedDecor` da loja).
 **Régua:** `src/components/perfil/EditHomeScreen.render.test.tsx`.
 
@@ -743,7 +744,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Avisos do arquivo:** a Hexsmith auto-equipa o HEX só em Porta vazia (`applyServerHexForge`); "Equipar agora" é o que troca quando a Porta já tinha outro. A poção é criada no cliente (`craftPotion`), sem servidor: o "confirmado" é o `onCraft` devolver diferente de `false`.
 
 ### `src/components/FundadorAvisoModal.tsx`
-**Dono de:** aviso do Conjunto Fundador (23/11/2026, REGISTRO §511): popup central (mesma composição do `ForgeResultModal`) com a arte, o nome PT/EN e a frase do(s) prêmio(s) ganho(s).
+**Dono de:** aviso do Conjunto Fundador (23/11/2026, REGISTRO §523): popup central (mesma composição do `ForgeResultModal`) com a arte, o nome PT/EN e a frase do(s) prêmio(s) ganho(s).
 **Props principais:** `FundadorAvisoModalProps` — `language`, `premios` (≥ 1), `dias`, `onClose`, `onEquip(premio)`.
 **Exports:** `FundadorAvisoModal(props)`, `FUNDADOR_EQUIPAVEIS`.
 **Estado/efeitos relevantes:** nenhum; prêmio único equipável (fundo, moldura, retrato) mostra "Equipar"; vários de uma vez (conta existente) = grade, só "Fechar"; Cristal só "Fechar".
@@ -2149,11 +2150,11 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Uma peça por tipo (07/10/2026, pedido do dono):** o card é UM por slot (3 no total: Núcleo/Carapaça/Rastro), mostrando a peça possuída (o tier mais alto) com o nome do tier ("Copper Carapace"/"Carapaça de cobre"…) já equipada, e o ÚNICO botão é Upgrade (+ "Refazer escolha" dentro de "Escolhas feitas"). Sem "Equip"/"Equipar" e sem "Tirar". Peça ainda não obtida: card informativo "Vem da missão de X", sem botão. `sanitizeEquipment` (cliente e `_equipment.js`) deixa só o tier mais alto por slot; `applyForgeGrant` de um tier maior SUBSTITUI a peça anterior e herda nível e escolhas.
 O Soulsmith (07/10/2026, lazy): 9 peças em cards (Lv N → Lv N+1 / Max, bônus, custo e saldo em chips, botão Upgrade; recusa em texto), modal de escolha A/B e Refazer escolha (Bits/fragmentos). Substituiu a `EquipmentCard` (compra por Bits). Regras em `utils/forge.ts`/`forgeActions.ts`. **Não existe "Tirar"/"Unequip"** (pedido do dono, 07/10/2026): as peças são partes da alma, aprimoradas; o selo diz "Parte da sua alma"/"Part of your soul" e `applyUnequip` foi apagada. O `Equip` só sobra para trocar entre tiers do mesmo slot.
 **Régua:** `src/components/ForgeCard.render.test.tsx`.
-**Sync 09/11/2026 (`5229b1be..62f204e1b`):** prop `view?: 'list' | 'map'` (padrão `list`) e `onBack`: `map` desenha o Soulsmith como mapa de chakras (`forge/VitraMap`, balão com as duas opções de aprimoramento, `pop`/`popChoice`); as regras e as recusas são as mesmas nos dois; `runUpgrade` serve ao modal da lista e ao balão. Cada peça mostra o bônus de atributo que dá agora (`bonusTexto`); `forgeReadySlots` acende o indicador do prédio. Entrada: `AreaView` monta `<ForgeCard view="list">` DENTRO da `AreaSheet` do lote `ferreiro` (23/11/2026, REGISTRO §506); `view="map"` fica de reserva (sem uso em produção).
+**Sync 09/11/2026 (`5229b1be..62f204e1b`):** prop `view?: 'list' | 'map'` (padrão `list`) e `onBack`: `map` desenha o Soulsmith como mapa de chakras (`forge/VitraMap`, balão com as duas opções de aprimoramento, `pop`/`popChoice`); as regras e as recusas são as mesmas nos dois; `runUpgrade` serve ao modal da lista e ao balão. Cada peça mostra o bônus de atributo que dá agora (`bonusTexto`); `forgeReadySlots` acende o indicador do prédio. Entrada: `AreaView` monta `<ForgeCard view="map" inline>` (a ForgeCard original: figura humanoide + 3 chakras; `inline` = sem tela cheia, sem moldura de tela e sem barra própria, palco na largura do modal) DENTRO da `AreaSheet` do lote `ferreiro` (23/11/2026, REGISTRO §513, revisto: a lista `view="list"` foi rejeitada pelo dono).
 
 
 ### `src/components/SoulsmithSheet.tsx` (removido em 23/11/2026)
-Removido a pedido do dono (a folha com texto e botão intermediários não volta): o lote `ferreiro` abre a `AreaSheet` COM a Vitra (retrato + fala de `areaNpcVoice`, como a Hexsmith) e a `ForgeCard` (`view="list"`) rola DENTRO dela; sem tela cheia (a tentativa de 23/11, #1130, foi revertida) e com o ✕ único da folha.
+Removido a pedido do dono (a folha com texto e botão intermediários não volta): o lote `ferreiro` abre a `AreaSheet` COM a Vitra (retrato + fala de `areaNpcVoice`, como a Hexsmith) e a `ForgeCard` (`view="map" inline`) rola DENTRO dela; sem tela cheia (a tentativa de 23/11, #1130, foi revertida) e com o ✕ único da folha.
 **Régua:** `src/components/nav/areaLotsNovos.test.ts`, `src/components/nav/AreaView.forja.render.test.tsx`.
 
 
@@ -2388,10 +2389,15 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 **Dono de:** o tutorial de primeira vez dos jogos do Ateliê da Mente: 4 passos curtos por jogo (EN+PT), demonstrações em CSS (quadro fixo com movimento reduzido), "Próximo"/"Pular"/"Entendi, jogar"; reabre sob demanda pelo "Ver o tutorial" do "Como se joga" sem gravar nada. Vive no chunk lazy de cada jogo. O modo desafio do Calabouço não o recebe.
 **Chamado por:** `EcoGame.tsx`, `ZipGame.tsx`, `PatchesGame.tsx`. **Régua:** `mindTutorial.render.test.tsx`.
 
+### `src/components/DriveAcordeao.tsx`
+**Dono de:** o accordion do Drive (extraído do `BestiaryCollection` em 23/11/2026): `Acordeao({ id, titulo, contagem?, aberto, onToggle })` (cabeçalho-botão com `aria-expanded`/`aria-controls`, corpo `hidden`) e `useAcordeaoFechados()` (ids fechados no storage). **Chamado por:** `BestiaryCollection.tsx`, `ElementDex.tsx`. **Régua:** `BestiaryCollection.acordeao.render.test.tsx`, `ElementDex.drive.render.test.tsx`.
+
 ### `src/components/ElementDex.tsx`
 **Dono de:** a aba "Elemento" da Biblioteca (27/10/2026): grade dos 20 base + 190 derivados; trancado = "?" sem nome, ícone nem id no DOM; destrancado abre uma `RitualDialog` com ícone grande, nome, composição (derivado) e forte/fraco contra (o que ainda está trancado ali aparece "?"). **Exports:** `ElementDex({ defeated, language })`, `dexElementName`. **Chamado por:** `LibraryPage.tsx`. **Régua:** `LibraryPage.abas.render.test.tsx`.
 
 **Sync 23/11/2026 (P5):** o modal de um elemento BASE mostra, acima da composição e das vantagens, o texto aprovado do dono (`[data-element-text]`, de `utils/elementoTextos.data.ts`); combinado e curado seguem sem texto. **Régua:** `src/components/ElementDex.textos.render.test.tsx`.
+
+**Sync 23/11/2026 (P5, accordion):** os chips de categoria saíram; Novo (CheckRow) e Base/Comb II/III/IV/Special viraram seções do MESMO accordion do Bestiário (`DriveAcordeao.tsx`: `Acordeao` + `useAcordeaoFechados`, estado em `DRIVE_ACORDEAO_FECHADOS`; ids `dex-novo`, `dex-base`…, cabeçalho com "destrancados / total"). Com filtro (Novo/bases) as seções vazias somem. **Régua:** `ElementDex.drive.render.test.tsx`.
 
 **Sync 23/11/2026 (P5/24):** a aba ganhou chips de categoria (`[data-element-cat]`: Base, Comb II, Comb III, Comb IV, Special; `utils/elementoCategoria.ts`) e a caixa "Novo" (`[data-element-only-new]`, só destrancados com selo); combinam em E com o filtro por bases. A ficha mora em `ElementModal.tsx` (`dexElementName` segue reexportado). O cabeçalho `X / Y` já existia (PT/EN iguais).
 

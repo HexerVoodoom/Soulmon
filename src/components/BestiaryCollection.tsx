@@ -1,4 +1,4 @@
-import { useCallback, useId, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 import { RitualDialog } from './ritual/RitualKit';
 import { elementIcon } from '../utils/elementIconArt';
 import { dexElementName, ElementModal } from './ElementModal';
@@ -10,8 +10,7 @@ import { STAGE_NAMES } from '../utils/oracle/base';
 import { NewBadge } from './LibraryNewBadge';
 import { BOSS_ROSTER, bossArt, bossText } from '../data/bossRoster';
 import type { StrayPlayerSeen } from '../utils/strayPlayers';
-import { readLocal, writeLocal } from '../utils/safeStorage';
-import { STORAGE_KEYS } from '../utils/storageKeys';
+import { Acordeao, useAcordeaoFechados } from './DriveAcordeao';
 import { elementMatchesBases, selectedBases } from '../utils/elementPotion';
 
 /**
@@ -24,38 +23,6 @@ import { elementMatchesBases, selectedBases } from '../utils/elementPotion';
 // Nome do estágio = o do jogo (STAGE_NAMES), nunca Rookie/Champion/Ultimate/Mega (decisão do dono, 09/11/2026).
 const STAGE_LABEL_KEY: Record<string, keyof typeof STAGE_NAMES> = { rookie: 'rookie', champion: 'champion', ultimate: 'perfeito', mega: 'mega', ultra: 'ultra' };
 
-/** Estado recolhido por nível (Drive em accordion, 18/11/2026): lista dos níveis FECHADOS; sem storage, tudo aberto. */
-const ACC_KEY = STORAGE_KEYS.DRIVE_ACORDEAO_FECHADOS;
-function lerFechados(): string[] {
-  try {
-    const v = JSON.parse(readLocal(ACC_KEY) ?? '[]');
-    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
-  } catch { return []; }
-}
-
-function Chevron() {
-  return (
-    <svg className="sm2-acc-chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-  );
-}
-
-/** Seção recolhível: cabeçalho-botão (setinha + nome + "vistos/total", sempre visível) e o corpo em `hidden` quando fechada. */
-function Acordeao({ id, titulo, contagem, aberto, onToggle, children }: { id: string; titulo: string; contagem: string; aberto: boolean; onToggle: () => void; children: ReactNode }) {
-  const corpo = `${useId()}-corpo`;
-  return (
-    <div data-bestiary-stage={id}>
-      <h3 className="sm2-acc-h">
-        <button type="button" className="sm2-acc-btn" aria-expanded={aberto} aria-controls={corpo} data-acc-toggle={id} onClick={onToggle}>
-          <Chevron />
-          <span className="sm2-acc-nome">{titulo}</span>
-          <span className="sm2-acc-cont sm2-num" data-acc-count={id}>{contagem}</span>
-        </button>
-      </h3>
-      <div id={corpo} hidden={!aberto}>{children}</div>
-    </div>
-  );
-}
-
 /** Bosses ainda não têm registro de "visto" no save (REGISTRO §475): `bossesSeen` vazio = todos em silhueta. */
 export function BestiaryCollection({ seen, language = 'en-US', isNew, players, playersNew, bases, bossesSeen, defeatedElements }: { defeatedElements?: readonly string[]; seen: readonly string[] | undefined; language?: string; isNew?: ReadonlySet<string>; players?: readonly StrayPlayerSeen[]; playersNew?: ReadonlySet<string>; bases?: readonly (string | null)[]; bossesSeen?: readonly string[] }) {
   const isPt = language === 'pt-BR';
@@ -66,12 +33,7 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
   // P5/24.6: o ícone do elemento da criatura abre o MESMO modal do dex, só se o elemento já foi destrancado.
   const [elemId, setElemId] = useState<string | null>(null);
   const elemUnlocked = useMemo(() => dexUnlockedSet(defeatedElements), [defeatedElements]);
-  const [fechados, setFechados] = useState<string[]>(lerFechados);
-  const alternar = useCallback((id: string) => setFechados(prev => {
-    const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
-    writeLocal(ACC_KEY, JSON.stringify(next)); // sem storage: vale só nesta visita
-    return next;
-  }), []);
+  const { fechados, alternar } = useAcordeaoFechados();
   const bossSet = useMemo(() => new Set(bossesSeen ?? []), [bossesSeen]);
   const bossVistos = BOSS_ROSTER.filter(b => bossSet.has(b.id)).length;
   const openEntry = openKey ? entries.find(e => e.key === openKey) : undefined;

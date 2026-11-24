@@ -12,12 +12,12 @@ describe('TaskAutoTag', () => {
     const tag = container.querySelector('[data-task-auto-tag]') as HTMLElement;
     expect(tag.getAttribute('role')).toBe('status');
     expect(tag.getAttribute('aria-label')).toBe('Tarefa concluída automaticamente: Caminhar');
-    expect(tag.lastElementChild?.textContent).toBe('Tarefa');
+    expect(tag.lastElementChild?.textContent).toBe('Caminhar'); // o NOME da tarefa, não a palavra genérica
     expect(container.querySelector('[data-task-auto-check]')?.firstElementChild).not.toBeNull(); // o check marcado (CheckMark) já vem desenhado
   });
   it('EN: "Task"', () => {
     const { container } = render(<TaskAutoTag name="Walk" language="en-US" onDone={() => {}} />);
-    expect(container.querySelector('[data-task-auto-tag]')?.lastElementChild?.textContent).toBe('Task');
+    expect(container.querySelector('[data-task-auto-tag]')?.lastElementChild?.textContent).toBe('Walk');
     expect(container.querySelector('[data-task-auto-tag]')?.getAttribute('aria-label')).toBe('Task completed automatically: Walk');
   });
   it('borda arredondada dourada (estilo do NoticeToast) e NÃO bloqueia o toque nos botões de cuidado', () => {

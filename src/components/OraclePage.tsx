@@ -22,6 +22,7 @@ import { signLabel } from '../utils/soulProfile/astrology/labels';
 import type { SoulProfile } from '../utils/soulProfile/profile';
 import { CityPicker } from './CityPicker';
 import { SoulTestItem, itemPrompt } from './SoulTestItem';
+import { sm2Button } from './form/FormKit';
 
 interface OraclePageProps {
   language?: Language;
@@ -312,10 +313,6 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
   const titleCls = 'text-[color:var(--sm-ink)]';
   const mutedCls = 'text-[color:var(--sm-muted)]';
   const inputCls = 'sm-px-field w-full px-2 py-1.5';
-  const btnCls = 'sm-btn';
-  const btnStyle = {};
-  const smallBtnCls = 'sm-btn sm-btn-secondary text-xs px-2 py-1';
-  const smallBtnStyle = {};
   const selectCls = 'sm-px-field px-1.5 py-1 text-xs';
   const mono = { fontFamily: 'var(--sm-font-pixel)' } as const;
 
@@ -532,8 +529,8 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
           <div className="flex gap-2 pt-1">
             <button
               onClick={handleReveal}
-              className={`flex-1 ${btnCls}`}
-              style={{ ...mono, ...btnStyle, opacity: canReveal ? 1 : 0.5 }}
+              className="flex-1"
+              style={{ ...sm2Button('primary', !canReveal), opacity: canReveal ? 1 : 0.5 }}
               disabled={!canReveal}
             >
               {profile ? (isPt ? '🔮 Refazer leitura' : '🔮 Redo reading') : (isPt ? '✨ Revelar leitura' : '✨ Reveal reading')}
@@ -901,8 +898,8 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
           {/* Botão: gerar criatura */}
           <button
             onClick={handleGenerateCreature}
-            className={`w-full ${btnCls}`}
-            style={{ ...mono, ...btnStyle }}
+            className="w-full"
+            style={sm2Button('primary')}
           >
             {creature
               ? (isPt ? '🎲 Gerar outra variação' : '🎲 Generate another variation')
@@ -943,8 +940,7 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
                 <button
                   onClick={handleGenerateImages}
                   disabled={genBusy}
-                  className={smallBtnCls}
-                  style={{ ...mono, ...smallBtnStyle, opacity: genBusy ? 0.5 : 1 }}
+                  style={{ ...sm2Button('outline', genBusy, 'sm'), opacity: genBusy ? 0.5 : 1 }}
                 >
                   {genBusy
                     ? `⏳ ${genProgress.done}/${genProgress.total}`
@@ -952,7 +948,7 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
                       ? `📋 ${isPt ? 'Gerar (debug)' : 'Generate (debug)'}`
                       : `🎨 ${isPt ? 'Gerar imagens' : 'Generate images'}`}
                 </button>
-                <button onClick={copyAllPrompts} className={smallBtnCls} style={{ ...mono, ...smallBtnStyle }}>
+                <button onClick={copyAllPrompts} style={sm2Button('outline', false, 'sm')}>
                   📋 {isPt ? 'Prompts' : 'Prompts'}
                 </button>
               </div>
@@ -1005,8 +1001,7 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
                     </span>
                     <button
                       onClick={() => copyText(stage.imagePrompt, isPt ? 'Prompt copiado!' : 'Prompt copied!')}
-                      className={smallBtnCls}
-                      style={{ ...mono, ...smallBtnStyle, flexShrink: 0 }}
+                      style={{ ...sm2Button('outline', false, 'sm'), flexShrink: 0 }}
                     >
                       📋 Prompt
                     </button>

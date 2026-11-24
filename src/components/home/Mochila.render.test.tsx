@@ -69,7 +69,7 @@ function montar(over: Partial<Parameters<typeof Mochila>[0]> = {}) {
 
 /** Arrasta o item de (10, 400) até (x, y) e solta. */
 function arrastar(item: HTMLElement, x: number, y: number) {
-  fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0, pointerType: 'touch' });
+  fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0, pointerType: 'mouse' });
   act(() => {
     fireEvent.pointerMove(document, { clientX: 40, clientY: 350, pointerType: 'touch' });
     fireEvent.pointerMove(document, { clientX: x, clientY: y, pointerType: 'touch' });
@@ -102,7 +102,7 @@ describe('Mochila — usar arrastando até o pet', () => {
   it('TOCAR sem arrastar não usa — só seleciona e mostra "Usar"', () => {
     const { onUse } = montar();
     const item = screen.getByRole('button', { name: 'Maçã.exe × 3' });
-    fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0 });
+    fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0, pointerType: 'mouse' });
     // tremida de dedo abaixo do limiar ainda é toque
     fireEvent.pointerMove(document, { clientX: 10 + DRAG_THRESHOLD_PX - 2, clientY: 400 });
     fireEvent.pointerUp(document, { clientX: 12, clientY: 400 });
@@ -115,7 +115,7 @@ describe('Mochila — usar arrastando até o pet', () => {
   it('durante o arrasto a folha desce, o fantasma aparece e o pet acende quando o item está sobre ele', () => {
     const { container, onTargetChange } = montar();
     const item = screen.getByRole('button', { name: 'Maçã.exe × 3' });
-    fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0 });
+    fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0, pointerType: 'mouse' });
     act(() => { fireEvent.pointerMove(document, { clientX: 150, clientY: 150 }); });
     expect(container.ownerDocument.querySelector('.sm3-arrastando')).not.toBeNull();
     expect(container.ownerDocument.querySelector('.sm3-fantasma')).not.toBeNull();
@@ -129,7 +129,7 @@ describe('Mochila — usar arrastando até o pet', () => {
   it('pointercancel (o sistema tomou o gesto) nunca usa o item, mesmo sobre o pet', () => {
     const { onUse } = montar();
     const item = screen.getByRole('button', { name: 'Maçã.exe × 3' });
-    fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0 });
+    fireEvent.pointerDown(item, { clientX: 10, clientY: 400, button: 0, pointerType: 'mouse' });
     act(() => { fireEvent.pointerMove(document, { clientX: 150, clientY: 150 }); });
     act(() => { fireEvent.pointerCancel(document); });
     expect(onUse).not.toHaveBeenCalled();

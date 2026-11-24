@@ -20,6 +20,7 @@ import { Icon } from '../ui/Icon';
 import { InfoTip } from '../ui/InfoTip';
 import { decorName, rewardText, useClaBuilding, type ClaSalaProps } from './claUi';
 
+import { sm2Button } from '../form/FormKit';
 export const PRACA_VISOR_HEIGHT = 150;
 const W = 320;
 const H = PRACA_VISOR_HEIGHT;
@@ -118,7 +119,7 @@ export function SalaPraca({ saveId, language, t, guild, tz, reducedMotion, onRew
       {status === 'error' && (
         <>
           <p role="alert" className="sm2-lib-alert" data-praca-erro>{t('guild.cla.erro')}</p>
-          <button type="button" onClick={() => void recarregar(false)} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-outline sm2-guild-btn"><Icon name="refresh" size={20} />{t('guild.erro.tentar')}</button>
+          <button type="button" onClick={() => void recarregar(false)} style={{ ...sm2Button('outline', false, 'sm'), width: '100%' }}><Icon name="refresh" size={20} />{t('guild.erro.tentar')}</button>
         </>
       )}
       {view && (
@@ -137,11 +138,11 @@ export function SalaPraca({ saveId, language, t, guild, tz, reducedMotion, onRew
                   {t('guild.praca.lugar', { nome: s.slot + 1 })}{' · '}{s.item ? decorName(language, s.item) : t('guild.praca.lugar.vazio')}
                 </span>
                 {s.item && (
-                  <button type="button" data-praca-tirar={s.slot} disabled={ocupado} aria-disabled={ocupado ? true : undefined} onClick={() => void poeItem(s.slot, null)} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline">
+                  <button type="button" data-praca-tirar={s.slot} disabled={ocupado} aria-disabled={ocupado ? true : undefined} onClick={() => void poeItem(s.slot, null)} style={sm2Button('outline', ocupado, 'sm')}>
                     <Icon name="undo" size={20} />{t('guild.praca.lugar.tirar')}
                   </button>
                 )}
-                <button type="button" data-praca-escolher={s.slot} disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-expanded={escolhendo === s.slot} onClick={() => setEscolhendo(escolhendo === s.slot ? null : s.slot)} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline">
+                <button type="button" data-praca-escolher={s.slot} disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-expanded={escolhendo === s.slot} onClick={() => setEscolhendo(escolhendo === s.slot ? null : s.slot)} style={sm2Button('outline', ocupado, 'sm')}>
                   <Icon name="inventory_2" size={20} />{s.item ? t('guild.praca.lugar.trocar') : t('guild.praca.lugar.pos')}
                 </button>
               </li>
@@ -153,7 +154,7 @@ export function SalaPraca({ saveId, language, t, guild, tz, reducedMotion, onRew
             <ul className="sm2-grove-list" data-praca-itens>
               {livres.map(id => (
                 <li key={id}>
-                  <button type="button" data-praca-item={id} disabled={ocupado} onClick={() => void poeItem(escolhendo, id)} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" style={{ width: '100%', justifyContent: 'flex-start' }}>
+                  <button type="button" data-praca-item={id} disabled={ocupado} onClick={() => void poeItem(escolhendo, id)} style={{ ...sm2Button('outline', ocupado, 'sm'), width: '100%', justifyContent: 'flex-start' }}>
                     {DECOR_ART[id] && <img src={DECOR_ART[id]} alt="" width={24} height={24} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />}
                     {decorName(language, id)}
                   </button>
@@ -179,9 +180,7 @@ export function SalaPraca({ saveId, language, t, guild, tz, reducedMotion, onRew
                       disabled={ocupado || ja}
                       aria-disabled={ocupado || ja ? true : undefined}
                       aria-label={ja ? `${t('guild.praca.presente.enviado')}: ${nome}` : t('guild.praca.presente.aria', { nome })}
-                      onClick={() => void enviar(m.id!)}
-                      className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline"
-                    >
+                      onClick={() => void enviar(m.id!)} style={sm2Button('outline', ocupado || ja, 'sm')}>
                       <Icon name={ja ? 'check_circle' : 'volunteer_activism'} size={20} fill={ja ? 1 : 0} />
                       {ja ? t('guild.praca.presente.enviado') : t('guild.praca.presente.enviar')}
                     </button>
@@ -201,7 +200,7 @@ export function SalaPraca({ saveId, language, t, guild, tz, reducedMotion, onRew
                     <li key={g.id} data-praca-presente style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <Icon name="volunteer_activism" size={24} tone="primary" />
                       <span className="sm2-lib-s" style={{ flex: 1, minWidth: 0, margin: 0 }}>{t('guild.praca.recebidos.de', { nome })}</span>
-                      <button type="button" data-praca-abrir={g.id} disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-label={t('guild.praca.abrir.aria', { nome })} onClick={() => void abrir(g.id)} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary">
+                      <button type="button" data-praca-abrir={g.id} disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-label={t('guild.praca.abrir.aria', { nome })} onClick={() => void abrir(g.id)} style={sm2Button('primary', ocupado, 'sm')}>
                         {t('guild.praca.abrir')}
                       </button>
                     </li>

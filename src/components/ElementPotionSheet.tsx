@@ -8,6 +8,7 @@ import { isPotionUnlocked, canAffordPotion, potionCost, potionIngredients, potio
 import type { Language } from '../utils/i18n';
 import { Icon as UiIcon } from './ui/Icon';
 import { ELEMENTO_NEUTRO_ID } from '../utils/elementoNeutro';
+import { favoritesFirst, readPotionFavorites, toggleFavorite, writePotionFavorites } from '../utils/potionFavorites';
 import { NEUTRO_POTION_COSTS, neutroProgresso } from '../utils/neutroPotion';
 
 /**
@@ -42,13 +43,16 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
   /** Poção recém-criada (base ou composta) para o modal de resultado: um por confirmação. */
   const [result, setResult] = useState<string | null>(null);
 
+  const [favs, setFavs] = useState<Set<string>>(readPotionFavorites);
+  const toggleFav = (id: string) => setFavs(f => { const n = toggleFavorite(f, id); writePotionFavorites(n); return n; });
+
   // O Neutro é uma poção como as outras: entra por último (e some quando há base escolhida no filtro, pois não contém nenhuma).
   const list = useMemo(() => {
     const l = potionListFor(essences, inventory, slots, unlocked);
-    if (selectedBases(slots).length > 0) return l;
+    if (selectedBases(slots).length > 0) return favoritesFirst(l, favs);
     const n = neutroProgresso(essences, inventory);
-    return [...l, { id: ELEMENTO_NEUTRO_ID, essences: [], potions: [], enoughEssences: n.completo, canCraft: n.completo }];
-  }, [essences, inventory, slots, unlocked]);
+    return favoritesFirst([...l, { id: ELEMENTO_NEUTRO_ID, essences: [], potions: [], enoughEssences: n.completo, canCraft: n.completo }], favs);
+  }, [essences, inventory, slots, unlocked, favs]);
   const setSlot = (i: number, id: string | null) => { setSlots(s => s.map((v, j) => (j === i ? id : v))); setShown(PAGE); setDone(null); };
   const back = () => { if (sel) setSel(null); else onBack(); };
 
@@ -73,6 +77,8 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
     resultTitle: isPt ? 'Poção criada' : 'Potion created',
     resultEffect: isPt ? 'Dê a poção ao Soulmon em Arquivos: vale só para a próxima evolução.' : 'Give the potion to your Soulmon in Files: it only affects the next evolution.',
     close: isPt ? 'Fechar' : 'Close',
+    favOn: (n: string) => (isPt ? `Tirar ${n} dos favoritos` : `Remove ${n} from favorites`),
+    favOff: (n: string) => (isPt ? `Favoritar ${n}` : `Favorite ${n}`),
     potionOf: (id: string) => (isPt ? 'Poção de ' : '') + elName(id, isPt) + (isPt ? '' : ' potion'),
   };
   const art = (id: string, big: boolean) => (potionArt(id)
@@ -94,7 +100,12 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
         <div className="sm2-pocao-head">
           {art(r.id, true)}
           <strong style={{ ...sm2Text, flex: 1, minWidth: 0 }}>{t.potionOf(r.id)}</strong>
-          <button type="button" data-potion-create={r.id} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" disabled={!r.canCraft} onClick={() => { setSel(r.id); setDone(null); }}>{t.create}</button>
+          {(() => { const on = favs.has(r.id); return (
+            <button type="button" data-potion-fav={r.id} className="sm2-pocao-fav" aria-pressed={on} aria-label={(on ? t.favOn : t.favOff)(t.potionOf(r.id))} onClick={() => toggleFav(r.id)}>
+              <UiIcon name="star" size={22} fill={on ? 1 : 0} tone={on ? 'gold' : 'inherit'} />
+            </button>
+          ); })()}
+          <button type="button" data-potion-create={r.id} style={sm2Button('primary', !r.canCraft, 'sm')} disabled={!r.canCraft} onClick={() => { setSel(r.id); setDone(null); }}>{t.create}</button>
         </div>
         <ul className="sm2-pocao-ing">
           {r.id === ELEMENTO_NEUTRO_ID && (() => { const n = neutroProgresso(essences, inventory); return (
@@ -123,7 +134,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
       footer={sel ? (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           {/* §316c (13/11/2026, dono): folha de poção é modal branco, fica com o botão padrão do app (não o CTA do site). */}
-          <button type="button" data-potion-confirm className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary" style={{ minWidth: 220 }} disabled={confirmDisabled}
+          <button type="button" data-potion-confirm style={{ ...sm2Button('primary', confirmDisabled, 'md'), minWidth: 220 }} disabled={confirmDisabled}
             onClick={() => { const ok = onCraft(sel) !== false; if (ok) { setDone(sel); setResult(sel); } setSel(null); }}>
             <UiIcon name="auto_awesome" size={22} tone="inherit" /><span>{t.confirmBtn}</span><Icon id={sel} size={24} />
           </button>
@@ -144,7 +155,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
                 {list.slice(0, shown).map(row)}
               </ul>
             )}
-            {list.length > shown && <button type="button" data-potion-more className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" onClick={() => setShown(n => n + PAGE)}>{t.more}</button>}
+            {list.length > shown && <button type="button" data-potion-more style={sm2Button('outline', false, 'sm')} onClick={() => setShown(n => n + PAGE)}>{t.more}</button>}
             <p style={sm2Hint}>{t.note}</p>
           </>
         )}

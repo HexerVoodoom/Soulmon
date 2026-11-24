@@ -852,6 +852,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/cristalFundador.ts`
 **Dono de:** o Cristal Fundador / Founder Crystal (`furn-cristal-fundador`): cosmético de concessão, `kind: 'furniture'`, espaço `floor-right`, `fits: 'any'`, **nunca à venda** (fora de `SHOP_ITEMS`/`TOURNAMENT_ITEMS`, `price: 0`, `unlock` de missão inexistente; entra por `injetarConcessoes` em `shop.ts`). Sempre aceso (`decorLuz.ts`, modo `sempre`), com a arte `assets/decor/furn-cristal-fundador.png` (168×168) e o fogo turquesa `assets/decor-fx/furn-cristal-fundador-chama.png` (folha 5×168, ~140 ms/quadro). Sem campo nem chave nova no save. **A entrega por progressão (Fundo/Moldura/Retrato/Cristal) ainda não existe: aguarda decisão do dono.**
+**Cristal em qualquer chão (REGISTRO §511):** `slotsPermitidos:'chao'` (aditivo em `ShopItem`); `petStage.ts` exporta `CHAO_SLOTS` (`rug`, `floor-left`, `floor-right`), `itemCabeNoSlot(item, slot)` e `slotParaItem(item, slotId)` (no tapete usa a caixa de móvel em pé); `applyDecorEquip` tira o item de outro espaço (um só); `editHome.decorOptionsForSlot`/`slotHoldsDrawnItem` seguem a mesma regra. Sem mudança de contrato do save.
 **Chamado por:** `catalogosNovos.ts`. **Régua:** `src/components/PetStageDecor.cristalFundador.render.test.tsx`, `src/utils/decorLuz.test.ts`.
 
 ### `src/utils/fundador.ts`
@@ -4377,7 +4378,7 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê. Sincronização
 **Regra de negócio:** `REGISTRO-DE-DECISOES.md` §113 (push ligado por padrão, eventos, teto) e §114 (cocô 2×/dia).
 
 ### `src/utils/prefetchOnboarding.ts`
-**Dono de:** o pré-download em segundo plano durante o onboarding (REGISTRO §510): escolhe o modo pela rede (Wi-Fi = tudo; resto = essencial), monta a fila a partir de `/prefetch-index.json` dentro do orçamento de quota e provoca os `fetch` (o SW guarda no `ASSET_CACHE`).
+**Dono de:** o pré-download em segundo plano durante o onboarding (REGISTRO §514): escolhe o modo pela rede (Wi-Fi = tudo; resto = essencial), monta a fila a partir de `/prefetch-index.json` dentro do orçamento de quota e provoca os `fetch` (o SW guarda no `ASSET_CACHE`).
 **Exports:** `escolherModo`, `montarFila`, `orcamentoDe`, `iniciarPrefetchOnboarding(deps?)` (devolve `cancelar` com `.pronto`), `FRACAO_QUOTA`, `TETO_SEM_ESTIMATIVA`, `PARALELO`.
 **Chamado por:** `src/components/SoulmonOnboarding.tsx` (import dinâmico, só no modo onboarding).
 **Régua:** `src/utils/prefetchOnboarding.test.ts`, `src/deploy/prefetchIndex.contract.test.ts`, `tests/gerar-prefetch-index.test.ts`.
@@ -4386,6 +4387,12 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê. Sincronização
 **Dono de:** o envio do modal de feedback da Home a `POST /api/feedback`. Só tipo, texto e diagnóstico não pessoal (versão, build, plataforma, idioma); `Authorization` só quando há login (limite por conta no servidor).
 **Exports:** `FeedbackType`, `FEEDBACK_TYPES`, `FEEDBACK_MAX` (2000), `buildFeedbackPayload(type, message, language)`, `sendFeedback(type, message, language, fetchImpl?)` → `{ ok, delivered }` ou `{ ok: false, reason: invalid | rate | server | network }`; nunca lança.
 **Quem usa:** `components/nav/HomeFeedbackButton.tsx`.
+
+### `src/utils/feedbackFlag.ts`
+**Dono de:** a flag de versão do botão de feedback/bug da Home (24/11/2026): visível por padrão (beta); `VITE_HIDE_FEEDBACK_BUTTON=1` (ou `true`) o esconde só na versão final. Não toca o save.
+**Exports:** `isFeedbackButtonVisible()`.
+**Quem usa:** `components/nav/HomeFeedbackButton.tsx`.
+**Régua:** `components/nav/HomeFeedbackButton.flag.render.test.tsx`.
 
 ### `src/utils/recargaPorChunk.ts`
 
@@ -4987,3 +4994,6 @@ Dono da regra "OU ampulheta OU relógio" das criaturas de tempo (§324): `umMoti
 - `companheiroInvocado.ts`: novos `NOMES_ARQUETIPO_EVOCACAO` e `tituloEEvocador(t)`; `GameState.soulmonClassTitles` lido quando falta o cache do estágio (só o positivo).
 - `hexsmithCopy.ts`: `HEX_CROWN_FAMILY_DESC: Record<SpecialFamily, Par>` cobre as 10 famílias.
 - `riftSets.ts`: novos `riftFloorName(elementName, part)` ("Fogo 1"/"Fogo 2") e `riftSetName(elementName, isPt)` ("Fogo 1 e 2"/"Fire 1 & 2"). `riftMapCopy.ts`: `askBody(label, setName)`; `nodeAria` com o nome do conjunto primeiro.
+
+### `src/utils/potionFavorites.ts`
+**Dono de:** as poções favoritas do Laboratório (Vesca), por aparelho em localStorage (`soulmon:potionFavorites`, fora do save na nuvem): `readPotionFavorites`, `writePotionFavorites` (com try/catch), `toggleFavorite` (puro) e `favoritesFirst` (favoritas no topo, ordem estável). **Chamado por:** `src/components/ElementPotionSheet.tsx` (estrela com `aria-pressed`, alvo de 44px). **Régua:** `potionFavorites.test.ts`.

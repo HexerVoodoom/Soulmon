@@ -1,6 +1,6 @@
 import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
-import { DECOR_SLOTS, SLOT_ORDER, decorFitsSetting, decorRenderBox, slotBoxStyle, type SlotId } from '../utils/petStage';
+import { SLOT_ORDER, decorFitsSetting, decorRenderBox, itemCabeNoSlot, slotBoxStyle, slotParaItem, type SlotId } from '../utils/petStage';
 import { DECOR_ART, DECOR_CHAMA } from '../utils/decorArt';
 import { ArcadeTela } from './ArcadeTela';
 import campfireBase from '../assets/decor-fx/furn-campfire-base.png';
@@ -52,12 +52,17 @@ export const DRAW_ORDER: readonly SlotId[] = ['wall', ...SLOT_ORDER.filter(s => 
 function itensDoPalco(equippedDecor: Partial<Record<SlotId, string>>, equippedBackground: string | null) {
   const bg = equippedBackground ? PET_BACKGROUNDS[equippedBackground] : null;
   if (!bg) return [];
+  const vistos = new Set<string>();
   return DRAW_ORDER.flatMap(slotId => {
     const itemId = equippedDecor[slotId];
     if (!itemId || !bg.slots.includes(slotId)) return [];
     const item = ALL_SHOP_ITEMS.find(i => i.id === itemId && i.kind === 'furniture');
     if (!item || !decorFitsSetting(item.fits ?? 'any', bg.setting)) return [];
-    return [{ slotId, item, slot: DECOR_SLOTS[slotId] }];
+    if (item.slotsPermitidos) { // peça de chão livre: só em espaço de chão e uma vez só (save adulterado/duplicado desenha o 1º)
+      if (!itemCabeNoSlot(item, slotId) || vistos.has(item.id)) return [];
+      vistos.add(item.id);
+    }
+    return [{ slotId, item, slot: slotParaItem(item, slotId) }];
   });
 }
 
@@ -86,6 +91,7 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
   if (!bg) return null;
 
   const isPt = language === 'pt-BR';
+  const caixas = new Map(itensDoPalco(equippedDecor, equippedBackground).map(i => [i.slotId, i.slot] as const)); // mesma regra do palco (cabe, chão livre, sem duplicar)
 
   return (
     <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }} aria-hidden="true">
@@ -96,8 +102,8 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
         const item = ALL_SHOP_ITEMS.find(i => i.id === itemId && i.kind === 'furniture');
         if (!item) return null;
         if (!decorFitsSetting(item.fits ?? 'any', bg.setting)) return null;
-
-        const slot = DECOR_SLOTS[slotId];
+        const slot = caixas.get(slotId);
+        if (!slot) return null;
         const box = slotBoxStyle(slot);
         const label = isPt ? item.namePt : item.nameEn;
         const art = item.id === 'furn-campfire' ? campfireBase : DECOR_ART[item.id]; // a Fogueira do palco é a arte SEM fogo em 2 camadas (base: toras e pedras; frente: aro e postes); o fogo do pixelfx passa ENTRE as duas (§481)

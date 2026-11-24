@@ -502,7 +502,7 @@ export function AreaView(props: AreaViewProps) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // #187: um atalho a `laboratorio.pet` (Arquivo) abre o Perfil JÁ na seção Arquivo — a visita do prédio do Arquivo conta como antes.
   /* O link do hábito ("Ir ao Caderno") traz o formato em `initialSection`; vale só para a abertura vinda dele. */
-  const [cadernoFormatoIni] = useState<'gratidao' | 'livre' | undefined>(() => (props.initialSheet === 'caderno' && (props.initialSection === 'gratidao' || props.initialSection === 'livre') ? (props.initialSection as 'gratidao' | 'livre') : undefined));
+  const [cadernoFormatoIni] = useState<'gratidao' | 'livre' | 'importa' | undefined>(() => (props.initialSheet === 'caderno' && (props.initialSection === 'gratidao' || props.initialSection === 'livre' || props.initialSection === 'importa') ? (props.initialSection as 'gratidao' | 'livre' | 'importa') : undefined));
   const [guildaSection, setGuildaSection] = useState<'cla' | 'amigos'>(props.initialSection === 'amigos' && !initialDemoBlocked ? 'amigos' : 'cla');
   useEffect(() => {
     if (area === 'laboratorio' && props.initialSheet && !initialLock) {
@@ -744,7 +744,7 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'caderno' && <CadernoSheet formatoInicial={cadernoFormatoIni} language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'fenda' && <MasmorraSheet language={language} saveId={props.guild.saveId} bitsToday={play.minigameBitsToday} onStart={() => { setRiftAuto(true); if (props.naMasmorra) { setSheet(null); setGame('masmorra'); } else start('masmorra'); }} onMap={() => { setSheet(null); setRiftMapOpen(true); }} />}
             {/* 23/11/2026 (dono): a folha do Soulsmith abre COM a Vitra (fala + retrato, como na Hexsmith) e a Forja de Alma (ForgeCard, lista de upar) mora DENTRO dela, rolável; o ✕ é o da folha. */}
-            {open?.id === 'ferreiro' && <ForgeCard language={language} view="list" />}
+            {open?.id === 'ferreiro' && <ForgeCard language={language} view="map" inline />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
             {open?.id === 'hexsmith' && <HexsmithSheet language={language} sprite={props.guild.mySprite} demoCharacterId={props.demoCharacterId} evolutionStage={props.evolutionStage} skills={props.skills} petElement={props.petElement} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={startSalao} funStatus={play.funSession?.status} onBuyTickets={play.funSession?.onBuy ? () => play.funSession!.onBuy!() : undefined} refused={funRefused} />}

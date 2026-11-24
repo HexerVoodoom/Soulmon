@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ModalSheet } from './form/FormKit';
+import { ModalSheet, sm2Button } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -28,8 +28,8 @@ export function ForgeResultModal({ language, title, name, effect, art, onClose, 
     <ModalSheet open placement="center" titulo="inline" sobreTelas title={title} onClose={onClose} language={language} maxWidth={328}
       footer={(
         <div className="sm2-forja-resultado-acoes">
-          {primary && <button type="button" data-forge-result-primary className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary" onClick={primary.onClick}>{primary.label}</button>}
-          <button type="button" data-forge-result-close className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-outline" onClick={onClose}>{closeLabel}</button>
+          {primary && <button type="button" data-forge-result-primary style={sm2Button('primary', false, 'md')} onClick={primary.onClick}>{primary.label}</button>}
+          <button type="button" data-forge-result-close style={sm2Button('outline', false, 'md')} onClick={onClose}>{closeLabel}</button>
         </div>
       )}>
       <div data-forge-result className="sm2-forja-resultado" role="status">

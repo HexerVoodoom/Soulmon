@@ -12,6 +12,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { lotIconArt, lotIconName } from '../../utils/lotIcons';
 import { RewardPreview } from '../ui/RewardPreview';
+import { InfoTip } from '../ui/InfoTip';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { BossFightScreen, type BossFightMe } from './BossFightScreen';
 import { FeiraTrailPlay } from './FeiraTrailPlay';
@@ -262,17 +263,16 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
       <div data-feira-evento={evento.kind} data-feira-k={evento.k}>
         {phase === 'home' && evento.kind === 'boss' && (
           <div style={{ textAlign: 'center' }}>
-            {entry && <img src={bossArt(evento.bossId) ?? ''} alt="" width={96} height={96} style={{ imageRendering: 'pixelated', display: 'block', margin: '0 auto 8px' }} data-feira-chefe-arte />}
-            <p style={{ ...sm2Text, margin: '0 0 4px' }} data-feira-linha>{t('boss.line', { name: bossName })}</p>
-            <p style={{ ...sm2Hint, margin: '0 0 8px' }}>{t('boss.level', { level: evento.level })}</p>
-            <div
-              role="meter" aria-label={t('boss.pool')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(evento.bossHpPct)}
-              style={{ height: 10, borderRadius: 6, background: 'var(--sm2-surface-2)', overflow: 'hidden', margin: '0 auto 8px', maxWidth: 260 }} data-feira-pool={Math.round(evento.bossHpPct)}
-            >
-              <div style={{ width: `${Math.round(evento.bossHpPct)}%`, height: '100%', background: 'var(--sm2-primary-fill)' }} />
+            {/* A imagem do inimigo no lugar do HP (dono, 23/11/2026); a barra segue no DOM só como dado (data-feira-pool), sem desenhar HP. */}
+            <div data-feira-pool={Math.round(evento.bossHpPct)} role="img" aria-label={t('boss.pool')} style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', gap: 4 }}>
+              {entry && <img src={bossArt(evento.bossId) ?? ''} alt="" width={144} height={144} style={{ imageRendering: 'pixelated', display: 'block' }} data-feira-chefe-arte />}
+              <InfoTip language={language} label={isPt ? 'Como funciona o chefe' : 'How the boss works'} align="right">
+                <span style={{ display: 'block' }} data-feira-linha>{t('boss.line', { name: bossName })}</span>
+                <span style={{ display: 'block', marginTop: 6 }}>{t('boss.level', { level: evento.level })}</span>
+                <span style={{ display: 'block', marginTop: 6 }}>{evento.canAttack ? t('boss.shared') : t('boss.today')}</span>
+                {evento.canAttack && <span style={{ display: 'block', marginTop: 6 }} data-feira-mesmo-dia>{t('boss.sameDay')}</span>}
+              </InfoTip>
             </div>
-            <p style={{ ...sm2Hint, margin: 0 }}>{evento.canAttack ? t('boss.shared') : t('boss.today')}</p>
-            {evento.canAttack && <p style={{ ...sm2Hint, margin: '4px 0 0' }} data-feira-mesmo-dia>{t('boss.sameDay')}</p>}
           </div>
         )}
         {phase === 'home' && evento.kind === 'trail' && (

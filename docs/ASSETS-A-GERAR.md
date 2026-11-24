@@ -1295,3 +1295,14 @@ Código pronto (nº 268-271, `elementosLote5.data.ts`). **FEITOS (dono aprovou e
 | `furia` | Fúria/Fury (fogo, vigor, vileza) | Furiosk | falta | falta | `271-furia.png` FEITO | falta | falta | FEITO (champion, ultimate) |
 
 Total que falta: 4 ícones, 4 folhas de FX, 4 poções + 4 chips e 4 cenários (os 4 sprites rookie e as 8 formas já estão no repo). Ao instalar cada peça, tire o id da dívida declarada nos testes (`SEM_POCAO_AINDA` em `potionArt.test.ts`; `SEM_ARTE_PROPRIA` e `SEM_FORMA_AINDA` já saíram com a arte dos sprites) e rode `scripts/element-visual.py`, `element-paleta.py`, `element-silhueta.py`, `element-dominante.py` e `scripts/fx-facing.mjs` (os dados gerados `elementVisual/Paleta/Silhueta/Dominante.data.ts` e `fxFacingTable.ts` só ganham os 4 quando o ícone e o FX existirem).
+
+
+## 35. Estado consolidado em 24/11/2026 (relatórios das sessões)
+
+Legenda: **instalado**, **aprovado, não instalado**, **gerado, aguardando OK**, **pendente**. O inventário com caminhos e dimensões está em `INVENTARIO-ASSETS.md` (seção do estado da P6). Nada aqui foi reconferido abrindo os arquivos.
+
+- **Do §34 (lote 5):** os 12 sprites de Soulmon estão instalados e aprovados. Dos 4 elementos novos, ícones 96², FX v3 (7 peças), poções 128², chips Hexsmith 128² e cenários 360×640 estão **gerados, aguardando OK** em `E:\Soulmon-assets\p6-elementos-novos`; a linha "falta" da tabela do §34 vale só até o dono aprovar a instalação. Combate: refs REAIS do jogo como âncora; cenário com acento turquesa sutil (REGISTRO §519).
+- **Gerado, aguardando OK:** selo FLED (só EN; hoje é texto), botões `sm2` (9 + 12 peças), cenas do Focus floresta, costa, caverna e jardim, prêmios beta (site no ar).
+- **Em PR:** Bits 200/500/1000 (#1146) e botões do Rift (#1148).
+- **Pendente (nada gerado):** cenas do Focus oficina, observatório e A7; slots do Evolution Center; Habit×Task + Focus&Work; Power Reducer; Draw again; Rift camada/portal; luvas da Hacksmith (4); BL2b lanterna/fogueira/cogumelo; moldura de modal nova (aguarda print do dono); 10 ícones facetados de categoria com Foco e Trabalho; quadrados do seletor de dias ×2 estados + "Marcar todos" + "Uma vez"; moldura da caixa de energias; botão de aço (opcional); arte da árvore da Casa do Clã (hoje só texto, `GroveCasaArvore`); corvo ROXO do site.
+- **Nenhum asset novo** foi criado pelas sessões P3, P4, P5 e P2; o Grove reaproveita as gotas do banho (`FX_ART` 💧, `@keyframes shower-drop`).

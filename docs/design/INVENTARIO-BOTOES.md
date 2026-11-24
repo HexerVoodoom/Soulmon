@@ -1,5 +1,7 @@
 # Soulmon — Inventário de botões
 
+> **Atualização 24/11/2026:** só as linhas C5 e C9 do plano de arte foram revistas. As contagens e a tabela por tela abaixo continuam as de 23/11, e as linhas de `sm2-guild-btn`, `sm2-chat-action-btn` e `sm3-mochila-usar-btn` descrevem classes que já saíram do CSS. Não reconferido por grep nesta consolidação.
+>
 > **Dono:** squad de design (UI) · **Data:** 23/11/2026 · **Verificação:** levantamento estático por `git grep` e extração por script sobre a `origin/main` em `e9a4f12b9`; nada foi rodado nem visto em tela. Números de linha (`arquivo:L`) valem para esse commit e escorregam; o símbolo se reencontra por grep. Este doc fica em `docs/design/` (a regra "sem `arquivo:linha`" do `docsManual` vale só para `docs/manual/`).
 >
 > **Para que serve:** o [DESIGN-GUIDE §3.1](DESIGN-GUIDE.md) tem só categorias com contagem. Aqui está o inventário por tela/modal e a lista de arte a gerar, para responder "todos os botões do jogo estão mapeados?". Resposta curta: **os 700 `<button>` de produção estão listados (apêndice, 222 arquivos)**; só 15 usos de CTA e 16 de Especial têm arte; o resto (≈ 98% dos botões) é CSS/inline sem arte. Lacunas de inspeção na seção E.
@@ -226,11 +228,11 @@ Direção de consolidação: os ≈ 25 estilos locais viram **uma única famíli
 | C2 | CTA de texto | n/a | nada | 0 |
 | C3 | Especial (`BotaoEspecial`: dourado, pve, pvp, ranking) | **tem** (3 estados por variante, 12 arquivos) | opcional: hover desktop ×4 | 0 (4 opcionais) |
 | C4 | **Padrão modal** (`primary`/`outline`/`quiet`/`ghost`): 183+170+28+11 usos | **não** (CSS/inline; revogado em 22/11, vai ganhar arte, P6) | 9-slice **primary** (turquesa/cobre), **outline** (aço/borda cobre, miolo escuro), **perigo** (para Excluir/Apagar conta, hoje `quiet` com cor); cada um em N, Pr, D = **9**; `quiet`/`ghost` ficam só texto (sem arte); `sm`/`md`/`lg` reaproveitam o mesmo 9-slice (altura 44/48/56 por token, não por arquivo); spinner de `busy` = glifo `sync` já existente | 9 (+3 hover opcionais) |
-| C5 | `sm2-kit-btn` / `PixelButton` (46 + 2) | **não** | migrar para C4 (zero arte própria) | 0 |
+| C5 | `sm2-kit-btn` / `PixelButton` (24/11: 5 arquivos, 16 ocorrências; eram 46 + 2 em 23/11, o resto migrou para `sm2Button` nos #1174, #1175, #1182, #1183) | **não** | migrar o que sobra para C4 (zero arte própria) | 0 |
 | C6 | Escolha de linha + Sortear (Arena, Torneio, Match-3) | **não** | 9-slice do **card da linha** (`escolhaCardStyle`) N + Pr (linha tocável) = **2**; o botão "Lutar/Fight" = C4 primary sm; "Sortear de novo" = C4 outline | 2 |
 | C7 | Voltar/fechar | glifo + disco da moldura de aço | disco do `BackCircleButton` (N, Pr, D) = **3**; glifos `arrow_back`, `close`, `chevron` já autorais (39 glifos) | 3 |
 | C8 | Ícone de ação / canto (`sm2-corner-link`, steppers −/+, `sm3-*` ícones) | parcial | fundo 44×44 (quadrado de cantos ou disco) em N, Pr, D = **3**; os glifos são os 39 existentes | 3 |
-| C9 | Locais por tela (≈ 25 classes) | **não** | migrar: `sm2-guild-btn`, `sm2-chat-action-btn`, `sm3-mochila-usar-btn`, `sm2-hex-equip-btn`, `sm2-deck-btn` etc. → C4 sm. Única arte nova: tom **equipado/selecionado** (Hex "Equipado", chips ativos, "Já é amigo") em N, Pr = **2** | 2 |
+| C9 | Locais por tela (≈ 25 classes em 23/11; `sm2-guild-btn`, `sm2-chat-action-btn` e `sm3-mochila-usar-btn` JÁ SAÍRAM do CSS em 24/11) | **não** | migrar o que resta: `sm2-deck-btn`, `sm3-material-btn`, `sm2-evolve-btn` etc. → C4 sm (`sm2-hex-equip-btn` e `sm2-guild-invite-btn` ficam como classes locais); pendentes: `App.tsx` `sm-btn` ×2, `sm3-ranking-fechar`, `btnCls` do PixelizerCard. Única arte nova: tom **equipado/selecionado** (Hex "Equipado", chips ativos, "Já é amigo") em N, Pr = **2** | 2 |
 | C10 | Legado (`sm-btn`, `sm2-pxbtn`, debug do Oráculo) | **não** | aposentar; zero arte | 0 |
 | C11 | Controles (chip, aba, segmento, switch, checkbox, cartão-botão): ≈ 216 `<button>` | **não** | chip (off/on/D) 3; aba (off/on) 2; segmento (off/on) 2; switch (trilho off/on + botão) 3; checkbox (off/on) 2 = **12** | 12 |
 | C12 | Toast clicável (`NoticeToast`, `UnlockToast`) e cartão-botão de loja/jogo | **não verificado** (o cartão do jogo usa `CardFrame`, que tem arte) | moldura de toast 9-slice N, Pr = **2** | 2 |

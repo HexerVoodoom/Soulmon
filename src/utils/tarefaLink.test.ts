@@ -109,6 +109,8 @@ describe('recurso e textos (A2, A12)', () => {
   it('tag e anúncio de leitor de tela', () => {
     expect(autoTagText('pt-BR')).toBe('Tarefa');
     expect(autoTagText('en-US')).toBe('Task');
+    expect(autoTagText('pt-BR', 'Escrever no jornal de gratidão')).toBe('Escrever no jornal de gratidão');
+    expect(autoTagText('en-US', '  ')).toBe('Task');
     expect(autoTagAria('Caminhar', 'pt-BR')).toBe('Tarefa concluída automaticamente: Caminhar');
     expect(autoTagAria('Walk', 'en-US')).toBe('Task completed automatically: Walk');
   });
@@ -130,5 +132,21 @@ describe('BUG-04: "feita hoje" e a chave de idempotência usam o MESMO dia (o do
       const velha = hab({ completedToday: true, lastCompletedDate: NOW.toDateString() });
       expect(atividadesParaAutoCheck('steps', { activities: [velha], now: NOW, tz, passos: passos(9000) }), 'offset ' + offsetMs).toEqual(['h1']);
     }
+  });
+});
+
+describe("hábito refletir (proposito-refletir-valores) vinculado ao Jornal", () => {
+  const refletir = hab({ id: "r1", name: "Refletir sobre o que importa hoje", catalogId: "proposito-refletir-valores" });
+  it("tem recurso do Caderno, gatilho caderno e setinha PT/EN", () => {
+    expect(gatilhoDoRecurso(recursoDaAtividade(refletir))).toBe("caderno");
+    expect(irLaLabel(recursoDaAtividade(refletir), "pt-BR")).toBe("Ir ao Caderno");
+    expect(irLaLabel(recursoDaAtividade(refletir), "en-US")).toBe("Go to the Journal");
+  });
+  it("salvar 2x no dia marca 1x (idempotente pela chave dia|id)", () => {
+    const ids1 = atividadesParaAutoCheck("caderno", { activities: [refletir], now: NOW });
+    expect(ids1).toEqual(["r1"]);
+    const lista = registrarAuto(undefined, DIA, "r1");
+    expect(atividadesParaAutoCheck("caderno", { activities: [refletir], now: NOW, tarefaAuto: lista })).toEqual([]);
+    expect(registrarAuto(lista, DIA, "r1")).toBe(lista);
   });
 });

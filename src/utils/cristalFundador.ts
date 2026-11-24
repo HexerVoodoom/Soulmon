@@ -9,10 +9,10 @@ export const CRISTAL_FUNDADOR_ID = 'furn-cristal-fundador';
 export const CRISTAL_FUNDADOR_QUADROS = 5;
 
 export const CRISTAL_FUNDADOR: ShopItem = {
-  id: CRISTAL_FUNDADOR_ID, kind: 'furniture', icon: '💎', slot: 'floor-right', fits: 'any',
+  id: CRISTAL_FUNDADOR_ID, kind: 'furniture', icon: '💎', slot: 'floor-right', slotsPermitidos: 'chao', fits: 'any',
   namePt: 'Cristal Fundador', nameEn: 'Founder Crystal',
-  descPt: 'Brilha sempre, de dia e de noite — ocupa o canto direito, combina com qualquer cenário',
-  descEn: 'Always glowing, day and night — takes the right corner, fits any scene',
+  descPt: 'Brilha sempre, de dia e de noite — vai em qualquer espaço do chão, combina com qualquer cenário',
+  descEn: 'Always glowing, day and night — fits any floor spot, fits any scene',
   price: 0,
   // Nunca comprável: a `unlock` aponta para uma missão que não existe (como a Concha da Maré). Só a concessão futura o entrega.
   unlock: { kind: 'mission', missionId: 'founder-crystal-grant' },
