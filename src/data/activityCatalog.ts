@@ -609,6 +609,7 @@ export const ACTIVITY_CATALOG: CatalogItem[] = [
   },
   {
     id: 'proposito-refletir-valores',
+    resource: 'building:forja.caderno',
     kind: 'abrangente',
     area: 'proposito',
     category: 'proposito',

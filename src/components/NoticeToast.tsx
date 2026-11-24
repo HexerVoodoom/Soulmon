@@ -111,7 +111,7 @@ export function TaskAutoTag({ name, language, onDone }: { name: string; language
       <span aria-hidden="true" data-task-auto-check style={checkBoxStyle({ checked: true, mixed: false, dashed: false })}>
         <CheckMark />
       </span>
-      <span aria-hidden="true">{autoTagText(language)}</span>
+      <span aria-hidden="true" style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{autoTagText(language, name)}</span>
     </div>
   );
 }

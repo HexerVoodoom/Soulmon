@@ -502,7 +502,7 @@ export function AreaView(props: AreaViewProps) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // #187: um atalho a `laboratorio.pet` (Arquivo) abre o Perfil JÁ na seção Arquivo — a visita do prédio do Arquivo conta como antes.
   /* O link do hábito ("Ir ao Caderno") traz o formato em `initialSection`; vale só para a abertura vinda dele. */
-  const [cadernoFormatoIni] = useState<'gratidao' | 'livre' | undefined>(() => (props.initialSheet === 'caderno' && (props.initialSection === 'gratidao' || props.initialSection === 'livre') ? (props.initialSection as 'gratidao' | 'livre') : undefined));
+  const [cadernoFormatoIni] = useState<'gratidao' | 'livre' | 'importa' | undefined>(() => (props.initialSheet === 'caderno' && (props.initialSection === 'gratidao' || props.initialSection === 'livre' || props.initialSection === 'importa') ? (props.initialSection as 'gratidao' | 'livre' | 'importa') : undefined));
   const [guildaSection, setGuildaSection] = useState<'cla' | 'amigos'>(props.initialSection === 'amigos' && !initialDemoBlocked ? 'amigos' : 'cla');
   useEffect(() => {
     if (area === 'laboratorio' && props.initialSheet && !initialLock) {
