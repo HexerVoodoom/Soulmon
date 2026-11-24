@@ -23,6 +23,8 @@ interface Props {
   isPt: boolean;
   formId: string;
   nomeDaForma: string;
+  /** O estágio da forma (ex.: 'Transcendent'): é o TÍTULO do modal quando vem; a frase de modo desce para a linha de baixo. */
+  nomeDoEstagio?: string;
   /** Formas desbloqueadas, na ordem (a 1ª é a original), já com a arte de cada uma. */
   itens: FormaAltItem[];
   formasAlt: FormasAlt | undefined;
@@ -36,17 +38,18 @@ interface Props {
   onClose: () => void;
 }
 
-export function FormasAlternativasSheet({ isPt, formId, nomeDaForma, itens, formasAlt, equipada, onEquip, modo = 'equipar', ehAtual = true, onClose }: Props) {
+export function FormasAlternativasSheet({ isPt, formId, nomeDaForma, nomeDoEstagio, itens, formasAlt, equipada, onEquip, modo = 'equipar', ehAtual = true, onClose }: Props) {
   const ocultas = ocultasDaForma(formasAlt, formId, new Set([...ALL_ELEMENT_IDS, ...CURATED_ELEMENT_IDS]).size);
   const equipadaEf = equipada ?? itens[0]?.elemento;
   const nomeEl = (el: string) => (el === ALT_ORIGINAL || el === '__atual' ? (isPt ? 'Original' : 'Original') : (isPt ? elementoNomeDe(el).pt : elementoNomeDe(el).en));
-  const titulo = modo === 'degenerar' ? (isPt ? 'Degenerar para…' : 'Degenerate to…') : (isPt ? 'Formas alternativas' : 'Alternate forms');
+  const fraseModo = modo === 'degenerar' ? (isPt ? 'Degenerar para…' : 'Degenerate to…') : (isPt ? 'Formas alternativas' : 'Alternate forms');
+  const titulo = nomeDoEstagio || fraseModo;
   return (
     <RitualDialog label={titulo} onClose={onClose} zIndex={130} maxWidth={360} closeLabel={isPt ? 'Fechar' : 'Close'} closeOnBackdrop>
       <div data-testid="sm-formas-alt" style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '70vh', overflowY: 'auto' }}>
         <div>
           <p style={{ ...sm2Text, fontWeight: 600, margin: 0 }}>{titulo}</p>
-          <p style={{ ...sm2Hint, margin: 0 }}>{nomeDaForma}</p>
+          <p style={{ ...sm2Hint, margin: 0 }}>{nomeDoEstagio ? `${fraseModo} · ${nomeDaForma}` : nomeDaForma}</p>
         </div>
         {modo === 'equipar' && itens.length <= 1 && (
           <p style={{ ...sm2Hint, margin: 0 }} data-testid="sm-formas-alt-dica">

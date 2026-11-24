@@ -60,6 +60,9 @@ describe('árvore do Centro de Evolução', () => {
     renderWithCss(<EvolutionPath {...props} />);
     expect(screen.getByTestId('sm-no-champion-power').querySelector('[data-estagio-icone="champion-power"]')).toBeTruthy();
     expect(screen.getByTestId('sm-no-mega-harmony').querySelector('[data-estagio-icone="mega-harmony"]')).toBeTruthy();
+    // nenhuma palavra de estágio nem BLOQUEADA/PREVISTA escrita no nó
+    const t = screen.getByTestId('sm-no-champion-power').textContent ?? '';
+    expect(t).not.toMatch(/Champion|Rookie|BLOQUEADA|LOCKED|FORECAST|PREVISTA/);
     expect(screen.getByTestId('sm-no-rookie').querySelector('[data-estagio-icone="rookie"]')).toBeTruthy();
     expect(screen.getByTestId('sm-no-ultra').querySelector('[data-estagio-icone="ultra"]')).toBeTruthy();
   });
@@ -72,8 +75,8 @@ describe('árvore do Centro de Evolução', () => {
   it('mesmo nível, outro galho: lista para equipar (não degenera)', () => {
     renderWithCss(<EvolutionPath {...props} currentStageId="champion-harmony" onEquipFormaAlt={() => {}} />);
     fireEvent.click(botao('champion-power'));
-    expect(screen.getByText('Formas alternativas')).toBeTruthy();
-    expect(screen.queryByText('Degenerar para…')).toBeNull();
+    expect(screen.getByTestId('sm-formas-alt').textContent).toContain('Formas alternativas');
+    expect(screen.getByTestId('sm-formas-alt').textContent).not.toContain('Degenerar para…');
   });
   it('troca de galho no mesmo nível: o botão diz Trocar forma e a troca leva o elemento escolhido junto', () => {
     const chamadas: string[] = [];

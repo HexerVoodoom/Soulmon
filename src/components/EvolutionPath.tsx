@@ -864,6 +864,7 @@ export function EvolutionPath({
             silhouette={hidden && Boolean(arteVerdadeira)}
             busy={estado === 'GERANDO'}
             ringColor={isUltra ? ULTRA_COLOR : ramoAttr ? ATTR_COLOR[ramoAttr] : undefined}
+            glowColor={(isCurrent || isForecast) && ramoAttr ? ATTR_COLOR[ramoAttr] : undefined}
             label={nodeLabel}
             title={hidden && isAdmin ? (isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)') : nome}
             onClick={hidden && isAdmin ? () => setConfirmReveal(evolution) : abrir}
@@ -872,20 +873,15 @@ export function EvolutionPath({
             <span aria-hidden="true" data-testid={`sm-no-${stageId}-interrogacao`} style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', ...sm2Text, fontWeight: 700, fontSize: 'var(--sm2-text-2xl)', color: 'var(--sm2-ink)', textShadow: '0 0 6px var(--sm2-surface-2)' }}>?</span>
           )}
         </div>
-        <p style={{ ...sm2Text, fontWeight: 500, margin: 0, fontSize: 'var(--sm2-text-sm)', color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-muted)', overflowWrap: 'anywhere' }}>
-          {hidden ? '???' : evolution.name}
-        </p>
-        <p style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+        <p style={{ ...sm2Text, fontWeight: 500, margin: 0, fontSize: 'var(--sm2-text-sm)', color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-muted)', overflowWrap: 'anywhere', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
           <EstagioIcone forma={stageId} size={16} />
-          {!hidden && <span style={ramoAttr ? { color: ATTR_INK[ramoAttr] } : undefined}>{L(evolution.stageName)}</span>}
+          <span>{hidden ? '???' : evolution.name}</span>
         </p>
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
           {isCurrent && tag(isPt ? 'ATUAL' : 'CURRENT', 'current')}
-          {isForecast && tag(isPt ? 'PREVISTA' : 'FORECAST')}
           {/* X3: o cadeado do jogador é "ON HOLD", nunca "LOCKED" — a coleção trancada é outra coisa (BLOQUEADA). */}
           {isCurrent && evolutionLocked && tag(isPt ? 'SEGURADA' : 'ON HOLD')}
           {isUltraMode && tag(isPt ? 'ZÊNITE' : 'ZENITH', 'gold')}
-          {!isReached && tag(isPt ? 'BLOQUEADA' : 'LOCKED')}
         </div>
         {/* A espiada NÃO persiste (só a sessão), e o card diz isso. */}
         {isRevealed && !isReached && (
@@ -922,6 +918,7 @@ export function EvolutionPath({
             isPt={isPt}
             formId={fid}
             nomeDaForma={opcoes.evolution.name}
+            nomeDoEstagio={L(opcoes.evolution.stageName)}
             itens={itens}
             formasAlt={formasAlt}
             modo={opcoes.modo}
@@ -1136,6 +1133,9 @@ export function EvolutionPath({
             </button>
           )}
         </div>
+        {formaAtual && (
+          <p data-evo-stage-name style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{L(formaAtual.stageName)}</p>
+        )}
         <p role="status" style={soParaLeitor} data-evo-lock-status>{evolutionLocked ? textoSegurada : ''}</p>
 
         {/* OFFLINE (D9): a geração de sprite é a única superfície de rede

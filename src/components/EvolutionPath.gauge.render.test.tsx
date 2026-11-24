@@ -76,4 +76,12 @@ describe('EvolutionPath — gauge', () => {
     expect(document.querySelector('[data-evo-lock-status]')?.getAttribute('role')).toBe('status');
     expect(document.querySelector('[data-evo-lock-status]')?.textContent).toMatch(/não protege os corações/);
   });
+
+  it('cabeçalho mostra o estágio por extenso sob o nome; os nós não escrevem estágio nem BLOQUEADA/PREVISTA', () => {
+    renderWithCss(<EvolutionPath {...base} language="en-US" />);
+    expect(document.querySelector('[data-evo-stage-name]')?.textContent).toBe('Rookie');
+    expect(screen.queryByText('LOCKED')).toBeNull();
+    expect(screen.queryByText('FORECAST')).toBeNull();
+  });
 });
+
