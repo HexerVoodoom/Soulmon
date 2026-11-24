@@ -228,6 +228,7 @@ Repositório: `HexerVoodoom/Soulmon`.
   design (vão no bundle de qualquer jeito); segredo de servidor continua em
   `wrangler secret put`. Quem guarda a regra:
   `src/deploy/firebaseNoBuild.contract.test.ts`.
+- **site-beta** (`/beta/`): só vai ao ar com deploy manual (`wrangler --branch main`); merge no GitHub não publica.
 - A URL de produção é **`soulmon.mateus-sprnd.workers.dev`**, e as três fontes
   já concordam: `capacitor.config.json` (chave `url`),
   `desktop/renderer/src/config.ts` (`APP_URL`) e
