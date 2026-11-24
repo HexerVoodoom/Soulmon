@@ -85,9 +85,9 @@ describe('§376 — hábito pré-pronto (Walk) e o teto', () => {
     const bloco = app.slice(app.indexOf('<CatalogBrowserModal'), app.indexOf('onCreateFromScratch=', app.indexOf('<CatalogBrowserModal')));
     expect(bloco).toMatch(/habitsCount=\{contaCotaDeHabitos\(gameState\.activities\)\}/);
     expect(bloco).toMatch(/habitsCap=\{hardHabitCap\}/);
-    expect(bloco).toMatch(/const criados = commitHabitCreate\(/);
-    expect(bloco).toMatch(/if \(criados > 0\) setCatalogBrowserOpen\(false\)/);
-    expect(app).toMatch(/return novas\.slice\(0, criados\)\.map\(a => a\.id\)/);
+    expect(bloco).toMatch(/commitHabitCreate\(/);
+    expect(bloco).toMatch(/onSettled: criados => \{ if \(criados > 0\) setCatalogBrowserOpen\(false\); \}/);
+    expect(app).toMatch(/resolve\(novas\.slice\(0, criados\)\.map\(a => a\.id\)\)/);
   });
 });
 

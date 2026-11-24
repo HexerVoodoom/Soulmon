@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /** Demo: "Plan my day" abre com sugestões do catálogo (com ícone); fora da demo, igual a antes. */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, fireEvent, cleanup } from '@testing-library/react';
+import { screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { DayGoalsModal } from './DayGoalsModal';
 import { demoDaySuggestions } from '../utils/demoDaySuggestions';
@@ -9,7 +9,7 @@ import { demoDaySuggestions } from '../utils/demoDaySuggestions';
 afterEach(cleanup);
 
 describe('DayGoalsModal — sugestões da demo', () => {
-  it('demo: abre com >=3 sugestões com ícone, desmarcadas; aceitar cria só o marcado', () => {
+  it('demo: abre com >=3 sugestões com ícone, desmarcadas; aceitar cria só o marcado', async () => {
     const suggestions = demoDaySuggestions({ soulGoal: '', activities: [] });
     expect(suggestions.length).toBeGreaterThanOrEqual(3);
     const accept = vi.fn(() => ['novo-1']);
@@ -25,7 +25,25 @@ describe('DayGoalsModal — sugestões da demo', () => {
     fireEvent.click(caixas[0]);
     fireEvent.click(container.querySelector('[data-day-goals-confirm]')!);
     expect(accept).toHaveBeenCalledWith([suggestions[0]]);
-    expect(onConfirm).toHaveBeenCalledWith(['novo-1'], []);
+    await waitFor(() => expect(onConfirm).toHaveBeenCalledWith(['novo-1'], []));
+  });
+
+  /** Pagante acima do recomendado: a criação é decidida DEPOIS do modal de sugestão; o plano só recebe o que foi criado. */
+  it('aceite assíncrono: recusar → plano sem os ids; confirmar → plano com os ids', async () => {
+    const suggestions = demoDaySuggestions({ soulGoal: '', activities: [] });
+    for (const [resposta, esperado] of [[[], []], [['novo-1', 'novo-2'], ['novo-1', 'novo-2']]] as const) {
+      const onConfirm = vi.fn();
+      const accept = vi.fn(() => new Promise<string[]>(r => setTimeout(() => r([...resposta]), 5)));
+      const { container, unmount } = renderWithCss(
+        <DayGoalsModal candidates={[]} suggestions={suggestions} onAcceptSuggestions={accept} language="pt-BR" onConfirm={onConfirm} onClose={vi.fn()} />,
+      );
+      const caixas = screen.getAllByRole('checkbox') as HTMLInputElement[];
+      fireEvent.click(caixas[0]);
+      fireEvent.click(container.querySelector('[data-day-goals-confirm]')!);
+      expect(onConfirm).not.toHaveBeenCalled(); // espera a resposta
+      await waitFor(() => expect(onConfirm).toHaveBeenCalledWith(esperado, []));
+      unmount();
+    }
   });
 
   it('foco do jogador manda: soulGoal "Sleep" prioriza a área sono', () => {

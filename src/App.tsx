@@ -9936,8 +9936,10 @@ export default function App() {
         onUnlock={() => { setCatalogBrowserOpen(false); setUnlockReason('task-limit'); }}
         onAdd={(item) => {
           // Só fecha se entrou: 0 = não coube no teto, e fechar faria parecer que foi adicionado (§376).
-          const criados = commitHabitCreate(activitiesFromCatalogChoice([item], language === 'pt-BR'), TELEMETRY_CREATE_PATH.create_modal);
-          if (criados > 0) setCatalogBrowserOpen(false);
+          // Pagante acima do recomendado: o catálogo só fecha DEPOIS da resposta do modal de sugestão, e só se criou (`onSettled`).
+          commitHabitCreate(activitiesFromCatalogChoice([item], language === 'pt-BR'), TELEMETRY_CREATE_PATH.create_modal, {
+            onSettled: criados => { if (criados > 0) setCatalogBrowserOpen(false); },
+          });
         }}
         onCreateFromScratch={() => { setCatalogBrowserOpen(false); setCreateInitialKind('habit'); setCreateModalOpen(true); }}
       />
@@ -10603,11 +10605,18 @@ export default function App() {
             onAcceptSuggestions={items => {
               const novas = activitiesFromCatalogChoice(items, language === 'pt-BR');
               // §376: só os que COUBERAM (prefixo de `fitHabitCreates`) — id do que não entrou seria marcado no plano sem existir.
-              const criados = commitHabitCreate(novas, TELEMETRY_CREATE_PATH.create_modal);
-              // §385: o teto cortou a seleção → aviso com quantos entraram.
-              const avisoTeto = habitCapPartialText(criados, novas.length, language === 'pt-BR');
-              if (avisoTeto) toast(avisoTeto, { id: 'habit-cap-partial' });
-              return novas.slice(0, criados).map(a => a.id);
+              // Só os ids REALMENTE criados voltam (o `dayPlan` nunca recebe id de hábito que não existe): com o modal de sugestão
+              // aberto a resposta é assíncrona ("Você tem razão" → nenhum id; "mesmo assim" → todos).
+              return new Promise<string[]>(resolve => {
+                commitHabitCreate(novas, TELEMETRY_CREATE_PATH.create_modal, {
+                  onSettled: criados => {
+                    // §385: o teto (só do demo) cortou a seleção → aviso com quantos entraram.
+                    const avisoTeto = habitCapPartialText(criados, novas.length, language === 'pt-BR');
+                    if (avisoTeto && tierForRules === 'demo') toast(avisoTeto, { id: 'habit-cap-partial' });
+                    resolve(novas.slice(0, criados).map(a => a.id));
+                  },
+                });
+              });
             }}
             language={language}
             initiallyPicked={gameState.dayPlan?.day === dayPlanToday ? gameState.dayPlan.picked : []}
