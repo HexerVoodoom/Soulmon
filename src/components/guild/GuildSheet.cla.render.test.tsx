@@ -75,7 +75,7 @@ describe('Praça e Casa: ocultas no Clan Hall (L5-D1), não apagadas', () => {
     mockServer({});
     const { container } = render(<GuildSheet {...base} casa={casa} cla={{ onReward: vi.fn() }} />);
     await waitFor(() => expect(container.querySelector('[data-cla-info]')).not.toBeNull());
-    await waitFor(() => expect(container.querySelector('[data-guild-card="casa"]')).not.toBeNull());
+    await waitFor(() => expect(container.querySelector('[data-guild-room="casa"]')).not.toBeNull());
     expect(container.querySelector('[data-guild-card="predios"]')).toBeNull();
     expect(container.querySelector('[data-predio="praca"]')).toBeNull();
     expect(container.querySelector('[data-casa-escolher]')).toBeNull();

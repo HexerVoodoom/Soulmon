@@ -913,6 +913,15 @@ export function AreaView(props: AreaViewProps) {
 
   const lots = hallLots(language);
   const open = lots.find(l => l.id === sheet) ?? null;
+  /** CTA "Ver a árvore no Bosque" do Clan Hall: abre o Grove pelas MESMAS recusas do toque no lote (cristal, forma BB, demo, Vínculo). */
+  const abrirBosque = () => {
+    if (cristalBlocks('grove')) { setSheet(null); setLockNote(crystalRefusalText(language === 'pt-BR')); return; }
+    if (bbBlocks('grove')) { setSheet(null); setLockNote(bbRefusalText(language === 'pt-BR')); return; }
+    if (demoBlocks('grove')) { setSheet(null); setLockNote(demoRefusalText(language === 'pt-BR')); return; }
+    const g = lockOf('grove');
+    if (g) { setSheet(null); setLockNote(buildingLockLine(g.minBond, language)); return; }
+    enter('grove');
+  };
   return (
     <AreaScene
       areaId={area}
@@ -934,7 +943,7 @@ export function AreaView(props: AreaViewProps) {
               />
               {guildaSection === 'amigos'
                 ? props.hallContent('friends')
-                : <GuildSheet room="salao" language={language} {...props.guild} />}
+                : <GuildSheet room="salao" language={language} {...props.guild} onAbrirBosque={abrirBosque} />}
             </>
           )}
           {open?.id === 'feira' && (
