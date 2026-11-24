@@ -7503,7 +7503,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-evo-caminhos { container-type: inline-size; column-gap: var(--sm2-space-2); }
 .sm2-evo-caminhos > * { min-inline-size: 0; padding-inline: var(--sm2-space-1); }
 @container (max-width: 380px) {
-  .sm2-evo-caminhos > * { --sm2-evo-nome-fs: var(--sm2-text-xs); --sm2-evo-glow-blur: 8px; --sm2-evo-glow-spread: 1px; --sm2-evo-hint-lh: 1.25; }
+  .sm2-evo-caminhos > * { padding-inline: 0; --sm2-evo-nome-fs: calc(var(--sm2-text-xs) - 1px); --sm2-evo-glow-blur: 8px; --sm2-evo-glow-spread: 1px; --sm2-evo-hint-lh: 1.25; }
 }
 .sm2-evo-caminhos [data-testid^="sm-estado-"] { line-height: var(--sm2-evo-hint-lh, inherit); text-wrap: balance; }
 .sm2-info-hit:focus-visible { outline: 2px solid #e3c06a; outline-offset: -4px; }
