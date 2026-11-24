@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import type { GameState } from '../contexts/GameStateContext';
 import { startFocusDescent, pauseFocusDescent, resumeFocusDescent, isFocusDescent } from './focusDescent';
 import { applyDungeonAway, applyRiftLayerPaid } from './dungeonAway';
+import { BITS_PER_CATEGORY_PER_DAY, MINIGAME_BITS_PER_DAY } from './currencies';
 import { sanitizeDungeonAway } from './dungeonIdle';
 import { hasFocusKeyOrLegacy } from './focusKey';
 import { sanitizeDungeonReturnSummary } from './dungeonReturnSummary';
@@ -93,7 +94,7 @@ describe('faixa 2 da Fenda (+100 Bits): paga 1x só, dentro do estado, respeitan
     // progresso NOVO do mês: descida começou na camada 1 (base 1); sem base, 1 camada no mês zerado não cruza faixa (R3)
     const novo = estado({ riftMonth: { m: riftMonthKey(T0), best: 1, claimed: 0, base: 1 } }) as GameState & { riftMonth?: undefined };
     const a = applyRiftLayerPaid(novo, 100, T0, dia);
-    expect(a.bits).toBe(100);
+    expect(a.bits).toBe(BITS_PER_CATEGORY_PER_DAY); // o bônus de 100 da faixa 2 agora conta como 'explorar' e para em 75 (dono, 24/11/2026)
     expect(a.fragments).toBe(20); // a faixa 1 cruza junto (camada 100 passa da 25)
     const b = applyRiftLayerPaid(a.next, 100, T0, dia);
     expect(b.bits).toBe(0);
@@ -101,7 +102,7 @@ describe('faixa 2 da Fenda (+100 Bits): paga 1x só, dentro do estado, respeitan
   });
   it('com o teto diário cheio, não paga Bits', () => {
     const dia = playerDayKey(new Date(T0), undefined);
-    const cheio = estado({ minigameBits: { day: dia, earned: 150 } });
+    const cheio = estado({ minigameBits: { day: dia, earned: MINIGAME_BITS_PER_DAY } });
     expect(applyRiftLayerPaid(cheio as GameState & { riftMonth?: undefined }, 100, T0, dia).bits).toBe(0);
   });
 });

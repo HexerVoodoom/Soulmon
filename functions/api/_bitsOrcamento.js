@@ -12,11 +12,11 @@
  * gravação (`creditosDoServidorDesde`). Queda de saldo (gasto) nunca consome nem gera registro. Conta sem estado começa CHEIA.
  *
  * FONTES DAS CONSTANTES (símbolos, não linhas):
- *   · grátis por dia, no cliente: `MINIGAME_BITS_PER_DAY` = 150 (`src/utils/currencies.ts`) × `ADVANCED_BITS_FACTOR` = 1,5
+ *   · grátis por dia, no cliente: `MINIGAME_BITS_PER_DAY` = 180 (`src/utils/currencies.ts`; era 150 até 24/11/2026) × `ADVANCED_BITS_FACTOR` = 1,5
  *     (`src/utils/minigameDifficulty.ts`); `BITS_PER_COMPLETE_DAY` = 100 (`src/utils/dailyReset.ts`, + talento);
  *     `CHECKIN_REWARDS.afternoon.bits` = 10 (`src/utils/checkIns.ts`); `CASA_BITS_POR_DIA` = 100 (`_casa.js`); Endless Rift tier 2
  *     = 100; desafio/praça/encontro do clã 10 + 15 + 20; pesadelo vencido (`REWARD_TABLE`) e conquistas (`settleAchievements`, lote).
- *     Soma ≈ 600/dia; `BITS_ORCAMENTO_POR_DIA` = 1.500 é a sugestão do §387 (~2,5× essa soma, folga para talento e conquista).
+ *     Soma ≈ 650/dia; `BITS_ORCAMENTO_POR_DIA` = 1.500 é a sugestão do §387 (~2,5× essa soma, folga para talento e conquista).
  *     A régua `_bitsOrcamento.test.js` reprova se as constantes do cliente crescerem a ponto de R deixar de cobrir 2× a soma.
  *   · creditados pelo servidor (fora do R, somados à parte): pacotes do Cambista `ent.bitsBuy` (`_bitsPacks.js`,
  *     `BITS_PACK_DAILY_CAP` = 1.000), cartas do Papus resgatadas (`_mensageiro.js`, `MAIL_BITS_MAX` = 5.000 por carta; inclui os
