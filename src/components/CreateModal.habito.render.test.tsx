@@ -63,7 +63,10 @@ describe('Nova tarefa: o campo único é o nome', () => {
   it('digitar habilita Salvar sem precisar de blur; apagar volta a bloquear', () => {
     render(<CreateModal isOpen initialKind="task" onClose={() => {}} onSaveTask={vi.fn()} onSaveActivity={vi.fn()} language="en-US" />);
     expect(saveBtn().disabled).toBe(true);
+    // O Quando começa vazio: sem dia e sem "One-time" o Salvar segue bloqueado.
     fireEvent.change(quick(), { target: { value: 'Meditate' } });
+    expect(saveBtn().disabled).toBe(true);
+    fireEvent.click(screen.getByLabelText('One-time'));
     expect(saveBtn().disabled).toBe(false);
     fireEvent.change(quick(), { target: { value: '' } });
     expect(saveBtn().disabled).toBe(true);

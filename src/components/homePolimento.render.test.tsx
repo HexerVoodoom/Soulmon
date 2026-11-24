@@ -103,19 +103,25 @@ describe('Hábito = todo dia · Tarefa = pontual ou em dias específicos', () =>
     expect(data.weekDays).toEqual([0, 1, 2, 3, 4, 5, 6]);
   });
 
-  it('tarefa pode ser "Uma vez" ou "Dias específicos"', () => {
+  it('tarefa pode ser "Uma vez" (checkbox) ou em dias específicos (quadrados)', () => {
     render(<CreateModal isOpen initialKind="task" onClose={() => {}} onSaveTask={vi.fn()} onSaveActivity={vi.fn()} language="pt-BR" />);
     expect(screen.queryByRole('button', { name: /Mais opções|Menos opções/ })).toBeNull();
-    expect(screen.getByRole('radio', { name: 'Uma vez' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('radio', { name: 'Dias específicos' }));
-    expect(screen.getByRole('radio', { name: 'Dias específicos' }).getAttribute('aria-checked')).toBe('true');
+    const uma = screen.getByRole('checkbox', { name: 'Uma vez' }) as HTMLInputElement;
+    expect(uma.checked).toBe(false);
+    for (const d of ['Domingo', 'Segunda-feira', 'Sábado']) expect(screen.getByRole('button', { name: d })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Segunda-feira' }));
+    expect(screen.getByRole('button', { name: 'Segunda-feira' }).getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(uma);
+    expect(uma.checked).toBe(true);
   });
 
-  it('EN: Habit / Task / Specific days', () => {
+  it('EN: Habit / Task, One-time, Mark all, Sun–Sat', () => {
     render(<CreateModal isOpen initialKind="task" onClose={() => {}} onSaveTask={vi.fn()} onSaveActivity={vi.fn()} language="en-US" />);
     expect(screen.queryByRole('button', { name: /More options|Fewer options/ })).toBeNull();
     expect(screen.getByRole('radio', { name: 'Habit' })).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Task' })).toBeTruthy();
-    expect(screen.getByRole('radio', { name: 'Specific days' })).toBeTruthy();
+    expect(screen.getByRole('checkbox', { name: 'One-time' })).toBeTruthy();
+    expect(screen.getByRole('checkbox', { name: 'Mark all' })).toBeTruthy();
+    for (const d of ['Sunday', 'Saturday']) expect(screen.getByRole('button', { name: d })).toBeTruthy();
   });
 });
