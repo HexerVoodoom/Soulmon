@@ -103,7 +103,7 @@ describe('voltar/fechar — contrato (I3)', () => {
     const cheias = [
       'components/games/GameKit.tsx', 'components/games/BattleStage.tsx', 'components/RogueDungeon.tsx',
       'components/nav/AreaSheet.tsx', 'components/guild/GroveFolha.tsx', 'components/mercado/ShopItemSheet.tsx',
-      'components/ui/BackArrow.tsx',
+      'components/ui/BackArrow.tsx', 'components/rift/RiftMap.tsx',
     ];
     for (const path of cheias) {
       const f = FILES.find(x => x.path === path)!;
