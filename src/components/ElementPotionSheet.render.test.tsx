@@ -27,7 +27,7 @@ describe('ElementPotionSheet: lista completa', () => {
     fireEvent.click(first.querySelector('[data-potion-create]')!);
     // §316c: folha de poção é modal branco, fica com o botão padrão do app (não o CTA do site).
     expect(document.querySelector('[data-potion-confirm]')!.hasAttribute('data-cta-button')).toBe(false);
-    expect(document.querySelector('[data-potion-confirm]')!.className).toContain('sm2-kit-btn-primary');
+    expect((document.querySelector('[data-potion-confirm]') as HTMLElement).style.getPropertyValue('--sm2-btn')).toBe('primary');
     fireEvent.click(document.querySelector('[data-potion-confirm]')!);
     expect(onCraft).toHaveBeenCalledWith('agua');
   });
