@@ -38,8 +38,8 @@ describe('combatArt — cenário, escudo e plataforma por elemento (rodada 2, 04
     expect(combatGlowPair('fogo')).toEqual([c('fogo'), c('fogo')]);
     expect(combatGlowPair('vapor')).toEqual([c('fogo'), c('agua')]);
   });
-  it('ícones de elemento: os 17 base passaram a existir (286 = 280 + 6 curados do lote 4)', () => {
-    expect(elementIconIds().length).toBe(286);
+  it('ícones de elemento: os 17 base passaram a existir (290 = 280 + 6 curados do lote 4 + 4 do lote 5)', () => {
+    expect(elementIconIds().length).toBe(290);
     for (const el of VISUAL_ELEMENTS) expect(elementIcon(el), el).toBeDefined();
   });
 });

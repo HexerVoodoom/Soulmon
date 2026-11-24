@@ -46,11 +46,11 @@ describe('molduras — FRAMES ↔ FRAME_ART ↔ assets/soulmon/molduras', () => 
 });
 
 describe('ícones de interação (ui-*) — mapas ↔ catálogos', () => {
-  it('toda chave de ACTIVITY_ICON_ART é um id do ACTIVITY_CATALOG (28 de 28)', () => {
+  it('toda chave de ACTIVITY_ICON_ART é um id do ACTIVITY_CATALOG (35 de 35: +7 de Criatividade, 24/11/2026)', () => {
     const ids = new Set(ACTIVITY_CATALOG.map(a => a.id));
     const chaves = Object.keys(ACTIVITY_ICON_ART);
     expect(chaves.filter(k => !ids.has(k))).toEqual([]);
-    expect(chaves).toHaveLength(28);
+    expect(chaves).toHaveLength(35);
   });
   it('toda passiva do jogo tem arte', () => {
     expect(PET_PASSIVES.filter(p => !PASSIVE_ICON_ART[p.id]).map(p => p.id)).toEqual([]);
