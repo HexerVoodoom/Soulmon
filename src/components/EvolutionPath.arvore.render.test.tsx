@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 /** Centro de Evolução como ÁRVORE (09/11/2026, dono): rookie no topo, 3 caminhos com rótulo no INÍCIO, convergem no ultra; ícone de estágio nos nós. */
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { screen, fireEvent, within } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
@@ -94,4 +96,12 @@ describe('árvore do Centro de Evolução', () => {
     expect(screen.queryByText('Degenerar para…')).toBeNull();
     expect(within(screen.getByTestId('sm-formas-alt')).queryAllByRole('button', { name: /Equipar|Degenerar/ })).toHaveLength(0);
   });
+
+  it('glow da forma atual: Harmonia azul `#009ED8`; o ouro da Benevolência (`#F2C230`) é const própria do glow', () => {
+    renderWithCss(<EvolutionPath {...props} currentStageId="champion-harmony" />);
+    const atual = screen.getByTestId('sm-no-champion-harmony').querySelector('button[data-soul-node]') as HTMLElement;
+    expect(atual.style.boxShadow.toLowerCase()).toMatch(/0, 158, 216|#009ed8/);
+    expect(readFileSync(resolve(__dirname, './EvolutionPath.tsx'), 'utf8')).toContain("benevolence: '#F2C230'");
+  });
 });
+

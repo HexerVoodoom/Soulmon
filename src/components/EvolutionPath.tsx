@@ -221,6 +221,9 @@ const CURVAS = {
 
 /** Conectores da árvore: uma faixa 300×48 com as 3 colunas. As PONTAS (esq/dir) usam o fio de cobre curvo (arte A, dono): aceso no ramo atual, apagado nos demais.
  *  O MEIO é a linha procedural de sempre (reta, cor do ramo). `split` sai do rookie; `join` é o espelho vertical (`.sm2-evo-ligacao--join`). */
+/** Cor do GLOW da árvore (dono, 24/11/2026): só para esse uso — Benevolência é ouro de verdade; `ATTR_COLOR` (âmbar) segue valendo nos demais lugares. */
+const GLOW_COLOR: Record<Attr, string> = { power: ATTR_COLOR.power, harmony: ATTR_COLOR.harmony, benevolence: '#F2C230' };
+
 function TreeLinks({ mode, currentBranch }: { mode: 'split' | 'join'; currentBranch: Attr }) {
   const meio = ATTR_ORDER[1];
   return (
@@ -864,7 +867,7 @@ export function EvolutionPath({
             silhouette={hidden && Boolean(arteVerdadeira)}
             busy={estado === 'GERANDO'}
             ringColor={isUltra ? ULTRA_COLOR : ramoAttr ? ATTR_COLOR[ramoAttr] : undefined}
-            glowColor={(isCurrent || isForecast) && ramoAttr ? ATTR_COLOR[ramoAttr] : undefined}
+            glowColor={(isCurrent || isForecast) && ramoAttr ? GLOW_COLOR[ramoAttr] : undefined}
             label={nodeLabel}
             title={hidden && isAdmin ? (isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)') : nome}
             onClick={hidden && isAdmin ? () => setConfirmReveal(evolution) : abrir}
