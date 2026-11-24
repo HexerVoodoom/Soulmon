@@ -7829,6 +7829,12 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   font-variant-numeric: lining-nums tabular-nums;
   color: var(--sm2-viewport-ink);
 }
+/* SUGESTÃO DE LIMITE DE HÁBITOS (`HabitOverRecommendedPopup.tsx`, 24/11/2026): texto + 2 botões no mesmo bottom sheet do escolhedor; só tokens. */
+.sm2-escolhedor__txt { margin: 0; text-align: center; color: var(--sm2-ink); font-family: var(--sm2-font-text); font-size: var(--sm2-text-md); line-height: 1.45; overflow-wrap: anywhere; }
+.sm2-escolhedor__txt ~ .sm2-escolhedor__op { padding-block: var(--sm2-space-2); line-height: 1.25; }
+.sm2-escolhedor__op--forte { font-weight: 700; }
+.sm2-escolhedor__op.sm2-escolhedor__op--forte { background: var(--sm2-primary-fill); border-color: var(--sm2-primary-fill); color: var(--sm2-on-primary); }
+.sm2-escolhedor__op.sm2-escolhedor__op--forte:active { background: var(--sm2-primary-deep); }
 @media (max-width: 340px) { .sm2-topbar__slot--lg { width: var(--sm2-topbar-slot-sm); } }
 /* MODAL DE RESULTADO DE FORJA (23/11/2026): arte + nome + efeito no popup central; largura vem do `ModalSheet` (<= 328px), nada fixo aqui. */
 .sm2-forja-resultado { display: grid; justify-items: center; gap: var(--sm2-space-2); text-align: center; padding: var(--sm2-space-2) 0; }

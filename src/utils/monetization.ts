@@ -223,6 +223,34 @@ export function activityCapFor(tier: AccountTier, stageCap: number): number {
 }
 
 /**
+ * O VEREDITO do portão de hábito (dono, 24/11/2026, opção A: "sem teto duro para quem não é demo, com o limite como SUGESTÃO").
+ *
+ *  - `'ok'`                   cria. Tarefa é sempre ok; hábito dentro do teto também.
+ *  - `'recomendado-excedido'`  SÓ o pagante: passou do número do estágio (`stageCap`). NÃO bloqueia: o App pergunta
+ *                              (modal de sugestão) e cria se a pessoa confirmar.
+ *  - `'bloqueado-demo'`       SÓ o demo: o teto é duro (`activityCapFor`), como sempre foi. É a fronteira de monetização.
+ *
+ * `adding` = quantos hábitos que gastam cota estão sendo criados AGORA (lote do catálogo/widget/import); padrão 1.
+ */
+export type HabitCreateDecision = 'ok' | 'recomendado-excedido' | 'bloqueado-demo';
+
+export function habitCreateDecision(args: {
+  tier: AccountTier;
+  kind: ActivityKind;
+  /** Quantos hábitos JÁ existem na lista. Tarefas não entram nesta conta. */
+  habitCount: number;
+  stageCap: number;
+  adding?: number;
+}): HabitCreateDecision {
+  if (args.kind === 'task') return 'ok';
+  if (args.tier === 'demo') {
+    return args.habitCount < activityCapFor('demo', args.stageCap) ? 'ok' : 'bloqueado-demo';
+  }
+  const adding = args.adding ?? 1;
+  return Number.isFinite(args.stageCap) && args.habitCount + adding > args.stageCap ? 'recomendado-excedido' : 'ok';
+}
+
+/**
  * O PORTÃO. Pergunte a esta função antes de criar qualquer coisa, por qualquer
  * caminho — é o ponto único de decisão que o vazamento de D-12 não tinha.
  *
@@ -232,8 +260,8 @@ export function activityCapFor(tier: AccountTier, stageCap: number): number {
  * de menor valor. Tarefa avulsa é o uso espontâneo — o que gera a métrica-norte
  * — e punir o espontâneo é punir exatamente o que se quer.
  *
- * A regra vale para os DOIS tiers. O pagante bate no teto do estágio dele pela
- * mesma porta; o que muda entre eles é só o número que `activityCapFor` devolve.
+ * Só o DEMO tem teto DURO (24/11/2026): o pagante nunca é recusado aqui — o número do estágio é só SUGESTÃO
+ * (`habitCreateDecision` → `'recomendado-excedido'`, e o App pergunta).
  */
 export function canCreateActivity(args: {
   tier: AccountTier;
@@ -243,6 +271,5 @@ export function canCreateActivity(args: {
   /** O teto do estágio atual (`gameState.maxActivityCap`). */
   stageCap: number;
 }): boolean {
-  if (args.kind === 'task') return true;
-  return args.habitCount < activityCapFor(args.tier, args.stageCap);
+  return habitCreateDecision(args) !== 'bloqueado-demo';
 }

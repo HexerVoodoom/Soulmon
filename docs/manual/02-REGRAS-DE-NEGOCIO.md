@@ -1003,8 +1003,8 @@ caminhos — nenhum deles passa por machucar a criatura.
 `required` é **três coisas ao mesmo tempo**: tarefas por dia, barras de energia
 (`getMaxEnergyForStage`) e o **gate da evolução** — é o número que `handleEvolve`
 e o `canEvolve` do HUD comparam com `perfectDays`. `cap` é o teto de hábitos
-cadastrados que o estágio libera (`maxActivityCap` → `activityCapFor(tier,
-stageCap)`, `src/utils/monetization.ts`; a conta grátis é aparada em
+cadastrados que o estágio **recomenda** (`maxActivityCap` → `activityCapFor(tier,
+stageCap)`, `src/utils/monetization.ts`; **só a conta grátis tem teto DURO**, aparada em
 `DEMO_ACTIVITY_TOTAL_CAP`, que **é** `FORM_REQUIREMENTS.rookie.cap`, nunca um `6`
 escrito à mão). `MAX_STAGE_REQUIREMENT` é `max(required)` da tabela e existe para
 nenhum outro teto do jogo poder ficar abaixo do que o jogo pede num dia — foi o
@@ -2990,9 +2990,18 @@ Determinismo**: `now` entra por parâmetro; não há `Date.now()` dentro.
   põe na frente a categoria que casa com `soulGoal`/`soulStruggle`
   ([§21](#soulgoal)), por palavra-chave, **no aparelho**.
 
+**O limite como SUGESTÃO (dono, 24/11/2026, opção A).** Quem não é demo NÃO tem teto duro: o
+`maxActivityCap` do estágio vira recomendação. `habitCreateDecision` (`monetization.ts`) devolve
+`ok` / `recomendado-excedido` (só pagante) / `bloqueado-demo` (só demo; tarefa é sempre `ok`).
+Se o pagante tenta passar do número, `habitOverRecommended` faz o portão `commitHabitCreate`
+abrir o modal `HabitOverRecommendedPopup` (uma vez por tentativa, inclusive em lote): "Neste nível o
+recomendado são X hábitos…" com "Quero me comprometer mesmo assim" (cria, pelo MESMO portão) e "Você
+tem razão" (também Esc/véu; não cria). Para o pagante nenhuma tela mostra "Limite atingido" nem
+o convite de desbloqueio (`UnlockNudge` é só do demo). O demo segue travado como antes.
+
 **O teto da criação.** `fitHabitCreates(state, novos, tier)`
 (`src/utils/habitCreate.ts`) devolve o PREFIXO do lote que cabe em
-`canCreateActivity` (tier + `maxActivityCap`). É chamado **duas vezes**: fora,
+`canCreateActivity` (tier + `maxActivityCap`) — **só trunca o demo**; o pagante recebe o lote inteiro. É chamado **duas vezes**: fora,
 contra o `gameState` (para a telemetria e para o chamador saber o que não coube),
 e **dentro do updater, contra o `prev`** — a família X-6: duas criações no mesmo
 lote do React liam a mesma contagem e ambas passavam.

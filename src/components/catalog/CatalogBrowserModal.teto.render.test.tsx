@@ -33,8 +33,8 @@ describe('§376 — hábito pré-pronto (Walk) e o teto', () => {
       expect(consomeCotaDeHabito(a)).toBe(true);
     }
     const [w] = activitiesFromCatalogChoice([walk], false);
-    expect(fitHabitCreates({ activities: cheia, maxActivityCap: CAP }, [w], 'paid')).toHaveLength(0);
-    expect(fitHabitCreates({ activities: cheia.slice(1), maxActivityCap: CAP }, [w], 'paid')).toHaveLength(1);
+    expect(fitHabitCreates({ activities: cheia, maxActivityCap: CAP }, [w], 'demo')).toHaveLength(0); // teto duro = só o demo (24/11/2026)
+    expect(fitHabitCreates({ activities: cheia.slice(1), maxActivityCap: CAP }, [w], 'demo')).toHaveLength(1);
   });
 
   it('com vaga, a Walk do catálogo é devida hoje em qualquer dia (sábado 14/11 incluído) e aparece mesmo antes da reafirmação', () => {
@@ -84,10 +84,10 @@ describe('§376 — hábito pré-pronto (Walk) e o teto', () => {
     const app = readFileSync(resolve(__dirname, '../../App.tsx'), 'utf8');
     const bloco = app.slice(app.indexOf('<CatalogBrowserModal'), app.indexOf('onCreateFromScratch=', app.indexOf('<CatalogBrowserModal')));
     expect(bloco).toMatch(/habitsCount=\{contaCotaDeHabitos\(gameState\.activities\)\}/);
-    expect(bloco).toMatch(/habitsCap=\{activityCap\}/);
-    expect(bloco).toMatch(/const criados = commitHabitCreate\(/);
-    expect(bloco).toMatch(/if \(criados > 0\) setCatalogBrowserOpen\(false\)/);
-    expect(app).toMatch(/return novas\.slice\(0, criados\)\.map\(a => a\.id\)/);
+    expect(bloco).toMatch(/habitsCap=\{hardHabitCap\}/);
+    expect(bloco).toMatch(/commitHabitCreate\(/);
+    expect(bloco).toMatch(/onSettled: criados => \{ if \(criados > 0\) setCatalogBrowserOpen\(false\); \}/);
+    expect(app).toMatch(/resolve\(novas\.slice\(0, criados\)\.map\(a => a\.id\)\)/);
   });
 });
 

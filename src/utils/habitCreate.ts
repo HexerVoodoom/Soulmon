@@ -1,4 +1,4 @@
-import { canCreateActivity, type AccountTier } from './monetization';
+import { canCreateActivity, habitCreateDecision, type AccountTier } from './monetization';
 import { consomeCotaDeHabito, contaCotaDeHabitos } from './atividadesLista';
 
 /**
@@ -28,8 +28,8 @@ import { consomeCotaDeHabito, contaCotaDeHabitos } from './atividadesLista';
  * lote duplo, e é melhor um `activity_create` a mais no agregado do que um
  * hábito a mais além do teto pelo qual alguém paga.
  *
- * ⚠️ NENHUM número mudou: o teto continua sendo `activityCapFor` via
- * `canCreateActivity`, com o mesmo `stageCap` e o mesmo tier.
+ * ⚠️ 24/11/2026 (dono, opção A): só o DEMO tem teto duro. O pagante NÃO é truncado: `fitHabitCreates` devolve o lote inteiro, e o
+ * número do estágio vira SUGESTÃO (`habitOverRecommended` → modal de confirmação no App).
  */
 
 /** Fatia do GameState que a decisão do teto lê. */
@@ -77,4 +77,26 @@ export function habitCapPartialText(added: number, asked: number, isPt: boolean)
   if (!(asked > 0) || added >= asked) return null;
   const x = Math.max(0, added);
   return isPt ? `Limite atingido: entraram ${x} de ${asked} hábitos` : `Limit reached: ${x} of ${asked} habits were added`;
+}
+
+/**
+ * A SUGESTÃO do estágio (só pagante). Devolve `{ recommended }` quando criar `novos` deixaria a cota de hábitos ACIMA do
+ * número recomendado do estágio (`maxActivityCap`); `null` quando cabe, quando o tier é demo (teto duro, já tratado por
+ * `fitHabitCreates`) ou quando nada do lote gasta cota (tarefa agendada nunca conta). Pura: o App decide perguntar.
+ */
+export function habitOverRecommended<A>(
+  state: HabitCapState,
+  novos: readonly A[],
+  tier: AccountTier,
+): { recommended: number } | null {
+  const adding = novos.filter(consomeCotaDeHabito).length;
+  if (adding === 0) return null;
+  const verdict = habitCreateDecision({
+    tier,
+    kind: 'habit',
+    habitCount: contaCotaDeHabitos(state.activities),
+    stageCap: state.maxActivityCap,
+    adding,
+  });
+  return verdict === 'recomendado-excedido' ? { recommended: state.maxActivityCap } : null;
 }

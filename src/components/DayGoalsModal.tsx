@@ -29,7 +29,7 @@ export interface DayGoalsModalProps {
   onClose: () => void;
   /** DEMO: atividades do catálogo oferecidas pré-preenchidas (desmarcadas). Nada é criado sem o toque; as marcadas viram atividade via `onAcceptSuggestions`, que devolve os ids criados. */
   suggestions?: readonly CatalogItem[];
-  onAcceptSuggestions?: (items: CatalogItem[]) => string[];
+  onAcceptSuggestions?: (items: CatalogItem[]) => string[] | Promise<string[]>;
   /** "Comprometer-me com uma tarefa" (menu do +): o MESMO modal, mas o pai já filtrou só o que NÃO foi comprometido. Confirmar só ACRESCENTA; sem oferta reduzida, sem sugestões, sem "Hoje não". */
   mode?: 'add';
   /** Modo "Hoje" (metas + compromisso). */
@@ -57,9 +57,9 @@ export function DayGoalsModal({ candidates, language, initiallyPicked = [], onCo
   const habits = candidates.filter(c => c.kind === 'habit' && !buffedIds.has(c.id));
   const tasks = candidates.filter(c => c.kind === 'task');
   const count = candidates.filter(c => picked.has(c.id)).length + suggestions.filter(i => picked.has(`sug:${i.id}`)).length;
-  const confirm = () => {
+  const confirm = async () => {
     const chosen = suggestions.filter(i => picked.has(`sug:${i.id}`));
-    const created = chosen.length > 0 && onAcceptSuggestions ? onAcceptSuggestions([...chosen]) : [];
+    const created = chosen.length > 0 && onAcceptSuggestions ? await onAcceptSuggestions([...chosen]) : [];
     const ids = [...candidates.filter(c => picked.has(c.id)).map(c => c.id), ...created];
     // Marcar a versão bufada (hábito com oferta de 5 min) É aceitar: vira a tarefa bônus de hoje, na MESMA linha — sem duplicata
     // da original e sem segunda ação (REGISTRO §474). Cada bufada marcada vira bônus; nenhuma sobrescreve a outra.

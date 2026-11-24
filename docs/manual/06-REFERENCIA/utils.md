@@ -1735,8 +1735,8 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`
 **Régua:** `habitCreate.test.ts`
 **Avisos do arquivo:**
-- ⚠️ Família X-6, instância 3 — a falha estava DECLARADA por escrito no próprio comentário antigo ('a decisão é tomada fora, o updater só escreve'). Nenhum número mudou: o teto continua sendo `activityCapFor`.
-**Regra de negócio:** O teto de hábitos ativos do modo grátis é o mesmo teto do Rookie. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+- ⚠️ Família X-6, instância 3 — a falha estava DECLARADA por escrito no próprio comentário antigo ('a decisão é tomada fora, o updater só escreve'). Desde 24/11/2026 só o demo é truncado (teto duro `activityCapFor`); o pagante recebe o lote inteiro e `habitOverRecommended` (mesmo arquivo) diz se o App deve PERGUNTAR (número do estágio = sugestão).
+**Regra de negócio:** O teto DURO de hábitos ativos é só do modo grátis (o mesmo teto do Rookie); para o pagante o número do estágio é sugestão. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
 ### `src/utils/habitRhythm.ts`
 **Dono de:** O motor de CONSTÂNCIA dos hábitos: 'N das últimas 7', escudos automáticos, marcos de maturidade.
