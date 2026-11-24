@@ -28,11 +28,14 @@ describe('categorias', () => {
 
 describe('accordion do Drive (mesmo componente do Bestiário)', () => {
   beforeEach(() => localStorage.clear());
-  it('seções Novo + 5 categorias, com aria-expanded/controls/hidden e contagem', () => {
+  it('5 categorias abertas por padrão, sem accordion Novo, com aria-expanded/controls/hidden e contagem', () => {
     renderWithCss(<ElementDex defeated={['fogo', 'agua']} language="pt-BR" />);
     const ids = [...document.querySelectorAll('[data-acc-toggle]')].map(e => e.getAttribute('data-acc-toggle'));
-    expect(ids).toEqual(['dex-novo', 'dex-base', 'dex-ii', 'dex-iii', 'dex-iv', 'dex-special']);
+    expect(ids).toEqual(['dex-base', 'dex-ii', 'dex-iii', 'dex-iv', 'dex-special']);
     expect(document.querySelector('[data-acc-count="dex-base"]')!.textContent).toBe('2 / 20');
+    expect(document.querySelector('[data-acc-toggle="dex-novo"]')).toBeNull();
+    const pos = document.querySelector('[data-base-filter]')!.compareDocumentPosition(document.querySelector('[data-element-only-new]')!);
+    expect(pos & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const btn = document.querySelector('[data-acc-toggle="dex-base"]') as HTMLButtonElement;
     const corpo = document.getElementById(btn.getAttribute('aria-controls')!)!;
     expect(btn.getAttribute('aria-expanded')).toBe('true');

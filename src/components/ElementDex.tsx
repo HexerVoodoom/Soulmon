@@ -14,7 +14,7 @@ import { ELEMENTO_CATEGORIAS, ELEMENTO_CATEGORIA_ROTULO, elementoCategoria } fro
  * DEX DE ELEMENTOS (aba "Elemento" da Biblioteca, 27/10/2026): os 20 base + 190 derivados + 59 curados (205–207, 212–267) + neutro (01/11/2026). Trancado = "?" SEM nome e SEM ícone (nem
  * no aria: o id não vai para o DOM da célula trancada). Destranca ao vencer um inimigo identificado (`utils/elementDex.ts`). Tocar
  * num destrancado abre a ficha (`ElementModal`, P5/24: constituintes clicáveis e Voltar). Filtros combinam em E: categoria
- * (seções de accordion do Drive: Base/Comb II/III/IV/Special; mesmo `Acordeao` do Bestiário), "Novo" (seção própria, CheckRow) e bases. Ícone pelado (nunca dentro de box).
+ * (seções de accordion do Drive: Base/Comb II/III/IV/Special; mesmo `Acordeao` do Bestiário), tag "Só novos" (CheckRow, sem accordion, abaixo do filtro de bases) e bases. Tudo aberto por padrão (só os fechados pelo usuário persistem). Ícone pelado (nunca dentro de box).
  */
 export { dexElementName };
 
@@ -37,12 +37,10 @@ export function ElementDex({ defeated, language = 'en-US', isNew }: { defeated: 
       <p className="sm2-lib-s" style={{ margin: '0 0 8px' }}>
         <span className="sm2-num" data-element-count>{count} / {LIBRARY_ELEMENT_IDS.length}</span>
       </p>
-      <Acordeao id="dex-novo" titulo={isPt ? 'Novo' : 'New'} aberto={!fechados.includes('dex-novo')} onToggle={() => alternar('dex-novo')}>
-        <span data-element-only-new><CheckRow checked={soNovos} onChange={setSoNovos}>{isPt ? 'Só os novos' : 'Only new'}</CheckRow></span>
-      </Acordeao>
       <div style={{ margin: '0 0 12px' }} data-base-filter>
         <ElementBaseSlots slots={bases} isPt={isPt} onChange={(i, v) => setBases(s => s.map((x, j) => (j === i ? v : x)))} />
       </div>
+      <div style={{ margin: '0 0 12px' }} data-element-only-new><CheckRow checked={soNovos} onChange={setSoNovos}>{isPt ? 'Só novos' : 'Only new'}</CheckRow></div>
       {filtering && shown.length === 0 && (
         <p className="sm2-lib-s" data-filter-empty style={{ textAlign: 'center', padding: '16px 0', margin: 0 }}>{baseFiltering ? (isPt ? 'Nenhum elemento com essas bases.' : 'No element with these bases.') : (isPt ? 'Nenhum elemento com esse filtro.' : 'No element matches this filter.')}</p>
       )}
