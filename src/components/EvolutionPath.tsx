@@ -616,7 +616,7 @@ export function EvolutionPath({
       unseen: acervo.tunedUnseen.includes(stageId),
     });
 
-  const estadoTexto: CSSProperties = { ...sm2Hint, margin: '4px 0 0' };
+  const estadoTexto: CSSProperties = { ...sm2Hint, margin: '4px 0 0', color: 'var(--sm2-ink)', opacity: 0.85 };
 
   /* D1 (15/09/2026): o pago recebe o rookie gerado e as formas seguintes sob
      demanda. Enquanto uma forma está GERANDO o visor mostra o cristal apagado (rookie) ou
@@ -836,7 +836,7 @@ export function EvolutionPath({
         style={{
           fontFamily: 'var(--sm2-font-text)',
           fontSize: 'var(--sm2-text-xs)',
-          fontWeight: 600,
+          fontWeight: 700,
           letterSpacing: '.04em',
           lineHeight: 'var(--sm2-leading-body)',
           minHeight: 24,
@@ -845,8 +845,8 @@ export function EvolutionPath({
           boxSizing: 'border-box',
           display: 'inline-flex',
           alignItems: 'center',
-          backgroundColor: tone === 'current' ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface-2)',
-          color: tone === 'current' ? 'var(--sm2-primary-ink)' : tone === 'gold' ? 'var(--sm2-gold-ink)' : 'var(--sm2-muted)',
+          backgroundColor: tone === 'current' ? 'color-mix(in srgb, var(--sm2-primary-ink) 30%, transparent)' : 'var(--sm2-surface-2)',
+          color: tone === 'current' ? 'var(--sm2-ink)' : tone === 'gold' ? 'var(--sm2-gold-ink)' : 'var(--sm2-ink)',
         }}
       >
         {texto}
@@ -860,7 +860,7 @@ export function EvolutionPath({
         data-testid={`sm-no-${stageId}`}
         data-estagio={evolution.stage}
       >
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', marginBlockEnd: 'var(--sm2-space-3)' }}>
           <SoulNode
             visual={visual}
             sprite={arteDoNo}
@@ -876,9 +876,9 @@ export function EvolutionPath({
             <span aria-hidden="true" data-testid={`sm-no-${stageId}-interrogacao`} style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', ...sm2Text, fontWeight: 700, fontSize: 'var(--sm2-text-2xl)', color: 'var(--sm2-ink)', textShadow: '0 0 6px var(--sm2-surface-2)' }}>?</span>
           )}
         </div>
-        <p style={{ ...sm2Text, fontWeight: 500, margin: 0, fontSize: 'var(--sm2-text-sm)', color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-muted)', overflowWrap: 'anywhere', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+        <p style={{ ...sm2Text, fontWeight: 500, margin: 0, fontSize: 'var(--sm2-text-sm)', color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-ink)', overflowWrap: 'normal', wordBreak: 'keep-all', whiteSpace: 'nowrap', maxWidth: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
           <EstagioIcone forma={stageId} size={16} />
-          <span>{hidden ? '???' : evolution.name}</span>
+          <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{hidden ? '???' : evolution.name}</span>
         </p>
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
           {isCurrent && tag(isPt ? 'ATUAL' : 'CURRENT', 'current')}
@@ -1407,7 +1407,7 @@ export function EvolutionPath({
                       </p>
                       {path.map((evo, i) => (
                         <div key={creatureFormId(evo)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-                          {i > 0 && <span aria-hidden="true" style={{ width: 4, height: 16, borderRadius: 2, backgroundColor: ATTR_COLOR[attr], opacity: 0.85, boxShadow: `0 0 4px ${ATTR_COLOR[attr]}` }} />}
+                          {i > 0 && <span aria-hidden="true" data-testid="sm-caminho-barra" style={{ width: 4, height: 16, borderRadius: 2, backgroundColor: GLOW_COLOR[attr], opacity: 1, boxShadow: `0 0 4px ${GLOW_COLOR[attr]}` }} />}
                           {renderEvolutionCard(evo)}
                         </div>
                       ))}

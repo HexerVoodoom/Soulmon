@@ -39,6 +39,8 @@ export const RITUAL_SCRIM = 'rgba(4, 18, 20, .55)';
 export interface RitualDialogProps {
   /** Nome acessível do diálogo (a manchete). Textos nascem em inglês. */
   label?: string;
+  /** Título na PLACA da moldura (só no modo `moldura`); sem ele a placa fica vazia e a manchete mora no miolo. */
+  title?: ReactNode;
   /** Alternativa ao `label`: o id do título dentro do diálogo. */
   labelledBy?: string;
   /** Escape e o × (quando `closeLabel` existe). */
@@ -78,7 +80,7 @@ export interface RitualDialogProps {
 }
 
 export function RitualDialog({
-  label, labelledBy, onClose, zIndex = 200, maxWidth = 340, closeLabel, closeLast = false, closeSide = 'start',
+  label, title, labelledBy, onClose, zIndex = 200, maxWidth = 340, closeLabel, closeLast = false, closeSide = 'start',
   focusContainer = false, veilRole, children, style, className, theme, closeOnBackdrop = false,
 }: RitualDialogProps) {
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
@@ -112,6 +114,7 @@ export function RitualDialog({
           ref={dialogRef}
           role="dialog"
           aria-modal="true"
+          title={title}
           aria-label={label}
           aria-labelledby={labelledBy}
           tabIndex={-1}
