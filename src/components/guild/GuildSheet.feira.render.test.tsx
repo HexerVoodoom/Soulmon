@@ -101,9 +101,9 @@ describe('o fenômeno: 3 estados × 4 tipos, sem número nenhum', () => {
     expect(visor().getAttribute('data-state')).toBe('aberto');
     expect(visor().getAttribute('role')).toBe('img');
     expect(visor().getAttribute('aria-label')).toBe(fill(PT('guild.aria.feira'), { nome: 'Névoa' }));
-    // o cabeçalho e a linha do fenômeno moram no "i" (dono, 23/11/2026): fora da tela até tocar
+    // o cabeçalho mora no "i" (dono, 23/11/2026), mas a linha curta do fenômeno volta à vista (dono, 24/11/2026)
     expect(screen.queryByText(PT('guild.feira.aberta.mundo'))).toBeNull();
-    expect(screen.queryByText(PT('guild.feira.fenomeno.nevoa.linha'))).toBeNull();
+    expect(screen.getByText(PT('guild.feira.fenomeno.nevoa.linha'))).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Névoa' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Como funciona a Feira' }));
     expect(screen.getByText(PT('guild.feira.aberta.mundo'))).toBeTruthy();
