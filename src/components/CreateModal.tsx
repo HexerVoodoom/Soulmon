@@ -292,8 +292,8 @@ export function CategoryChips({
   isPt: boolean;
 }) {
   return (
-    <div>
-      <label style={sm2Label}>{isPt ? 'Categoria' : 'Category'}</label>
+    <div className="sm2-nova-cat">
+      <label style={{ ...sm2Label, marginBottom: 0 }}>{isPt ? 'Categoria' : 'Category'}</label>
       <div role="group" aria-label={isPt ? 'Categoria' : 'Category'} style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {CATEGORIES.map(cat => (
           <Chip key={cat} selected={category === cat} onToggle={() => setCategory(cat)} style={{ padding: '0 12px' }}>
@@ -641,6 +641,8 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
       language={language}
       footer={footer}
     >
+      {/* Um filho só: o respiro do topo/rodapé e o gap entre seções são tokens do CSS (`.sm2-nova-corpo`). */}
+      <div className="sm2-nova-corpo">
       {/* 1. CAPTURA RÁPIDA — o caminho primário. */}
       <div>
         <Field
@@ -675,7 +677,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
       {/* 2. O formulário inteiro, sempre aberto (sem More/Fewer options). */}
       <div>
         {(
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 14 }}>
+          <div className="sm2-nova-form">
             <CategoryChips category={category} setCategory={setCategory} isPt={isPt} />
 
             <div>
@@ -760,6 +762,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
             </div>
           </div>
         )}
+      </div>
       </div>
     </ModalSheet>
   );

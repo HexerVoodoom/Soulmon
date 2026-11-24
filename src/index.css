@@ -7636,3 +7636,16 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-encerrar-acoes { display: flex; justify-content: center; gap: var(--sm2-space-2); }
 .sm2-encerrar-acoes > button { flex: 1 1 0; min-width: 0; }
 .sm2-encerrar-texto { margin: 0; text-align: center; color: var(--sm2-ink); font-size: var(--sm2-text-sm); }
+
+/* NOVA TAREFA / NOVO HÁBITO — espaçamento (PR i). Escala única: seções a --sm2-space-4; rótulo↔controle e chips↔energias a --sm2-space-2/-3.
+   O corpo é o ÚNICO filho do rolável do `ModalSheet` (que traz o gap 18 próprio): o respiro do topo afasta o campo da barra de título e o de baixo
+   (rodapé fixo = 16 + alvo 44 + 16 + safe-area, mais folga) deixa "Quando pretendo fazer"/"Prazo" rolarem para fora de trás de Cancelar/Salvar. */
+.sm2-nova-corpo {
+  --sm2-nova-rodape: calc(var(--sm2-space-4) + 44px + var(--sm2-space-4) + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: var(--sm2-space-4);
+  padding-top: var(--sm2-space-5);
+  padding-bottom: calc(var(--sm2-nova-rodape) + var(--sm2-space-4));
+}
+.sm2-nova-form { display: flex; flex-direction: column; gap: var(--sm2-space-4); margin: 0; }
+.sm2-nova-cat { display: flex; flex-direction: column; gap: var(--sm2-space-2); }
+.sm2-nova-cat [data-testid="category-points"] { margin-top: var(--sm2-space-3); }
