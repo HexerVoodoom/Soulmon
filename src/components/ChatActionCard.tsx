@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { sm2Button } from './form/FormKit';
 import { describeAction, renameAction, type CreateAction } from '../utils/chatActions';
 
 /**
@@ -58,19 +59,19 @@ export function ChatActionCard({
         <p style={{ margin: 0 }} aria-live="polite">{describeAction(current, isPt)}</p>
       )}
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-        <button type="button" onClick={onDismiss} className="sm2-chat-action-btn">
+        <button type="button" onClick={onDismiss} style={sm2Button('quiet', false, 'sm')}>
           {isPt ? 'Agora não' : 'Not now'}
         </button>
         {editing ? (
-          <button type="button" onClick={applyEdit} className="sm2-chat-action-btn">
+          <button type="button" onClick={applyEdit} style={sm2Button('outline', false, 'sm')}>
             {isPt ? 'Salvar nome' : 'Save name'}
           </button>
         ) : (
-          <button type="button" onClick={() => { setDraft(nameNow); setEditing(true); }} className="sm2-chat-action-btn">
+          <button type="button" onClick={() => { setDraft(nameNow); setEditing(true); }} style={sm2Button('outline', false, 'sm')}>
             {isPt ? 'Editar' : 'Edit'}
           </button>
         )}
-        <button type="button" onClick={() => onConfirm(current)} disabled={editing} className="sm2-chat-action-btn sm2-chat-action-primary">
+        <button type="button" onClick={() => onConfirm(current)} disabled={editing} style={sm2Button('primary', editing, 'sm')}>
           {isPt ? 'Criar' : 'Create'}
         </button>
       </div>
