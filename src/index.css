@@ -4840,16 +4840,23 @@ button[style*="--sm2-btn: ghost"]:active {
   color: rgb(255 255 255 / .72) !important;
   text-shadow: none;
 }
-/* ✕ de remover item (CreateModal): disco da arte `sm2-fechar` no lugar do glifo. */
-.sm2-btn-arte button[aria-label^="Remover passo"],
-.sm2-btn-arte button[aria-label^="Remove step"] {
-  background: url('./assets/soulmon/ui/sm2/sm2-fechar.webp') center / contain no-repeat !important;
-  border-radius: 50% !important;
+/* Drop-down de categoria do CreateModal (dono, 24/11/2026). Campo + lista em fluxo; selecionado = `primary-fill` sólido com `on-primary`. */
+.sm2-cat-select__campo {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 12px; box-sizing: border-box; margin-top: 6px;
+  background: var(--sm2-surface-2); color: var(--sm2-ink); border: 1px solid var(--sm2-muted); border-radius: var(--sm2-radius-md);
+  font: inherit; font-size: var(--sm2-text-md); text-align: left; cursor: pointer;
 }
-.sm2-btn-arte button[aria-label^="Remover passo"] > *,
-.sm2-btn-arte button[aria-label^="Remove step"] > * { visibility: hidden; }
-.sm2-btn-arte button[aria-label^="Remover passo"]:active,
-.sm2-btn-arte button[aria-label^="Remove step"]:active { filter: brightness(.8); transform: scale(.96); }
+.sm2-cat-select__campo[aria-expanded="true"] { border-color: var(--sm2-primary-ink); }
+.sm2-cat-select__nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.sm2-cat-select__lista {
+  margin-top: 6px; max-height: 288px; overflow-y: auto; background: var(--sm2-surface); border: 1px solid var(--sm2-muted);
+  border-radius: var(--sm2-radius-md); padding: 4px;
+}
+.sm2-cat-select__op {
+  display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 8px; cursor: pointer; color: var(--sm2-ink); font-size: var(--sm2-text-md);
+}
+.sm2-cat-select__op[data-active] { background: var(--sm2-surface-2); }
+.sm2-cat-select__op[aria-selected="true"] { background: var(--sm2-primary-fill); color: var(--sm2-on-primary); font-weight: 600; }
 
 /* ── Campo filled ───────────────────────────────────────────────────────── */
 .sm2-form-field {
@@ -7597,6 +7604,8 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-modal--dono .sm2-moldura-modal__placa { left: calc(var(--u) * 25.1); width: calc(var(--u) * 54.1); top: calc(var(--u) * 4.7); height: calc(var(--u) * 7.7); padding: 0 calc(var(--u) * 1.5); box-sizing: border-box; }
 .sm2-moldura-modal--dono .sm2-moldura-modal__info { right: calc(var(--u) * 2.85); top: calc(var(--u) * 4.25); width: calc(var(--u) * 8.5); height: calc(var(--u) * 8.5); }
 .sm2-moldura-dono__fechar { position: absolute; z-index: 4; left: calc(var(--u) * 8.5); top: calc(var(--u) * 8.5); transform: translate(-50%, -50%); }
+/* Folha de baixo na moldura dono (`ModalSheet moldura="dono"`): a linha do ✕ vira o medalhão — centrada nele, sem a margem/posição relativa da folha comum. */
+.sm2-moldura-sheet .sm2-modal-fechar-linha.sm2-moldura-dono__fechar { position: absolute; margin: 0; left: calc(var(--u) * 8.5); top: calc(var(--u) * 8.5); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; transform: translate(-50%, -50%); }
 .sm2-moldura-modal__conteudo {
   /* Sem z-index: não cria contexto de empilhamento, então a moldura (z 2) cobre o que rola e o cabeçalho de quem chama (z 4) fica sobre ela. */
   position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box;

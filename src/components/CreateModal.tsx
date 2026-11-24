@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type MutableRefObject } from 'react';
 import { ACTIVITY_CATEGORIES } from '../types/categories';
 import { Icon } from './ui/Icon';
 import { categoryIconArt } from '../assets/soulmon/icons/categories';
@@ -285,13 +285,99 @@ const CATEGORIES: ActivityCategory[] = ACTIVITY_CATEGORIES as ActivityCategory[]
 
 /** Chips de categoria com o ícone VETOR de 20 (D-A7: `CATEGORY_ICON_NAME`,
  *  todos no subset — o PNG `icon-cat-*` fora do visor saiu). */
+function CatIcon({ cat, isPt, selected }: { cat: ActivityCategory; isPt: boolean; selected: boolean }) {
+  return categoryIconArt(cat)
+    ? <img data-cat-icon={cat} src={categoryIconArt(cat)} alt="" width={24} height={24} draggable={false} style={{ flexShrink: 0, objectFit: 'contain' }} />
+    : <Icon name={CATEGORY_ICON_NAME[cat]} size={20} fill={selected ? 1 : 0} tone="inherit" />;
+}
+
+/** DROP-DOWN de categoria (dono, 24/11/2026): um campo com a categoria atual (ícone + nome) que abre a lista com todas. Combobox/listbox:
+ *  ↑/↓ movem, Enter/Espaço escolhem, Esc e toque fora fecham (o Esc NÃO fecha a folha), escolher fecha. Alvo ≥ 44. A lista abre em fluxo
+ *  (empurra o formulário), então a folha rolável nunca a recorta. O selecionado é o `primary-fill` SÓLIDO com `on-primary`. */
+function CategorySelect({ category, setCategory, isPt, apiRef }: { category: ActivityCategory; setCategory: (c: ActivityCategory) => void; isPt: boolean; apiRef?: MutableRefObject<{ open: boolean; close: () => void }> }) {
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const uid = useId();
+  const listId = `${uid}-lista`;
+  const label = isPt ? 'Categoria' : 'Category';
+  useEffect(() => {
+    if (!open) return undefined;
+    const fora = (e: PointerEvent) => { if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener('pointerdown', fora);
+    return () => document.removeEventListener('pointerdown', fora);
+  }, [open]);
+  // O Escape do diálogo (captura no document) fecha a folha antes de qualquer handler daqui: o dono da folha pergunta a esta ref se há lista aberta.
+  useEffect(() => { if (apiRef) apiRef.current = { open, close: () => setOpen(false) }; }, [apiRef, open]);
+  const abrir = () => { setActive(Math.max(0, CATEGORIES.indexOf(category))); setOpen(true); };
+  const escolher = (c: ActivityCategory) => { setCategory(c); setOpen(false); triggerRef.current?.focus(); };
+  const onKey = (e: KeyboardEvent<HTMLElement>) => {
+    if (e.key === 'Escape' && open) { e.stopPropagation(); e.preventDefault(); setOpen(false); triggerRef.current?.focus(); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!open) { abrir(); return; }
+      setActive(a => (a + (e.key === 'ArrowDown' ? 1 : -1) + CATEGORIES.length) % CATEGORIES.length);
+    } else if (open && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault(); escolher(CATEGORIES[active]);
+    }
+  };
+  return (
+    <div className="sm2-nova-cat" ref={rootRef} onKeyDown={onKey}>
+      <label id={`${uid}-rot`} style={{ ...sm2Label, marginBottom: 0 }}>{label}</label>
+      <button
+        ref={triggerRef}
+        type="button"
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={listId}
+        aria-labelledby={`${uid}-rot`}
+        aria-activedescendant={open ? `${uid}-op-${CATEGORIES[active]}` : undefined}
+        className="sm2-cat-select__campo"
+        data-cat-select
+        onClick={() => (open ? setOpen(false) : abrir())}
+      >
+        <CatIcon cat={category} isPt={isPt} selected />
+        <span className="sm2-cat-select__nome">{categoryLabel(category, isPt)}</span>
+        <Icon name="expand_more" size={24} tone="inherit" />
+      </button>
+      {open && (
+        <div id={listId} role="listbox" aria-label={label} className="sm2-cat-select__lista" data-cat-list>
+          {CATEGORIES.map((cat, i) => (
+            <div
+              key={cat}
+              id={`${uid}-op-${cat}`}
+              role="option"
+              aria-selected={cat === category}
+              data-active={i === active ? '' : undefined}
+              className="sm2-cat-select__op"
+              onPointerEnter={() => setActive(i)}
+              onClick={() => escolher(cat)}
+            >
+              <CatIcon cat={cat} isPt={isPt} selected={cat === category} />
+              <span className="sm2-cat-select__nome">{categoryLabel(cat, isPt)}</span>
+              {cat === category && <Icon name="check" size={20} tone="inherit" />}
+            </div>
+          ))}
+        </div>
+      )}
+      <StrengthensLine category={category} isPt={isPt} />
+    </div>
+  );
+}
+
 export function CategoryChips({
-  category, setCategory, isPt,
+  category, setCategory, isPt, dropdown = false, apiRef,
 }: {
   category: ActivityCategory;
   setCategory: (c: ActivityCategory) => void;
   isPt: boolean;
+  /** Dono (24/11/2026): na criação a categoria é um drop-down; as telas de edição seguem com os chips. */
+  dropdown?: boolean;
+  apiRef?: MutableRefObject<{ open: boolean; close: () => void }>;
 }) {
+  if (dropdown) return <CategorySelect category={category} setCategory={setCategory} isPt={isPt} apiRef={apiRef} />;
   return (
     <div className="sm2-nova-cat">
       <label style={{ ...sm2Label, marginBottom: 0 }}>{isPt ? 'Categoria' : 'Category'}</label>
@@ -388,11 +474,11 @@ export function StepsFields({
               <Field type="text" value={step.label} onChange={(e) => onLabel(step.id, e.target.value)}
                 aria-label={`${isPt ? 'Passo' : 'Step'} ${index + 1}`}
                 placeholder={`${isPt ? 'Passo' : 'Step'} ${index + 1}`} />
-              {/* "Remove step N": alvo 44 (achado 7), `close` 24 `muted` pelado. */}
+              {/* "Remove step N": alvo 44 (achado 7), ✕ 24 simples na cor de perigo (dono, 24/11/2026), sem fundo e sem arte. */}
               <button type="button" onClick={() => onDelete(step.id)}
                 aria-label={isPt ? `Remover passo ${index + 1}` : `Remove step ${index + 1}`}
-                style={{ width: 44, height: 44, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 'var(--sm2-radius-md)' }}>
-                <Icon name="close" size={24} tone="muted" />
+                style={{ width: 44, height: 44, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 'var(--sm2-radius-md)', color: 'var(--sm2-danger-ink)' }}>
+                <Icon name="close" size={24} tone="inherit" />
               </button>
             </div>
           ))}
@@ -532,6 +618,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
    * VÊ o nome e os chips do que foi reconhecido antes de confirmar. Parsing
    * invisível que erra é como o app perde a confiança dele.
    */
+  const catApi = useRef({ open: false, close: () => {} });
   const applyQuickAdd = () => {
     const raw = quickText.trim();
     // O campo agora É o nome: reaplicar o texto já aplicado apagaria os chips.
@@ -641,8 +728,9 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
     <ModalSheet
       open={isOpen}
       dismissOnBackdrop={false} /* formulário com texto digitado */
+      moldura="dono"
       title={isPt ? (kind === 'task' ? 'Nova tarefa' : 'Novo hábito') : (kind === 'task' ? 'New task' : 'New habit')}
-      onClose={onClose}
+      onClose={() => { if (catApi.current.open) catApi.current.close(); else onClose(); }}
       language={language}
       footer={footer}
     >
@@ -683,7 +771,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
       <div>
         {(
           <div className="sm2-nova-form">
-            <CategoryChips category={category} setCategory={setCategory} isPt={isPt} />
+            <CategoryChips dropdown apiRef={catApi} category={category} setCategory={setCategory} isPt={isPt} />
 
             <div>
               <label style={sm2Label}>{txt.kindLabel}</label>
