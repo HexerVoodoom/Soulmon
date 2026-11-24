@@ -7401,6 +7401,7 @@ button.sm2-hex-row {
 .sm2-especial[data-especial-variant="pve"] .sm2-especial-label, .sm2-especial[data-especial-variant="pvp"] .sm2-especial-label, .sm2-especial[data-especial-variant="ranking"] .sm2-especial-label { margin: 0 -10px; }
 /* Botões da folha do Rift (P3, 23/11/2026): arte 1080x232, altura 72 px (escala 0,31). Enter: ponta 200 -> 62 px; Sec: ponta 150 -> 47 px. NÃO herdam 56/40 do base. */
 .sm2-especial[data-especial-variant="rift"], .sm2-especial[data-especial-variant="rift-sec"] { height: 72px; min-height: 48px; }
+@media (max-height: 780px) { .sm2-especial[data-especial-variant="rift"], .sm2-especial[data-especial-variant="rift-sec"] { height: 60px; } } /* telas baixas (360x740): a folha do Rift cabe sem esconder as linhas de Bits */
 .sm2-especial[data-especial-variant="rift"] { border-width: 0 62px; border-image-slice: 0 200 0 200 fill; border-image-width: 0 62px; color: #06231F; text-shadow: none; }
 .sm2-especial[data-especial-variant="rift-sec"] { border-width: 0 47px; border-image-slice: 0 150 0 150 fill; border-image-width: 0 47px; color: #F2FFFB; }
 .sm2-especial[data-especial-variant="rift"]:active:not(:disabled), .sm2-especial[data-especial-variant="rift-sec"]:active:not(:disabled) { transform: translateY(2px); }

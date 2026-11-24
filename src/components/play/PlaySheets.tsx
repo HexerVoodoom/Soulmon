@@ -120,6 +120,22 @@ export function BitsHoje({ language, earned, extraCap = 0, category, hideTotal }
   );
 }
 
+/** As duas linhas de Bits do Rift, na base da folha (dono, 24/11/2026): o teto da Fenda (categoria 'explorar', 75) e o total do dia (180). */
+function RiftBitsHoje({ language, earned = 0, extraCap = 0 }: { language: Language; earned?: number; extraCap?: number }) {
+  const gs = useGameStateOptional()?.gameState;
+  const isPt = language === 'pt-BR';
+  const catCap = bitsCategoryCap(extraCap);
+  const cap = minigameBitsCap(extraCap);
+  const catN = gs ? Math.min(catCap, minigameBitsCategoryToday(gs, playerDayKey(new Date(), gs.playerDayTz), 'explorar')) : 0;
+  const total = Math.min(cap, Math.max(0, Math.floor(earned)));
+  return (
+    <p data-bits-hoje data-rift-bits-hoje style={{ ...note, margin: 0 }}>
+      <span data-rift-bits-dungeon className="sm2-num" style={{ display: 'block' }}>{isPt ? `Bits da masmorra hoje: ${catN} de ${catCap}` : `Dungeon Bits today: ${catN} of ${catCap}`}</span>
+      <span data-rift-bits-total className="sm2-num" style={{ display: 'block' }}>{isPt ? `Bits totais hoje: ${total} de ${cap}` : `Total Bits today: ${total} of ${cap}`}</span>
+    </p>
+  );
+}
+
 function StatBox({ value, label, valueStyle }: { value: ReactNode; label: string; valueStyle?: CSSProperties }) {
   return (
     <div style={box}>
@@ -145,7 +161,7 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId }: {
   const currentLayer = riftCurrentLayer(gs);
   const [rankOpen, setRankOpen] = useState(false);
   return (
-    <div data-masmorra style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div data-masmorra style={{ display: 'flex', flexDirection: 'column', gap: 'min(12px, 1.1dvh)' }}>
       {saveId && (
         <BotaoEspecial variant="ranking" data-masmorra-ranking aria-haspopup="dialog" onClick={() => setRankOpen(true)}>
           {isPt ? 'Ver ranking' : 'See ranking'}
@@ -178,7 +194,7 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId }: {
         </ul>
       </ModalInfo>
       {/* P3 9.3b (22/11/2026): a camada ATUAL (onde o "Entrar no Rift" retoma) em destaque; o recorde (a mais funda) fica abaixo, discreto. Arte própria da camada: fila de arte (slot com fallback). */}
-      <div data-masmorra-current-layer style={{ ...box, flex: 'none', borderColor: 'var(--sm2-primary)', alignItems: 'center', textAlign: 'center', padding: '14px 12px' }}>
+      <div data-masmorra-current-layer style={{ ...box, flex: 'none', borderColor: 'var(--sm2-primary)', alignItems: 'center', textAlign: 'center', padding: 'min(14px, 1.2dvh) 12px' }}>
         <span className="sm2-num" style={{ ...boxValue, fontSize: 'var(--sm2-text-xl, 28px)', color: 'var(--sm2-primary-ink)' }}>{isPt ? `Camada ${currentLayer}` : `Layer ${currentLayer}`}</span>
         <p style={boxLabel}>{isPt ? 'camada atual' : 'current layer'}</p>
       </div>
@@ -188,12 +204,13 @@ export function MasmorraSheet({ language, onStart, onMap, bitsToday, saveId }: {
           {best > 0 && <StatBox value={best} label={isPt ? 'seu melhor placar' : 'your best score'} />}
         </div>
       )}
-      <BitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} category="explorar" />
       <BotaoEspecial variant="rift" data-masmorra-start onClick={onStart}>
         {isPt ? 'Entrar no Rift' : 'Enter the Rift'}
         <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />
       </BotaoEspecial>
       {onMap && <BotaoEspecial variant="rift-sec" data-masmorra-map onClick={onMap}>{isPt ? 'Ver o mapa' : 'See the map'}</BotaoEspecial>}
+      {/* 24/11/2026 (dono): as linhas de Bits ficam na BASE da folha (a parte de cima é só botões e recordes). */}
+      <RiftBitsHoje language={language} earned={bitsToday} extraCap={rift.riftBitsCap} />
     </div>
   );
 }
