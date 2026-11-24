@@ -891,8 +891,8 @@ export function AreaView(props: AreaViewProps) {
                 />
               )}
               {open?.id === 'evolucao' && props.potionContent && evoSub === 'menu' ? (
-                /* O título (placa) já diz "Centro de Evolução": o botão NÃO repete o nome do prédio. Botões COM ARTE do app (`.sm2-btn-arte` + `sm2Button`). */
-                <div data-lab-choice className="sm2-lab-choice sm2-btn-arte">
+                /* O título (placa) já diz "Centro de Evolução": o botão NÃO repete o nome do prédio. Botões COM ARTE do app (`sm2Button` sob `html[data-ui="arte"]`). */
+                <div data-lab-choice className="sm2-lab-choice">
                   <button type="button" style={sm2Button('primary', false, 'lg')} data-lab-choice-evolution onClick={() => setEvoSub('evolution')}>
                     {language === 'pt-BR' ? 'Ver evolução' : 'View evolution'}
                   </button>

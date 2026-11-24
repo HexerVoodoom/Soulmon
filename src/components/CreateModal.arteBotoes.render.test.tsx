@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/** Arte dos botões sm2: o CreateModal liga o escopo `.sm2-btn-arte` e o `sm2Button` marca variante e altura no style. */
+/** Arte dos botões sm2: a arte dos botões vale no app inteiro sob `html[data-ui="arte"]` (CSS) e o `sm2Button` marca variante e altura no style. */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { CreateModal } from './CreateModal';
@@ -11,16 +11,13 @@ const mk = () => render(
 );
 
 describe('CreateModal: arte dos botões sm2', () => {
-  it('Cancel/Save trazem os marcadores de variante e altura, dentro do escopo .sm2-btn-arte', () => {
+  it('Cancel/Save trazem os marcadores de variante e altura (a arte vem do escopo global html[data-ui="arte"], sem classe no CreateModal)', () => {
     mk();
     const cancel = screen.getByRole('button', { name: 'Cancel' });
     const save = screen.getByRole('button', { name: 'Save' });
     expect(cancel.getAttribute('style')).toMatch(/--sm2-btn-kind:\s*outline/);
     expect(save.getAttribute('style')).toMatch(/--sm2-btn-kind:\s*primary/);
     expect(cancel.getAttribute('style')).toMatch(/--sm2-btn-h:\s*48px/);
-    expect(cancel.closest('.sm2-btn-arte')).not.toBeNull();
-    expect(save.closest('.sm2-btn-arte')).not.toBeNull();
-    expect(document.querySelector('.sm2-nova-corpo.sm2-btn-arte')).not.toBeNull();
   });
   it('Save desabilitado segue marcado como primary (arte disabled vem de :disabled)', () => {
     mk();

@@ -4792,39 +4792,39 @@ button[style*="--sm2-btn: ghost"]:active {
 }
 
 /* ── Arte dos botões `sm2Button` (P6 aprovou 24/11/2026; P7 liga) ───────────
-   ESCOPADO: só vale dentro de um contêiner `.sm2-btn-arte`. Para ligar no app
-   inteiro basta pôr a classe no root; sem ela nada muda nos ~350 botões.
+   ESCOPADO por `html[data-ui="arte"]` (fase 4, 24/11/2026): vale no app INTEIRO quando a pele é arte;
+   na pele minimalista nada muda nos ~350 botões.
    `sm2Button()` grava `--sm2-btn-kind` (primary|outline|danger|quiet|ghost) e
    `--sm2-btn-h` (44/48/56 px) no style; aqui só primary/outline/danger ganham
    arte (quiet/ghost ficam sem). 9-slice horizontal 703×169: a ponta com a gema
    ocupa ~75 px → `--cap` = altura × 75/169. Estados = 3 arquivos (normal,
    pressed no `:active`, disabled no `:disabled`). Texto claro em qualquer tema
    porque o miolo da arte é escuro/teal nos dois (contraste no PR #P7). */
-.sm2-btn-arte { --sm2-btn-arte-ink: #FFFFFF; }
-.sm2-btn-arte button[style*="--sm2-btn-kind:primary"],
-.sm2-btn-arte button[style*="--sm2-btn-kind: primary"] { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-normal.webp'); }
-.sm2-btn-arte button[style*="--sm2-btn-kind:primary"]:active:not(:disabled),
-.sm2-btn-arte button[style*="--sm2-btn-kind: primary"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-pressed.webp'); }
-.sm2-btn-arte button[style*="--sm2-btn-kind:primary"]:disabled,
-.sm2-btn-arte button[style*="--sm2-btn-kind: primary"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-disabled.webp'); }
-.sm2-btn-arte button[style*="--sm2-btn-kind:outline"],
-.sm2-btn-arte button[style*="--sm2-btn-kind: outline"] { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-normal.webp'); }
-.sm2-btn-arte button[style*="--sm2-btn-kind:outline"]:active:not(:disabled),
-.sm2-btn-arte button[style*="--sm2-btn-kind: outline"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-pressed.webp'); }
-.sm2-btn-arte button[style*="--sm2-btn-kind:outline"]:disabled,
-.sm2-btn-arte button[style*="--sm2-btn-kind: outline"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-disabled.webp'); }
-.sm2-btn-arte button[style*="--sm2-btn-kind:danger"],
-.sm2-btn-arte button[style*="--sm2-btn-kind: danger"] { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-normal.webp'); }
-.sm2-btn-arte button[style*="--sm2-btn-kind:danger"]:active:not(:disabled),
-.sm2-btn-arte button[style*="--sm2-btn-kind: danger"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-pressed.webp'); }
-.sm2-btn-arte button[style*="--sm2-btn-kind:danger"]:disabled,
-.sm2-btn-arte button[style*="--sm2-btn-kind: danger"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-disabled.webp'); }
-.sm2-btn-arte button[style*="--sm2-btn-kind: primary"],
-.sm2-btn-arte button[style*="--sm2-btn-kind:primary"],
-.sm2-btn-arte button[style*="--sm2-btn-kind: outline"],
-.sm2-btn-arte button[style*="--sm2-btn-kind:outline"],
-.sm2-btn-arte button[style*="--sm2-btn-kind: danger"],
-.sm2-btn-arte button[style*="--sm2-btn-kind:danger"] {
+html[data-ui="arte"] { --sm2-btn-arte-ink: #FFFFFF; }
+html[data-ui="arte"] button[style*="--sm2-btn-kind:primary"],
+html[data-ui="arte"] button[style*="--sm2-btn-kind: primary"] { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-normal.webp'); }
+html[data-ui="arte"] button[style*="--sm2-btn-kind:primary"]:active:not(:disabled),
+html[data-ui="arte"] button[style*="--sm2-btn-kind: primary"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-pressed.webp'); }
+html[data-ui="arte"] button[style*="--sm2-btn-kind:primary"]:disabled,
+html[data-ui="arte"] button[style*="--sm2-btn-kind: primary"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-disabled.webp'); }
+html[data-ui="arte"] button[style*="--sm2-btn-kind:outline"],
+html[data-ui="arte"] button[style*="--sm2-btn-kind: outline"] { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-normal.webp'); }
+html[data-ui="arte"] button[style*="--sm2-btn-kind:outline"]:active:not(:disabled),
+html[data-ui="arte"] button[style*="--sm2-btn-kind: outline"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-pressed.webp'); }
+html[data-ui="arte"] button[style*="--sm2-btn-kind:outline"]:disabled,
+html[data-ui="arte"] button[style*="--sm2-btn-kind: outline"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-disabled.webp'); }
+html[data-ui="arte"] button[style*="--sm2-btn-kind:danger"],
+html[data-ui="arte"] button[style*="--sm2-btn-kind: danger"] { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-normal.webp'); }
+html[data-ui="arte"] button[style*="--sm2-btn-kind:danger"]:active:not(:disabled),
+html[data-ui="arte"] button[style*="--sm2-btn-kind: danger"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-pressed.webp'); }
+html[data-ui="arte"] button[style*="--sm2-btn-kind:danger"]:disabled,
+html[data-ui="arte"] button[style*="--sm2-btn-kind: danger"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-disabled.webp'); }
+html[data-ui="arte"] button[style*="--sm2-btn-kind: primary"],
+html[data-ui="arte"] button[style*="--sm2-btn-kind:primary"],
+html[data-ui="arte"] button[style*="--sm2-btn-kind: outline"],
+html[data-ui="arte"] button[style*="--sm2-btn-kind:outline"],
+html[data-ui="arte"] button[style*="--sm2-btn-kind: danger"],
+html[data-ui="arte"] button[style*="--sm2-btn-kind:danger"] {
   --cap: calc(var(--sm2-btn-h, 48px) * 75 / 169);
   background: none !important;
   border-style: solid !important;
@@ -4832,11 +4832,25 @@ button[style*="--sm2-btn: ghost"]:active {
   border-width: 0 var(--cap) !important;
   border-radius: 0 !important;
   border-image: var(--arte) 0 75 fill / 0 var(--cap) stretch !important;
-  padding-inline: 8px !important;
+  /* Medido em 360 (#1254): rodapé de 3 botões tinha só 46px de miolo (gema 21px/lado + 8px de padding): padding mínimo e texto 14px para "Cancelar" caber; PT longo quebra em 2 linhas, balanceado e com entrelinha curta para não tocar o cobre. */
+  padding-inline: var(--sm2-space-half, 2px) !important;
+  padding-block: 0 !important;
+  font-size: var(--sm2-text-sm) !important;
+  line-height: 1.15 !important;
+  text-wrap: balance;
   color: var(--sm2-btn-arte-ink) !important;
   text-shadow: 0 1px 2px rgba(4, 18, 20, .55);
 }
-.sm2-btn-arte button[style*="--sm2-btn-kind"]:disabled {
+/* Rodapé de 3 botões em 360/375: o miolo útil é ~58–63px; "alterações" (67px a 14px) estourava. Fonte 12,5px nas telas estreitas. */
+@media (max-width: 380px) {
+  html[data-ui="arte"] button[style*="--sm2-btn-kind: primary"],
+  html[data-ui="arte"] button[style*="--sm2-btn-kind:primary"],
+  html[data-ui="arte"] button[style*="--sm2-btn-kind: outline"],
+  html[data-ui="arte"] button[style*="--sm2-btn-kind:outline"],
+  html[data-ui="arte"] button[style*="--sm2-btn-kind: danger"],
+  html[data-ui="arte"] button[style*="--sm2-btn-kind:danger"] { font-size: calc(var(--sm2-text-sm) - 1.5px) !important; }
+}
+html[data-ui="arte"] button[style*="--sm2-btn-kind"]:disabled {
   color: rgb(255 255 255 / .72) !important;
   text-shadow: none;
 }
