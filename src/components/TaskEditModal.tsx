@@ -124,76 +124,81 @@ export function TaskEditModal({
       open={isOpen}
       dismissOnBackdrop={false} /* formulário com texto digitado */
       sobreTelas /* abre também de dentro do `View all` */
+      moldura="dono"
+      fundoVazio
       title={title ?? (isPt ? 'Editar tarefa' : 'Edit task')}
       onClose={onClose}
       language={language}
       footer={footer}
     >
-      <div>
-        <label style={sm2Label} htmlFor="sm-task-name">{isPt ? 'Nome' : 'Name'}</label>
-        <Field id="sm-task-name" type="text" value={name} onChange={(e) => setName(e.target.value)} />
-      </div>
-
-      <CategoryChips category={category} setCategory={setCategory} isPt={isPt} />
-
-      {/* Esforço — a recompensa escala com ISTO, nunca com a contagem. */}
-      <div>
-        <EffortFields effort={effort} setEffort={setEffort} isPt={isPt} />
-        {/* Sugestão, nunca obrigação. */}
-        {effort === 3 && steps.length === 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 6 }}>
-            <span style={{ ...sm2Hint, margin: 0, flex: 1, minWidth: 180 }}>{txt.projectSteps}</span>
-            <button type="button" onClick={handleAddStep} style={{ ...sm2Button('ghost', false, 'sm'), padding: '0 8px', minWidth: 44 }}>
-              {txt.add}
-            </button>
-          </div>
-        )}
-      </div>
-
-      <StepsFields steps={steps} isPt={isPt} onAdd={handleAddStep}
-        onLabel={handleUpdateStepLabel} onDelete={handleDeleteStep} />
-
-      <div>
-        <CheckRow checked={hasStart} onChange={(v) => { setHasStart(v); if (v && !startDate) setStartDate(todayIso()); }}>
-          {txt.when}
-        </CheckRow>
-        {hasStart && (
-          <Field type="date" value={startDate} aria-label={txt.when}
-            onChange={(e) => setStartDate(e.target.value)} />
-        )}
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <InfoTip language={language} label={isPt ? 'Sobre o "quando"' : 'About the "when"'} align="right" style={{ minHeight: 28 }}>{txt.whenHint}</InfoTip>
+      {/* Um filho só: respiro do topo/rodapé e gap entre seções vêm de `.sm2-nova-corpo` (mesmo da Nova tarefa/Novo hábito). */}
+      <div className="sm2-nova-corpo" data-edit-corpo={onDelete ? 'excluir' : undefined}>
+        <div>
+          <label style={sm2Label} htmlFor="sm-task-name">{isPt ? 'Nome' : 'Name'}</label>
+          <Field id="sm-task-name" type="text" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
-      </div>
 
-      <div>
-        <CheckRow checked={hasDeadline} onChange={setHasDeadline}>{txt.deadline}</CheckRow>
-        {hasDeadline && (
-          <div style={{ display: 'flex', gap: 10 }}>
-            <Field type="date" value={deadlineDate} aria-label={isPt ? 'Data do prazo' : 'Deadline date'}
-              onChange={(e) => setDeadlineDate(e.target.value)} />
-            <Field type="time" value={deadlineTime} aria-label={isPt ? 'Hora do prazo' : 'Deadline time'}
-              onChange={(e) => setDeadlineTime(e.target.value)} />
+        <CategoryChips category={category} setCategory={setCategory} isPt={isPt} />
+
+        {/* Esforço — a recompensa escala com ISTO, nunca com a contagem. */}
+        <div>
+          <EffortFields effort={effort} setEffort={setEffort} isPt={isPt} />
+          {/* Sugestão, nunca obrigação. */}
+          {effort === 3 && steps.length === 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 6 }}>
+              <span style={{ ...sm2Hint, margin: 0, flex: 1, minWidth: 180 }}>{txt.projectSteps}</span>
+              <button type="button" onClick={handleAddStep} style={{ ...sm2Button('ghost', false, 'sm'), padding: '0 8px', minWidth: 44 }}>
+                {txt.add}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <StepsFields steps={steps} isPt={isPt} onAdd={handleAddStep}
+          onLabel={handleUpdateStepLabel} onDelete={handleDeleteStep} />
+
+        <div>
+          <CheckRow checked={hasStart} onChange={(v) => { setHasStart(v); if (v && !startDate) setStartDate(todayIso()); }}>
+            {txt.when}
+          </CheckRow>
+          {hasStart && (
+            <Field type="date" value={startDate} aria-label={txt.when}
+              onChange={(e) => setStartDate(e.target.value)} />
+          )}
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <InfoTip language={language} label={isPt ? 'Sobre o "quando"' : 'About the "when"'} align="right" style={{ minHeight: 28 }}>{txt.whenHint}</InfoTip>
           </div>
-        )}
-      </div>
+        </div>
 
-      <div>
-        <CheckRow checked={hasAlarm} onChange={setHasAlarm}>{txt.alarm}</CheckRow>
-        {hasAlarm && (
-          <>
-            {hasDeadline && (
-              <div role="radiogroup" aria-label={txt.alarm} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                {(['2h', '1h', '30min'] as const).map(preset => (
-                  <Segment key={preset} selected={selectedPreset === preset}
-                    onSelect={() => handlePresetClick(preset)} label={`${preset} ${txt.before}`} />
-                ))}
-              </div>
-            )}
-            <Field type="time" value={customAlarmTime} aria-label={txt.alarm}
-              onChange={(e) => handleCustomTimeChange(e.target.value)} />
-          </>
-        )}
+        <div>
+          <CheckRow checked={hasDeadline} onChange={setHasDeadline}>{txt.deadline}</CheckRow>
+          {hasDeadline && (
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Field type="date" value={deadlineDate} aria-label={isPt ? 'Data do prazo' : 'Deadline date'}
+                onChange={(e) => setDeadlineDate(e.target.value)} />
+              <Field type="time" value={deadlineTime} aria-label={isPt ? 'Hora do prazo' : 'Deadline time'}
+                onChange={(e) => setDeadlineTime(e.target.value)} />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <CheckRow checked={hasAlarm} onChange={setHasAlarm}>{txt.alarm}</CheckRow>
+          {hasAlarm && (
+            <>
+              {hasDeadline && (
+                <div role="radiogroup" aria-label={txt.alarm} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                  {(['2h', '1h', '30min'] as const).map(preset => (
+                    <Segment key={preset} selected={selectedPreset === preset}
+                      onSelect={() => handlePresetClick(preset)} label={`${preset} ${txt.before}`} />
+                  ))}
+                </div>
+              )}
+              <Field type="time" value={customAlarmTime} aria-label={txt.alarm}
+                onChange={(e) => handleCustomTimeChange(e.target.value)} />
+            </>
+          )}
+        </div>
       </div>
     </ModalSheet>
   );

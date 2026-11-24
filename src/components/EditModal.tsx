@@ -140,54 +140,59 @@ export function EditModal({
       open={isOpen}
       dismissOnBackdrop={false} /* formulário com texto digitado */
       sobreTelas /* abre também de dentro do `View all` */
+      moldura="dono"
+      fundoVazio
       title={isPt ? 'Editar atividade' : 'Edit activity'}
       onClose={onClose}
       language={language}
       footer={footer}
     >
-      {/* A FICHA — card SIS-03 no topo (FichaHabito). Só com ritmo: um
-          hábito sem histórico ainda não tem o que mostrar além da linha. */}
-      {rhythm && initialData && (
-        <section
-          aria-label={isPt ? 'Ficha do hábito' : 'Habit card'}
-          style={{
-            backgroundColor: 'var(--sm2-surface)', border: '1px solid var(--sm2-line)',
-            borderRadius: 'var(--sm2-radius-md)', padding: 12, boxShadow: SM2_SHADOW_CARD,
-          }}
-        >
-          <HabitConstancy
-            rhythm={rhythm}
-            schedule={normalizeSchedule(initialData)}
-            now={now ?? new Date()}
-            language={language}
-            hideMetrics={hideMetrics}
-          />
-        </section>
-      )}
+      {/* Um filho só: respiro do topo/rodapé e gap entre seções vêm de `.sm2-nova-corpo` (mesmo da Nova tarefa/Novo hábito). */}
+      <div className="sm2-nova-corpo" data-edit-corpo={onDelete ? 'excluir' : undefined}>
+        {/* A FICHA — card SIS-03 no topo (FichaHabito). Só com ritmo: um
+            hábito sem histórico ainda não tem o que mostrar além da linha. */}
+        {rhythm && initialData && (
+          <section
+            aria-label={isPt ? 'Ficha do hábito' : 'Habit card'}
+            style={{
+              backgroundColor: 'var(--sm2-surface)', border: '1px solid var(--sm2-line)',
+              borderRadius: 'var(--sm2-radius-md)', padding: 12, boxShadow: SM2_SHADOW_CARD,
+            }}
+          >
+            <HabitConstancy
+              rhythm={rhythm}
+              schedule={normalizeSchedule(initialData)}
+              now={now ?? new Date()}
+              language={language}
+              hideMetrics={hideMetrics}
+            />
+          </section>
+        )}
 
-      <div>
-        <label style={sm2Label} htmlFor="sm-edit-name">{isPt ? 'Nome' : 'Name'}</label>
-        <Field id="sm-edit-name" type="text" value={name} maxLength={60}
-          onChange={(e) => setName(e.target.value)} />
-      </div>
+        <div>
+          <label style={sm2Label} htmlFor="sm-edit-name">{isPt ? 'Nome' : 'Name'}</label>
+          <Field id="sm-edit-name" type="text" value={name} maxLength={60}
+            onChange={(e) => setName(e.target.value)} />
+        </div>
 
-      {/* O card "Atributos por atividade completa" com os três +N saiu: a linha
-          de "Fortalece" dentro dos chips diz o mesmo em uma linha, sem caixa. */}
-      <CategoryChips category={category} setCategory={setCategory} isPt={isPt} />
+        {/* O card "Atributos por atividade completa" com os três +N saiu: a linha
+            de "Fortalece" dentro dos chips diz o mesmo em uma linha, sem caixa. */}
+        <CategoryChips category={category} setCategory={setCategory} isPt={isPt} />
 
-      {canEditWeekdays && <HabitScheduleFields sched={sched} language={language} />}
+        {canEditWeekdays && <HabitScheduleFields sched={sched} language={language} />}
 
-      <HabitAnchorFields sched={sched} language={language} />
+        <HabitAnchorFields sched={sched} language={language} />
 
-      <StepsFields steps={steps} isPt={isPt} onAdd={handleAddStep}
-        onLabel={handleUpdateStepLabel} onDelete={handleDeleteStep} />
+        <StepsFields steps={steps} isPt={isPt} onAdd={handleAddStep}
+          onLabel={handleUpdateStepLabel} onDelete={handleDeleteStep} />
 
-      <div>
-        <label style={sm2Label} htmlFor="sm-edit-time">
-          {isPt ? 'Horário (opcional)' : 'Time (optional)'}
-        </label>
-        <Field id="sm-edit-time" type="time" value={alarmTime}
-          onChange={(e) => setAlarmTime(e.target.value)} />
+        <div>
+          <label style={sm2Label} htmlFor="sm-edit-time">
+            {isPt ? 'Horário (opcional)' : 'Time (optional)'}
+          </label>
+          <Field id="sm-edit-time" type="time" value={alarmTime}
+            onChange={(e) => setAlarmTime(e.target.value)} />
+        </div>
       </div>
     </ModalSheet>
   );
