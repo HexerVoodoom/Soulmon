@@ -68,14 +68,6 @@ import { RitualDialog } from './ritual/RitualKit';
 import { useIsOnline } from './ui/OfflineSeal';
 import { Icon } from './ui/Icon';
 import { EvoBar } from './evolution/EvoBar';
-import curvaEsqAtivo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-ativo-v3.png';
-import curvaEsqAtivo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-ativo-v3@2x.png';
-import curvaEsqInativo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-inativo-v3.png';
-import curvaEsqInativo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-esq-inativo-v3@2x.png';
-import curvaDirAtivo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-ativo-v3.png';
-import curvaDirAtivo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-ativo-v3@2x.png';
-import curvaDirInativo1x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-inativo-v3.png';
-import curvaDirInativo2x from '../assets/soulmon/evo/conector-evolucao-A-curva-dir-inativo-v3@2x.png';
 import cadeadoAberto from '../assets/soulmon/evo/cadeado-B-aberto.png';
 import cadeadoFechado from '../assets/soulmon/evo/cadeado-B-fechado.png';
 import { InfoTip, ModalInfo } from './ui/InfoTip';
@@ -214,34 +206,33 @@ const sectionLabel: CSSProperties = {
   textTransform: 'uppercase',
 };
 
-const CURVAS = {
-  esq: { ativo: [curvaEsqAtivo1x, curvaEsqAtivo2x], inativo: [curvaEsqInativo1x, curvaEsqInativo2x] },
-  dir: { ativo: [curvaDirAtivo1x, curvaDirAtivo2x], inativo: [curvaDirInativo1x, curvaDirInativo2x] },
-} as const;
-
-/** Conectores da árvore: uma faixa 300×48 com as 3 colunas. As PONTAS (esq/dir) usam o fio de cobre curvo (arte A, dono): aceso no ramo atual, apagado nos demais.
- *  O MEIO é a linha procedural de sempre (reta, cor do ramo). `split` sai do rookie; `join` é o espelho vertical (`.sm2-evo-ligacao--join`). */
 /** Cor do GLOW da árvore (dono, 24/11/2026): só para esse uso — Benevolência é ouro de verdade; `ATTR_COLOR` (âmbar) segue valendo nos demais lugares. */
 const GLOW_COLOR: Record<Attr, string> = { power: ATTR_COLOR.power, harmony: ATTR_COLOR.harmony, benevolence: '#F2C230' };
 
+/** Conectores da árvore (24/11/2026): branch RETO em CSS, sem imagem — tronco, traço horizontal e 3 descidas (Poder · Harmonia · Benevolência) na cor do ramo.
+ *  `split` sai da forma atual; `join` é o espelho vertical (`.sm2-evo-ligacao--join`). Decorativo (aria-hidden). */
 function TreeLinks({ mode, currentBranch }: { mode: 'split' | 'join'; currentBranch: Attr }) {
-  const meio = ATTR_ORDER[1];
+  const vars = { ['--sm2-evo-poder' as string]: GLOW_COLOR.power, ['--sm2-evo-harmonia' as string]: GLOW_COLOR.harmony, ['--sm2-evo-bene' as string]: GLOW_COLOR.benevolence } as CSSProperties;
+  // Classes escritas por extenso (o contrato de CSS só enxerga literais, não template strings).
+  const descidas = [['sm2-evo-lig__descida--esq', ATTR_ORDER[0]], ['sm2-evo-lig__descida--meio', ATTR_ORDER[1]], ['sm2-evo-lig__descida--dir', ATTR_ORDER[2]]] as const;
   return (
     <div
       aria-hidden="true"
       data-testid={`sm-arvore-ligacao-${mode}`}
       className={mode === 'join' ? 'sm2-evo-ligacao sm2-evo-ligacao--join' : 'sm2-evo-ligacao'}
+      style={vars}
     >
-      {([['esq', ATTR_ORDER[0]], ['dir', ATTR_ORDER[2]]] as const).map(([lado, a]) => {
-        const estado = a === currentBranch ? 'ativo' : 'inativo';
-        const [x1, x2] = CURVAS[lado][estado];
-        return (
-          <img key={a} data-conector={estado} data-conector-ramo={a} src={x1} srcSet={`${x1} 1x, ${x2} 2x`} alt="" className="sm2-evo-conector" />
-        );
-      })}
-      <svg viewBox="0 0 300 48" preserveAspectRatio="none" data-conector="procedural" data-conector-ramo={meio} className="sm2-evo-conector">
-        <path d="M150 0L150 48" fill="none" stroke={ATTR_COLOR[meio]} strokeWidth={4} strokeLinecap="round" vectorEffect="non-scaling-stroke" opacity={0.9} />
-      </svg>
+      <span className="sm2-evo-lig__tronco" data-conector="tronco" />
+      <span className="sm2-evo-lig__barra" data-conector="barra" />
+      {descidas.map(([classe, a]) => (
+        <span
+          key={a}
+          data-conector={a === currentBranch ? 'ativo' : 'inativo'}
+          data-conector-ramo={a}
+          className={`sm2-evo-lig__descida ${classe}`}
+          style={{ backgroundColor: GLOW_COLOR[a] }}
+        />
+      ))}
     </div>
   );
 }
@@ -860,7 +851,7 @@ export function EvolutionPath({
         data-testid={`sm-no-${stageId}`}
         data-estagio={evolution.stage}
       >
-        <div style={{ position: 'relative', marginBlockEnd: 'var(--sm2-space-3)' }}>
+        <div style={{ position: 'relative' }}>
           <SoulNode
             visual={visual}
             sprite={arteDoNo}
@@ -876,6 +867,7 @@ export function EvolutionPath({
             <span aria-hidden="true" data-testid={`sm-no-${stageId}-interrogacao`} style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', ...sm2Text, fontWeight: 700, fontSize: 'var(--sm2-text-2xl)', color: 'var(--sm2-ink)', textShadow: '0 0 6px var(--sm2-surface-2)' }}>?</span>
           )}
         </div>
+        {ramoAttr && <span aria-hidden="true" data-testid={`sm-tracinho-nome-${stageId}`} className="sm2-evo-tracinho" style={{ blockSize: 'var(--sm2-space-2)', ['--sm2-tracinho' as string]: GLOW_COLOR[ramoAttr] } as CSSProperties} />}
         <p style={{ ...sm2Text, fontWeight: 500, margin: 0, fontSize: 'var(--sm2-evo-nome-fs, var(--sm2-text-sm))', color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-ink)', overflowWrap: 'normal', wordBreak: 'keep-all', whiteSpace: 'nowrap', maxWidth: '100%', inlineSize: '100%', boxSizing: 'border-box', minInlineSize: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'safe center', gap: 4 }}>
           <span style={{ flex: 'none', display: 'inline-flex' }}><EstagioIcone forma={stageId} size={16} /></span>
           <span data-testid={`sm-nome-no-${stageId}`} title={hidden ? undefined : evolution.name} style={{ minInlineSize: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto' }}>{hidden ? '???' : evolution.name}</span>
@@ -1396,7 +1388,7 @@ export function EvolutionPath({
                     <div key={attr} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }} data-testid={`sm-caminho-${attr}`} role="group" aria-label={L(ATTR_LABEL[attr])}>
                       <p
                         style={{
-                          ...sm2Text, margin: '0 0 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, textAlign: 'center',
+                          ...sm2Text, margin: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, textAlign: 'center',
                           fontWeight: lider === attr ? 700 : 600, color: ATTR_INK[attr], fontSize: 'var(--sm2-text-xs)', lineHeight: 1.2,
                         }}
                         data-testid={`sm-caminho-rotulo-${attr}`}
@@ -1405,9 +1397,10 @@ export function EvolutionPath({
                         <span>{L(ATTR_LABEL[attr])}</span>
                         <EvolutionRing value={pontosDe(attr)} max={Math.max(...ATTR_ORDER.map(pontosDe))} color={ATTR_COLOR[attr]} label={`${pontosDe(attr)}`} />
                       </p>
+                      <span aria-hidden="true" data-testid="sm-caminho-tracinho-valor" className="sm2-evo-tracinho" style={{ blockSize: 'var(--sm2-space-2)', ['--sm2-tracinho' as string]: GLOW_COLOR[attr] } as CSSProperties} />
                       {path.map((evo, i) => (
                         <div key={creatureFormId(evo)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-                          {i > 0 && <span aria-hidden="true" data-testid="sm-caminho-barra" style={{ width: 4, height: 16, borderRadius: 2, backgroundColor: GLOW_COLOR[attr], opacity: 1, boxShadow: `0 0 4px ${GLOW_COLOR[attr]}` }} />}
+                          {i > 0 && <span aria-hidden="true" data-testid="sm-caminho-barra" className="sm2-evo-tracinho" style={{ blockSize: 'var(--sm2-space-3)', ['--sm2-tracinho' as string]: GLOW_COLOR[attr] } as CSSProperties} />}
                           {renderEvolutionCard(evo)}
                         </div>
                       ))}
