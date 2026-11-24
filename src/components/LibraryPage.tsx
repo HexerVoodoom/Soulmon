@@ -46,7 +46,7 @@ import { Icon } from './ui/Icon';
 import { amigosPresente, amigosDueloAmistoso } from '../assets/soulmon/icones-ui';
 import { InfoTip } from './ui/InfoTip';
 import { MiniGlass } from './ui/MiniGlass';
-import { Field, sm2Button } from './form/FormKit';
+import { Field, ModalSheet, sm2Button } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 import type { PlayerDayAnchor } from '../utils/playerDay';
 import { useLibraryMemory } from '../hooks/useLibraryMemory';
@@ -781,10 +781,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
         const formas: SeenForm[] = vistas.length > 0 ? vistas : (atual ? [atual] : []);
         const nome = selectedPet.petName || selectedPet.name;
         return (
-          <RitualDialog onClose={() => setSelectedPet(null)} labelledBy="sm2-pet-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320} closeOnBackdrop>
-            <h2 id="sm2-pet-title" className="sm2-lib-h2" style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}>
-              {nome}
-            </h2>
+          <ModalSheet open placement="center" title={nome} onClose={() => setSelectedPet(null)} language={isPt ? 'pt-BR' : 'en-US'} maxWidth={320}>
             <ul data-pet-forms aria-label={isPt ? 'Formas que você já viu' : 'Forms you have seen'} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '55vh', overflowY: 'auto' }}>
               {formas.map(f => {
                 const atualAqui = isCurrentForm(f, atual);
@@ -810,7 +807,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
             <p className="sm2-lib-s" style={{ margin: '12px 0 0' }}>
               {isPt ? 'Dono' : 'Owner'}: {selectedPet.isNpc ? (isPt ? 'demonstração' : 'demo') : selectedPet.name}
             </p>
-          </RitualDialog>
+          </ModalSheet>
         );
       })()}
 

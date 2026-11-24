@@ -403,10 +403,12 @@ export function CheckRow({
  * Foco preso, Escape fecha e o foco volta para quem abriu (`useDialogA11y`).
  */
 export function ModalSheet({
-  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom', sobreTelas = false, titulo = 'inline', fundo, moldura,
+  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom', sobreTelas = false, titulo = 'inline', fundo, moldura, titleNode,
 }: {
   /** 24/11/2026 (dono): só na folha de BAIXO com moldura. `'dono'` = a moldura final (`.sm2-moldura-modal--dono`, arte `moldura/npc-*`): placa teal, ✕ CENTRADO no medalhão esquerdo, (i) no ornamento direito. O padrão não muda. */
   moldura?: 'dono';
+  /** Conteúdo rico do título inline (ex.: nome + clã); `title` segue como texto simples. */
+  titleNode?: ReactNode;
   /** 24/11/2026: só no popup central com moldura. URL de UM tile só, grande (cover, sem repetir), em opacidade baixa atrás do conteúdo. */
   fundo?: string;
   /** 23/11/2026 (dono, teste A/B): só no popup CENTRAL com moldura. `'placa'` (padrão) = título na placa de bronze sobre o topo; `'inline'` = SEM placa:
@@ -529,7 +531,7 @@ export function ModalSheet({
           /* 24/11/2026 (dono): SEM placa; título em TEXTO na MESMA linha do ✕ (glifo à direita). Com `onBack` a seta de voltar ocupa o lado esquerdo. */
           <div className="sm2-popup-cabeca" data-tem-info={info ? '' : undefined}>
             {onBack ? <BackArrow icon="arrow_back" onClick={onBack} language={language} style={{ margin: '0 0 0 -10px' }} /> : null}
-            <h2 id={tituloId} className="sm2-popup-titulo" data-popup-titulo>{title}</h2>
+            <h2 id={tituloId} className="sm2-popup-titulo" data-popup-titulo>{titleNode ?? title}</h2>
             {closeSide !== 'none' && !onBack && (
               <button type="button" className="sm2-popup-fechar" onClick={onClose} aria-label={isPt ? 'Fechar' : 'Close'}>
                 <Icon name="close" size={24} tone="inherit" />

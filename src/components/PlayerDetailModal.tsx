@@ -25,7 +25,7 @@ import { isSafeSpriteSrc } from '../utils/spriteLibrary';
 import { ATTR_LABEL } from '../types/attributes';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { Viewport } from './ui/Viewport';
-import { RitualDialog } from './ritual/RitualKit';
+import { ModalSheet } from './form/FormKit';
 import type { DirectoryPlayer } from '../utils/community';
 import type { Language } from '../utils/i18n';
 
@@ -50,20 +50,15 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
   const Glyph = branch ? ATTR_GLYPH[branch] : null;
 
   return (
-    <RitualDialog
+    <ModalSheet
+      open
+      placement="center"
+      title={player.name}
+      titleNode={<PlayerName name={player.name} guildName={player.guildName} isPt={isPt} />}
       onClose={onClose}
-      labelledBy="sm2-player-title"
-      closeLabel={isPt ? 'Fechar' : 'Close'}
+      language={language}
       maxWidth={340}
     >
-      <h2
-        id="sm2-player-title"
-        className="sm2-lib-h2"
-        style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}
-      >
-        {/* §321: o clã embaixo do nome (o título continua sendo o nome; o clã é a linha calma de baixo). */}
-        <PlayerName name={player.name} guildName={player.guildName} isPt={isPt} />
-      </h2>
 
       <div className="sm2-lib-hero">
         {/* WP4.14 — A CRIATURA É VISITÁVEL, e visitar é OLHAR.
@@ -139,6 +134,6 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
           </p>
         )}
       </div>
-    </RitualDialog>
+    </ModalSheet>
   );
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RitualDialog } from './ritual/RitualKit';
+import { ModalSheet } from './form/FormKit';
 import { elementIcon } from '../utils/elementIconArt';
 import { dexElementName, ElementModal } from './ElementModal';
 import { dexUnlockedSet } from '../utils/elementDex';
@@ -109,8 +109,7 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
         </Acordeao>
       )}
       {openEntry && (
-        <RitualDialog onClose={() => setOpenKey(null)} labelledBy="sm2-bestiary-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320} closeOnBackdrop>
-          <h2 id="sm2-bestiary-title" className="sm2-lib-h2" style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}>{openEntry.name}</h2>
+        <ModalSheet open placement="center" title={openEntry.name} onClose={() => setOpenKey(null)} language={isPt ? 'pt-BR' : 'en-US'} maxWidth={320}>
           <div data-bestiary-detail={openEntry.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
             {rosterSpriteOf(openEntry) && (
               <img src={rosterSpriteOf(openEntry)} alt="" aria-hidden="true" draggable={false} width={160} height={160}
@@ -127,7 +126,7 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
               )}
             </p>
           </div>
-        </RitualDialog>
+        </ModalSheet>
       )}
       {elemId && <ElementModal id={elemId} unlocked={elemUnlocked} isPt={isPt} onClose={() => setElemId(null)} />}
     </section>
