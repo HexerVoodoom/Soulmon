@@ -113,8 +113,11 @@ describe('voltar/fechar — contrato (I3)', () => {
       const f = FILES.find(x => x.path === path)!;
       // Exceção do dono (18/11/2026): a moldura de AÇO da Hexsmith (`AreaSheet moldura="aco"`) desenha o ✕ no disco esquerdo da arte
       // (o mesmo do modal Files). Só o componente `FecharAco` pode usar o glifo; o resto do arquivo segue sem ✕.
-      const src = path === 'components/nav/AreaSheet.tsx' ? f.src.replace(/function FecharAco\([\s\S]*?\r?\n\}\r?\n/, '') : f.src;
-      if (path === 'components/nav/AreaSheet.tsx') expect(src.length, 'FecharAco encontrado e recortado').toBeLessThan(f.src.length);
+      // Exceção do dono (23/11/2026, P3 Passeio): o popup `titulo="inline"` do `AreaSheet` desenha o ✕ glifo (`.sm2-popup-fechar`) no topo direito, como o `ModalSheet`.
+      const src = path === 'components/nav/AreaSheet.tsx'
+        ? f.src.replace(/function FecharAco\([\s\S]*?\r?\n\}\r?\n/, '').replace(/<div className="sm2-popup-fechar-linha">[\s\S]*?<\/div>/, '')
+        : f.src;
+      if (path === 'components/nav/AreaSheet.tsx') expect(src.length, 'FecharAco e ✕ inline recortados').toBeLessThan(f.src.length);
       expect(src, `${path}: ✕ em tela cheia`).not.toMatch(FECHA);
     }
     const kit = FILES.find(f => f.path === 'components/games/GameKit.tsx')!.src;
