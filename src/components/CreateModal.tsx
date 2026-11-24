@@ -729,6 +729,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
       open={isOpen}
       dismissOnBackdrop={false} /* formulário com texto digitado */
       moldura="dono"
+      fundoVazio
       title={isPt ? (kind === 'task' ? 'Nova tarefa' : 'Novo hábito') : (kind === 'task' ? 'New task' : 'New habit')}
       onClose={() => { if (catApi.current.open) catApi.current.close(); else onClose(); }}
       language={language}

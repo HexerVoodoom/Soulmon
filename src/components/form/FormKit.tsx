@@ -403,10 +403,12 @@ export function CheckRow({
  * Foco preso, Escape fecha e o foco volta para quem abriu (`useDialogA11y`).
  */
 export function ModalSheet({
-  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom', sobreTelas = false, titulo = 'inline', fundo, moldura, titleNode,
+  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom', sobreTelas = false, titulo = 'inline', fundo, moldura, titleNode, fundoVazio,
 }: {
   /** 24/11/2026 (dono): só na folha de BAIXO com moldura. `'dono'` = a moldura final (`.sm2-moldura-modal--dono`, arte `moldura/npc-*`): placa teal, ✕ CENTRADO no medalhão esquerdo, (i) no ornamento direito. O padrão não muda. */
   moldura?: 'dono';
+  /** 24/11/2026 (dono): fundo VAZIO (turquesa escuro liso, sem pedra/runas/lote) nas folhas/popups com moldura. Classe `sm2-moldura-modal--vazio`. */
+  fundoVazio?: boolean;
   /** Conteúdo rico do título inline (ex.: nome + clã); `title` segue como texto simples. */
   titleNode?: ReactNode;
   /** 24/11/2026: só no popup central com moldura. URL de UM tile só, grande (cover, sem repetir), em opacidade baixa atrás do conteúdo. */
@@ -496,6 +498,7 @@ export function ModalSheet({
         aria-modal="true"
         {...(inline ? { 'aria-labelledby': tituloId } : { 'aria-label': title })}
         data-placement={placement}
+        {...(framed && fundoVazio ? { fundoVazio: true } : null)}
         {...(inline && fundo ? { fundo, fillOpacity: 0.12, 'data-fundo-unico': '' } : null)}
         className={centered ? (inline ? 'sm2-sheet-fade sm2-moldura-modal--titulo-inline' : 'sm2-sheet-fade') : donoSheet ? 'sm2-sheet-rise sm2-moldura-modal--dono' : 'sm2-sheet-rise'}
         {...(framed && centered ? { variante: 'cristal' } : null)}

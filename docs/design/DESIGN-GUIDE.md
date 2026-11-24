@@ -26,6 +26,7 @@ Fontes do DS (dispersas, nesta ordem de autoridade): `src/index.css` (tokens `--
 | Movimento | `--sm2-dur-tap 120ms`, `-enter 200ms`, `-page 320ms`, `--sm2-ease` | `prefers-reduced-motion`: bloco global canônico do `index.css` mais corte em JS onde há loop (`Viewport`, `.sm-visor-scan`); animação nova com loop corta em JS (`tokens.md` §7). |
 | Ícones | `Icon` (glifo Material, `tone` = ink/muted/primary/gold/danger/viewport/viewport-danger/inherit), `PixelIcon` + `assets/soulmon/icones-ui/` (pixel art), `EstagioIcone`, `BitsIcon`, `CreditIcon` | 39 glifos autorais travados na Fase 2; ícone nunca em box extra. |
 | Moldura | `ModalFrame`, `CardFrame` (fatiamento vertical), `--sm2-moldura-pad-{x,t,b}` | A moldura é arte; o respiro do conteúdo é token. |
+| Fundo vazio de modal | classe `sm2-moldura-modal--vazio` (prop `fundoVazio` em `ModalFrame`/`ModalSheet`) | Turquesa escuro LISO (`--sm2-viewport-bg`), sem pedra/runas/lote. Nova tarefa, Novo hábito e Missões usam a MESMA classe. |
 
 ## 3. Componentes e categorias
 
