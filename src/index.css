@@ -3099,6 +3099,9 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
 
   /* Escala FECHADA: 12/14/16/20/24/32. Piso ABSOLUTO de 12px — não existe
      texto menor no app, nem legenda, nem rodapé de card. */
+  /* Pílulas de moeda do mapa (Bits/Honra/Créditos): largura FIXA e igual; cabe "99.999" a 14px tabular + ícone de 22px. */
+  --sm2-moeda-w: 96px;
+
   --sm2-text-xs: 12px;
   --sm2-text-sm: 14px;
   --sm2-text-md: 16px;
@@ -7636,3 +7639,34 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-encerrar-acoes { display: flex; justify-content: center; gap: var(--sm2-space-2); }
 .sm2-encerrar-acoes > button { flex: 1 1 0; min-width: 0; }
 .sm2-encerrar-texto { margin: 0; text-align: center; color: var(--sm2-ink); font-size: var(--sm2-text-sm); }
+
+/* Pílulas de moeda do HUD do mapa: as 3 IGUAIS (ícone + valor), mesma largura FIXA, sem encolher nem sobrepor (QA 24/11/2026). */
+.sm2-moeda-hud {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sm2-space-3);
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
+}
+.sm2-moeda {
+  box-sizing: border-box;
+  flex: 0 0 var(--sm2-moeda-w);
+  width: var(--sm2-moeda-w);
+  min-width: var(--sm2-moeda-w);
+  padding: 0 var(--sm2-space-2);
+  font-size: var(--sm2-text-sm);
+  line-height: var(--sm2-leading-title);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.sm2-moeda__in {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sm2-space-1);
+  white-space: nowrap;
+}
+.sm2-moeda__val {
+  font-variant-numeric: lining-nums tabular-nums;
+  text-align: end;
+}

@@ -37,7 +37,7 @@ export function alvo44(style: CSSProperties | undefined): CSSProperties {
  *   (footgun do `index.css.contract`).
  */
 function InfoTipBase({
-  children, label, language, align = 'center', style, trigger, bare = false, autoCloseMs,
+  children, label, language, align = 'center', style, trigger, bare = false, autoCloseMs, className,
 }: {
   children: ReactNode;
   /** Nome acessível do "?" (ex.: "Como funciona a Feira" / "How the Fair works"). */
@@ -52,6 +52,8 @@ function InfoTipBase({
   bare?: boolean;
   /** Fecha sozinho depois de N ms aberto (ex.: dica de moeda, 4000). */
   autoCloseMs?: number;
+  /** Classe do botão (só sem `bare`): o layout vem do `index.css`, não de estilo em linha. */
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top?: number; bottom?: number; maxHeight: number; left: number; width: number } | null>(null);
@@ -131,7 +133,7 @@ function InfoTipBase({
         aria-describedby={open ? id : undefined}
         title={bare ? undefined : label}
         data-info-bare={bare ? '' : undefined}
-        className={bare ? 'sm2-info-hit' : undefined}
+        className={bare ? 'sm2-info-hit' : className}
         onClick={() => setOpen(o => !o)}
         style={bare ? undefined : {
           background: 'none', border: 'none', padding: 0, margin: 0,
