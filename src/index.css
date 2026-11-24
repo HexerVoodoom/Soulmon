@@ -7576,7 +7576,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-modal--cristal {
   --sm2-cristal-canto: clamp(52px, calc(var(--u) * 17.5), 120px);
   --sm2-cristal-placa-h: clamp(40px, calc(var(--u) * 13), 64px);
-  --sm2-moldura-pad-x: calc(var(--sm2-cristal-canto) * .5); --sm2-moldura-pad-t: 8px; --sm2-moldura-pad-b: calc(var(--sm2-cristal-canto) * .45);
+  --sm2-moldura-pad-x: calc(var(--sm2-cristal-canto) * .5); --sm2-moldura-pad-t: 8px; --sm2-moldura-pad-b: calc(var(--sm2-cristal-canto) * .8);
   min-height: 0; border-radius: calc(var(--sm2-cristal-canto) * .4); background: var(--sm2-viewport-bg, #0E2422);
 }
 .sm2-moldura-modal--cristal .sm2-moldura-modal__fundo,
@@ -7623,7 +7623,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-modal.sm2-moldura-modal--cristal.sm2-moldura-modal--titulo-inline { --sm2-moldura-pad-t: 0px; }
 .sm2-popup-cabeca {
   display: flex; align-items: center; flex-shrink: 0; gap: 4px;
-  margin: calc(var(--sm2-cristal-canto) * .3) calc(var(--sm2-cristal-canto) * .3) 0 calc(var(--sm2-moldura-pad-x) + 4px);
+  margin: calc(var(--sm2-cristal-canto) * .3) calc(var(--sm2-cristal-canto) * .3) 0 calc(var(--sm2-cristal-canto) * .85);
 }
 .sm2-popup-cabeca[data-tem-info] .sm2-popup-titulo { padding-right: 50px; }
 .sm2-popup-fechar {
