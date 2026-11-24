@@ -96,15 +96,14 @@ describe('AreaSheet', () => {
     expect(card.contains(npcZone)).toBe(false);
     expect(npcZone.style.flex).toBe('0 1 33.3333dvh');
     expect(Number(npcZone.style.zIndex)).toBeLessThan(Number(card.style.zIndex));
-    // H4: o ✕ fica no canto superior ESQUERDO, acima do NPC, fora do card e
-    // dentro do diálogo (o foco preso o alcança).
+    // Moldura final do dono (24/11/2026): o ✕ mora no MEDALHÃO esquerdo da moldura (dentro do card e do diálogo, o foco preso o alcança); a posição
+    // é do CSS (`.sm2-moldura-dono__fechar`, centro em 8,5u/8,5u) e ele segue antes do NPC no DOM.
     const close = container.querySelector('[data-area-sheet-close]') as HTMLElement;
     expect(dlg.contains(close)).toBe(true);
-    expect(card.contains(close)).toBe(false);
-    expect(close.style.position).toBe('absolute');
-    // H9: o ✕ mora na MESMA âncora lateral do voltar/casinha (`cornerAnchor.ts`)
-    expect(close.style.left).toContain('--sm2-space-3');
-    expect(close.compareDocumentPosition(npcZone) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(card.contains(close)).toBe(true);
+    expect(close.closest('.sm2-moldura-dono__fechar')).not.toBeNull();
+    expect(card.classList.contains('sm2-moldura-modal--dono')).toBe(true);
+    expect(close.compareDocumentPosition(npcZone) & Node.DOCUMENT_POSITION_FOLLOWING).toBeFalsy();
     const npc = container.querySelector('[data-area-sheet-npc]');
     expect(npc).not.toBeNull();
     expect(npc!.getAttribute('src')).toBeTruthy();

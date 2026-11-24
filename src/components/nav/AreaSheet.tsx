@@ -90,6 +90,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   const frame = npcFrame ?? npcFrameFor(areaId, lotId);
   const aco = MOLDURA_MODAL && moldura === 'aco';
   const inline = MOLDURA_MODAL && !aco && titulo === 'inline';
+  // Moldura FINAL do dono (24/11/2026): madeira com cipós e gemas, medalhão esquerdo (✕), ornamento (i) à direita, placa de título. Só o padrão (nem aço, nem inline).
+  const dono = MOLDURA_MODAL && !aco && !inline;
 
   const npcSrc = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
   const npc = npcVoice ?? (areaId ? lotNpcVoice(areaId, lotId, language) : { name: '', line: '' });
@@ -121,7 +123,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           pointerEvents: 'none',
         }}
       >
-        {!closeInSheet && !hideClose && !aco && !inline && (
+        {!closeInSheet && !hideClose && !aco && !inline && !dono && (
           <BackCircleButton
             data-area-sheet-close=""
             onClick={() => onClose()}
@@ -183,7 +185,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           data-area-sheet
           title={inline ? undefined : title}
           fundo={fundoDoLote(areaId, lotId)}
-          className={aco ? 'sm2-sheet-rise sm2-moldura-modal--aco' : inline ? 'sm2-sheet-rise sm2-moldura-modal--titulo-inline sm2-area-sheet-inline' : 'sm2-sheet-rise'}
+          className={aco ? 'sm2-sheet-rise sm2-moldura-modal--aco' : inline ? 'sm2-sheet-rise sm2-moldura-modal--titulo-inline sm2-area-sheet-inline' : dono ? 'sm2-sheet-rise sm2-moldura-modal--dono' : 'sm2-sheet-rise'}
           data-moldura-variante={aco ? 'aco' : undefined}
           // Toque dentro da folha não deve fechar (só o backdrop fecha).
           onClick={e => e.stopPropagation()}
@@ -211,15 +213,15 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
         >
           {aco && <CristalChama />}
           {aco && !hideClose && <FecharAco label={closeLabel} onClose={onClose} />}
-          {closeInSheet && !hideClose && !aco && (
-            <div style={MOLDURA_MODAL ? { position: 'absolute', top: 'calc(var(--u) * 3)', left: 'calc(var(--u) * 3)', zIndex: 4 } : { padding: '8px 16px 0', flexShrink: 0 }}>
-              <BackCircleButton data-area-sheet-close="" onClick={() => onClose()} label={closeLabel} />
+          {(closeInSheet || dono) && !hideClose && !aco && (
+            <div className={dono ? 'sm2-moldura-dono__fechar' : undefined} style={dono ? undefined : MOLDURA_MODAL ? { position: 'absolute', top: 'calc(var(--u) * 3)', left: 'calc(var(--u) * 3)', zIndex: 4 } : { padding: '8px 16px 0', flexShrink: 0 }}>
+              <BackCircleButton data-area-sheet-close="" onClick={() => onClose()} label={closeLabel} style={dono ? { border: 0, color: '#E9F5F2' } : undefined} />
             </div>
           )}
           {/* Com a moldura (`MOLDURA_MODAL`) o TÍTULO mora na PLACA do topo (`ModalFrame title`, serifa dourada, centrado, reticências se longo) e esta
               linha vira só os encaixes (start-slot, head-slot, "i"), pousados POR CIMA da moldura (z 4) sobre a placa e o disco do canto. */}
           <div data-area-sheet-head style={MOLDURA_MODAL
-            ? { position: 'absolute', top: 0, left: 0, right: 0, height: aco ? 'calc(var(--u) * 22)' : 'calc(var(--u) * 16.9)', zIndex: 4, display: 'flex', alignItems: 'center', padding: '0 calc(var(--u) * 3)', boxSizing: 'border-box', pointerEvents: 'none' }
+            ? { position: 'absolute', top: 0, left: 0, right: 0, height: aco ? 'calc(var(--u) * 22)' : dono ? 'calc(var(--u) * 15)' : 'calc(var(--u) * 16.9)', zIndex: 4, display: 'flex', alignItems: 'center', padding: '0 calc(var(--u) * 3)', boxSizing: 'border-box', pointerEvents: 'none' }
             : { display: 'flex', alignItems: 'center', minHeight: 52, padding: '8px 16px 0', boxSizing: 'border-box', backgroundColor: 'var(--sm2-surface)' }}>
             {MOLDURA_MODAL
               ? <span style={{ flex: 1 }} />

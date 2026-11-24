@@ -839,6 +839,7 @@ describe('guard de asset — paleta (magenta/roxo da paleta antiga)', () => {
     // Sétima exceção (pedido do dono, 18/11/2026): as peças do modal FILES (`ui/files/`: moldura em fatias, cristal, abas, slots, disquete) são arte de MOLDURA/ITEM, não de botão.
     // Sexta exceção (pedido do dono, 18/11/2026): o TÍTULO "BOSS BATTLE" (`ui/boss-battle-title{,-pt}.png`, lettering em arte, não botão).
     // Quinta exceção (pedido do dono, 18/11/2026): o BOTÃO ESPECIAL de compra (`ui/btn-especial{,-press,-off}.webp`, `.sm2-especial`, 3-slice dourado/turquesa).
+    // Exceção (pedido do dono, 24/11/2026): as fatias `ui/moldura/npc-{topo,base,lado-e,lado-d}.webp` (moldura FINAL do dono dos modais de NPC/prédio, `.sm2-moldura-modal--dono`) são arte de MOLDURA aprovada, não botão.
     // Quarta exceção (17/11/2026, PR moldura de modais): as fatias WebP da moldura de modal/card (`ui/moldura/`) são arte de MOLDURA, não de botão.
     expect(fs.existsSync(path.join(ASSETS, 'soulmon/buttons'))).toBe(false);
   });

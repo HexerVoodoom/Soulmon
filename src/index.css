@@ -7492,6 +7492,21 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-ritual { overflow: hidden; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
 .sm2-moldura-ritual .sm2-moldura-modal__conteudo { gap: 12px; overflow-y: auto; padding-left: calc(var(--u) * 5); padding-right: calc(var(--u) * 5); padding-bottom: calc(var(--u) * 9); }
 .sm2-info-hit:focus-visible { outline: 2px solid #e3c06a; outline-offset: -4px; }
+/* MOLDURA FINAL DO DONO (24/11/2026, `AreaSheet` padrão): madeira com cipós e gemas, medalhão vazio à esquerda (✕), ornamento (i) à direita, placa teal.
+   Mesmo método do painel (topo/base em `--u` com proporção da arte @720, lados repeat-y); medidas em u = 1% da largura = 7,2 px do arquivo.
+   Arte em `assets/soulmon/ui/moldura/npc-*.webp` (fatias do P6). Cena `__fundo` recortada para DENTRO da madeira. */
+.sm2-moldura-modal--dono {
+  --sm2-moldura-pad-t: calc(var(--u) * 15); --sm2-moldura-pad-x: calc(var(--u) * 2.8 + 8px); --sm2-moldura-pad-b: calc(var(--u) * 12); --sm2-moldura-pad-x-rodape: calc(var(--u) * 2.8 + 8px);
+}
+.sm2-moldura-modal--dono .sm2-moldura-modal__fundo { inset: calc(var(--u) * 3) calc(var(--u) * 2.5) calc(var(--u) * 6) calc(var(--u) * 2.5); border-radius: calc(var(--u) * 3); }
+.sm2-moldura-modal--dono .sm2-moldura-modal__lado { width: calc(var(--u) * 2.78); }
+.sm2-moldura-modal--dono .sm2-moldura-modal__lado--e { background-image: url('./assets/soulmon/ui/moldura/npc-lado-e.webp'); }
+.sm2-moldura-modal--dono .sm2-moldura-modal__lado--d { background-image: url('./assets/soulmon/ui/moldura/npc-lado-d.webp'); }
+.sm2-moldura-modal--dono .sm2-moldura-modal__topo { height: calc(var(--u) * 36.4); background-image: url('./assets/soulmon/ui/moldura/npc-topo.webp'); }
+.sm2-moldura-modal--dono .sm2-moldura-modal__base { height: calc(var(--u) * 38.75); background-image: url('./assets/soulmon/ui/moldura/npc-base.webp'); }
+.sm2-moldura-modal--dono .sm2-moldura-modal__placa { left: calc(var(--u) * 25.1); width: calc(var(--u) * 54.1); top: calc(var(--u) * 4.7); height: calc(var(--u) * 7.7); padding: 0 calc(var(--u) * 1.5); box-sizing: border-box; }
+.sm2-moldura-modal--dono .sm2-moldura-modal__info { right: calc(var(--u) * 2.85); top: calc(var(--u) * 4.25); width: calc(var(--u) * 8.5); height: calc(var(--u) * 8.5); }
+.sm2-moldura-dono__fechar { position: absolute; z-index: 4; left: calc(var(--u) * 8.5); top: calc(var(--u) * 8.5); transform: translate(-50%, -50%); }
 .sm2-moldura-modal__conteudo {
   /* Sem z-index: não cria contexto de empilhamento, então a moldura (z 2) cobre o que rola e o cabeçalho de quem chama (z 4) fica sobre ela. */
   position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box;

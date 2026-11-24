@@ -6,7 +6,11 @@
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
 import { MailboxSheet } from './MailboxSheet';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { NPC_MENSAGEIRO_ART } from '../assets/soulmon/npcs';
+
+const CSS_DONO = readFileSync(resolve(__dirname, '../index.css'), 'utf8');
 
 beforeEach(() => {
   try { localStorage.clear(); } catch { /* jsdom */ }
@@ -40,8 +44,11 @@ describe.each(['pt-BR', 'en-US'] as const)('MailboxSheet › NPC grande por fora
     expect(footer.querySelector('[data-mail-claim-all]')).not.toBeNull();
     expect(footer.querySelector('[data-mail-delete-read]')).not.toBeNull();
     const close = container.querySelector('[data-area-sheet-close]') as HTMLElement;
-    expect(close.style.left).not.toBe('');
-    expect(close.style.right).toBe('');
+    // o ✕ mora no medalhão ESQUERDO da moldura do dono (posição = `.sm2-moldura-dono__fechar`, `left`, nunca `right`)
+    expect(close.closest('.sm2-moldura-dono__fechar')).not.toBeNull();
+    const regra = CSS_DONO.slice(CSS_DONO.indexOf('.sm2-moldura-dono__fechar {'), CSS_DONO.indexOf('}', CSS_DONO.indexOf('.sm2-moldura-dono__fechar {')));
+    expect(regra).toContain(' left:');
+    expect(regra).not.toContain(' right:');
     close.click();
     expect(onClose).toHaveBeenCalled();
   });
