@@ -102,6 +102,8 @@ export interface MochilaProps {
   onGoToBuilding?: (building: BuildingId) => void;
   /** DEMO LOCAL: o prédio social bloqueado na demo não recebe o "Ir lá". */
   demo?: boolean;
+  /** Onboarding (dono, 24/11/2026): o dedo arrasta a comida direto, sem toque longo (a lista tem poucos itens e nao rola). */
+  arrastoDireto?: boolean;
 }
 
 interface Arrasto {
@@ -135,7 +137,7 @@ const ABAS: ReadonlyArray<{ id: MochilaAbaVista; pt: string; en: string }> = [
 export const USAR_TRAVA_MS = 400;
 
 export function Mochila({
-  open, onClose, foodInventory, language, onUse, petTargetRef, onTargetChange, petName, materials, extras, onGoToBuilding, demo,
+  open, onClose, foodInventory, language, onUse, petTargetRef, onTargetChange, petName, materials, extras, onGoToBuilding, demo, arrastoDireto,
 }: MochilaProps) {
   const isPt = language === 'pt-BR';
   const [aba, setAba] = useState<MochilaAbaVista>('comida');
@@ -243,7 +245,7 @@ export function Mochila({
     engolirCliqueRef.current = false;
     // Dedo (touch/pen): o arrasto só ARMA depois de um toque longo parado; mexer antes disso é rolar a lista (nativo, `touch-action: pan-y`).
     // Mouse não rola por arrasto: arma na hora.
-    const comDedo = e.pointerType !== 'mouse';
+    const comDedo = e.pointerType !== 'mouse' && !arrastoDireto;
     let armado = !comDedo;
     const timer = comDedo ? window.setTimeout(() => {
       armado = true;
@@ -374,6 +376,7 @@ export function Mochila({
                     key={emoji}
                     type="button"
                     className="sm3-item"
+                    data-direto={arrastoDireto || undefined}
                     data-item={emoji}
                     data-disquete={disq || undefined}
                     data-on={selecionadoVisivel === emoji || undefined}
