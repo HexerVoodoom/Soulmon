@@ -3101,6 +3101,8 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
      texto menor no app, nem legenda, nem rodapé de card. */
   /* Pílulas de moeda do mapa (Bits/Honra/Créditos): largura FIXA e igual; cabe "99.999" a 14px tabular + ícone de 22px. */
   --sm2-moeda-w: 96px;
+  /* Fundo da pílula: a cor de fundo do TEMA a 80% (não 55: sobre a cachoeira clara do mapa o contraste do texto caía a ~3:1; a 80% fica >= 4,5:1 nos dois temas). Sem moldura, sem borda. */
+  --sm2-moeda-fundo: color-mix(in srgb, var(--sm2-bg) 80%, transparent);
 
   --sm2-text-xs: 12px;
   --sm2-text-sm: 14px;
@@ -7659,7 +7661,13 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+/* O fundo vai no miolo (e não no botão): o InfoTip fixa `background: none` em linha no botão. 32px visuais; o toque de 44 é do botão. */
 .sm2-moeda__in {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 32px;
+  background: var(--sm2-moeda-fundo);
+  border-radius: var(--sm2-radius-md);
   display: inline-flex;
   align-items: center;
   justify-content: center;

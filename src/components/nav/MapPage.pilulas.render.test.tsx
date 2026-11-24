@@ -47,6 +47,12 @@ describe('MapPage: as 3 pílulas de moeda são iguais (24/11/2026)', () => {
     expect(pill).toMatch(/flex:\s*0 0 auto/);
     expect(pill).not.toMatch(/flex:[^;]*var\(--sm2-moeda-w\)/);
     expect(pill).toMatch(/tabular-nums/);
+    // fundo translúcido do tema + raio por token (sem moldura nem borda)
+    const miolo = bloco('.sm2-moeda__in');
+    expect(miolo).toContain('background: var(--sm2-moeda-fundo)');
+    expect(miolo).toContain('border-radius: var(--sm2-radius-md)');
+    expect(miolo).toContain('min-height: 32px');
+    expect(css).toContain('--sm2-moeda-fundo: color-mix(in srgb, var(--sm2-bg) 80%, transparent)');
     expect(bloco('.sm2-moeda-hud')).toMatch(/gap:\s*var\(--sm2-space-3\)/);
     expect(bloco('.sm2-moeda__in')).toMatch(/gap:\s*var\(--sm2-space-1\)/);
     expect(css).toMatch(/--sm2-moeda-w:\s*96px/);
