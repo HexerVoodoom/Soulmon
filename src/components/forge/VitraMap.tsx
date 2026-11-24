@@ -34,7 +34,7 @@ export interface VitraChakra {
 }
 
 /** O balão do chakra: abre logo abaixo do anel e, se sair da tela (telas baixas, recorte do palco), é empurrado para dentro com uma folga. */
-function Pop({ slot, side, children }: { slot: EquipSlot; side: string; children: ReactNode }) {
+function Pop({ slot, side, inline, children }: { slot: EquipSlot; side: string; inline?: boolean; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -42,16 +42,18 @@ function Pop({ slot, side, children }: { slot: EquipSlot; side: string; children
     const fit = () => {
       el.style.setProperty('--dx', '0px'); el.style.setProperty('--dy', '0px');
       const r = el.getBoundingClientRect();
-      const vw = window.innerWidth, vh = window.innerHeight, m = 8;
-      const dx = r.left < m ? m - r.left : r.right > vw - m ? vw - m - r.right : 0;
-      const dy = r.bottom > vh - m ? vh - m - r.bottom : 0;
+      // inline: o limite é o contêiner do mapa (o modal), não a janela
+      const box = inline ? el.closest('[data-vitra-map]')?.getBoundingClientRect() : undefined;
+      const left = box ? box.left : 0, right = box ? box.right : window.innerWidth, bottom = box ? box.bottom : window.innerHeight, m = 8;
+      const dx = r.left < left + m ? left + m - r.left : r.right > right - m ? right - m - r.right : 0;
+      const dy = r.bottom > bottom - m ? bottom - m - r.bottom : 0;
       el.style.setProperty('--dx', `${Math.round(dx)}px`); el.style.setProperty('--dy', `${Math.round(dy)}px`);
     };
     fit();
     window.addEventListener('resize', fit);
     return () => window.removeEventListener('resize', fit);
-  }, []);
-  return <div ref={ref} className="sm2-vit-pop" data-side={side} data-vitra-pop={slot}>{children}</div>;
+  }, [inline]);
+  return <div ref={ref} className="sm2-vit-pop" data-side={side} data-vitra-pop={slot} data-horizontal={inline || undefined}>{children}</div>;
 }
 
 /** `inline`: dentro do corpo de um modal (AreaSheet), sem tela cheia: o palco ocupa a largura do modal, ancorado no topo. */
@@ -71,7 +73,7 @@ export function VitraMap({ chakras, onBackdrop, label, children, inline }: { cha
                 aria-label={c.label} aria-expanded={c.open} aria-haspopup="dialog" onClick={c.onToggle}>
                 {c.face}
               </button>
-              {c.open && <Pop slot={c.slot} side={at.side}>{c.popover}</Pop>}
+              {c.open && <Pop slot={c.slot} side={at.side} inline={inline}>{c.popover}</Pop>}
             </div>
           );
         })}
