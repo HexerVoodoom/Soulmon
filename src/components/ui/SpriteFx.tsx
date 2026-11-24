@@ -30,6 +30,7 @@ const BANNER_LABEL: Record<ResultBannerKind, { pt: string; en: string }> = {
   victory: { pt: 'Vitória', en: 'Victory' },
   defeat: { pt: 'Derrota', en: 'Defeat' },
   draw: { pt: 'Empate', en: 'Draw' },
+  fled: { pt: 'Fugiu', en: 'Fled' },
   win: { pt: 'Vitória', en: 'Win' },
   lose: { pt: 'Derrota', en: 'Lose' },
   complete: { pt: 'Completo', en: 'Complete' },

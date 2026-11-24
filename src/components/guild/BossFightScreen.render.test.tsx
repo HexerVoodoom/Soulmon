@@ -56,6 +56,8 @@ describe('BossFightScreen', () => {
     const { container } = render(<BossFightScreen {...base} skipReplay />);
     expect(container.querySelector('[data-result-title]')!.textContent).toBe('Herald of the End fled, for now');
     expect(container.querySelector('[data-result-pool-pct]')).not.toBeNull();
+    expect(container.querySelector('[data-result-banner="fled"]')).not.toBeNull(); // selo FLED (arte do P6), não o DRAW
+    expect(container.querySelector('[data-result-banner="draw"]')).toBeNull();
     expect(container.querySelector('[data-result-row]')).toBeNull(); // sem recompensa fora do abate
     expect(container.textContent!.toLowerCase()).not.toMatch(/fail|falh/);
   });

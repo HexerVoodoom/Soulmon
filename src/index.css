@@ -7740,8 +7740,6 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* P7: o respiro do título no cristal vem da margem esquerda da `.sm2-popup-cabeca` (canto*.85); sem padding duplo, e o ✕ não encolhe. */
 .sm2-moldura-modal--cristal .sm2-popup-titulo { padding: 0; }
 .sm2-moldura-modal--cristal .sm2-popup-fechar { flex-shrink: 0; }
-/* P3: selo de texto PLACEHOLDER do resultado do chefe que fugiu (no lugar do DRAW). Trocar pela arte do selo FLED (P6). */
-.sm-result-seal-text { display: block; margin: 0 auto; text-align: center; font-family: var(--sm2-font-display, Georgia, serif); font-weight: 800; letter-spacing: .12em; font-size: var(--sm2-text-xl, 1.5rem); color: #e3c06a; text-shadow: 0 2px 0 rgba(0,0,0,.55); }
 .sm2-popup-titulo {
   margin: 0; padding: 0; flex: 1 1 auto; min-width: 0; text-align: left; overflow-wrap: anywhere; text-wrap: balance;
   font-family: var(--sm2-font-display, Georgia, serif); font-size: var(--sm2-text-lg, 1.25rem); font-weight: 700; line-height: 1.2; color: #e3c06a;
