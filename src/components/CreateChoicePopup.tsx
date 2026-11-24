@@ -34,7 +34,7 @@ export function CreateChoicePopup({ open, language, onClose, onPick, onCommit }:
             <Icon name="close" size={24} tone="inherit" />
           </button>
         </div>
-        <div style={{ display: 'grid', gap: 10, padding: '0 4px 20px' }}>
+        <div style={{ display: 'grid', gap: 10, padding: '0 4px 34px' }}>
           <button type="button" data-create-choice="habit" className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary"
             style={{ width: '100%', gap: 8 }} onClick={() => onPick('habit')}>
             <Icon name="event_repeat" size={20} tone="inherit" />{pt ? 'Hábito' : 'Habit'}
