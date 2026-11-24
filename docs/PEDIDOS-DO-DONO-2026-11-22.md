@@ -100,6 +100,8 @@ Palavras do dono: "Modal de pop up tá bem ruim. Precisa ter altura mínima maio
 
 **Rodada 5 (arte, 23/11): sprites do lote 5 aprovados.** O dono aprovou os 12 sprites (4 rookies + 4 champions + 4 ultimates) e os 8 nomes: Spectrel→Spectrane→Spectrarch (fantasma), Revenox→Revenoxar→Revenolord (morto-vivo), Hemolisk→Hemocarax→Hemocolossa (sangue), Furiosk→Furiozar→Furiotitan (fúria). Instalados em `novos-arquivo/combinados/` e `combinados-formas/`, registrados por `buildFormasLote5`; faltam só ícones, FX, poções/chips e cenários (P6). REGISTRO §510.
 
+**Rodada 5 (Conjunto Fundador, PR 2/2, 23/11): aviso por popup central (REGISTRO §523).** Ao ganhar prêmio(s) do conjunto: conta existente vê UM popup com os 4; conta nova vê um popup por marco (1/2/3/5 dias) com arte, nome, "Ganho por constância: N dias." e "Equipar" (fundo/moldura/retrato) + "Fechar". Campo novo `fundadorAvisados` impede repetir. REGISTRO §511.
+
 **Rodada 5 (decisão, 23/11): besourinho de feedback.** O besourinho (`HomeFeedbackButton`) fica VISÍVEL no beta e é ocultado só na versão final. Flag de build `VITE_HIDE_FEEDBACK_BUTTON=1` (`src/utils/feedbackFlag.ts`; padrão = visível); só renderização, o save não muda. Teste: `HomeFeedbackButton.flag.render.test.tsx`.
 
 ## Rodada 5 (cont.) e rodada 6 — 23 e 24/11/2026 (consolidação dos relatórios das sessões, 24/11)
@@ -123,7 +125,7 @@ Estado de cada pedido (fonte: relatórios P2 a P7, site e marketing; "aberto" = 
 | Caderno: 5º campo, escrita livre, "Eu sou grato por"; hábito "refletir" liga ao Caderno | #1139, #1142, #1176 mergeados |
 | Besourinho de feedback visível no beta, oculto só na versão final | #1180 aberto |
 | Escolhedor Hábito/Tarefa + New task, seletor When (7 quadrados + Marcar todos + Uma vez), filtros da Home, convite do contador de passos, limite de atividades (demo x pago/beta) | fila/parado (P2) |
-| Cristal Fundador em qualquer chão (§511); Fundador PR2, aviso de prêmio | #1165 mergeado; #1166 aberto |
+| Cristal Fundador em qualquer chão (§511); Fundador PR2, aviso de prêmio (§523) | #1165 mergeado; #1166 aberto |
 | Migração dos botões locais para `sm2Button` (§517) | #1175, #1174, #1182, #1183 de 24/11; estado de merge não confirmado nos relatórios |
 | Popup central com moldura cristal (§515); pré-download no onboarding (§514) | #1135, #1136, #1145, #1150, #1161 e #1164 citados como feitos pela P7; estado de merge de cada um não confirmado |
 | Regra do `dist/` (§506) e regra de worktrees/lock/disco (§516) | em vigor |

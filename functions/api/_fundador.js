@@ -14,8 +14,8 @@ const premios = (v) => (Array.isArray(v) ? FUNDADOR_PREMIOS.filter((id) => v.inc
  * Só age se um dos dois lados tem algum campo do Fundador; sem nenhum, o save segue intacto (não inventa o campo).
  */
 export function enforceFundador(state, gravado) {
-  const temEntrada = 'fundadorDias' in state || 'fundadorUltimoDia' in state || 'fundadorPremios' in state;
-  const temGravado = !!gravado && ('fundadorDias' in gravado || 'fundadorUltimoDia' in gravado || 'fundadorPremios' in gravado);
+  const temEntrada = 'fundadorDias' in state || 'fundadorUltimoDia' in state || 'fundadorPremios' in state || 'fundadorAvisados' in state;
+  const temGravado = !!gravado && ('fundadorDias' in gravado || 'fundadorUltimoDia' in gravado || 'fundadorPremios' in gravado || 'fundadorAvisados' in gravado);
   if (!temEntrada && !temGravado) return state;
   const d = Math.max(dias(state.fundadorDias), dias(gravado?.fundadorDias));
   const u = [ultimo(state.fundadorUltimoDia), ultimo(gravado?.fundadorUltimoDia)].filter(Boolean).sort().pop();
@@ -24,6 +24,11 @@ export function enforceFundador(state, gravado) {
   const p = FUNDADOR_PREMIOS.filter((id) => novoP.includes(id) || velhoP.includes(id));
   // Campo ausente nos DOIS lados = conta existente (o cliente concede na carga): continua ausente.
   const temPremiosEmAlgum = Array.isArray(state.fundadorPremios) || Array.isArray(gravado?.fundadorPremios);
+  // Avisados: UNIÃO também (recarregar não repete o popup; cliente antigo que regrava sem o campo não perde o estado).
+  if (Array.isArray(state.fundadorAvisados) || Array.isArray(gravado?.fundadorAvisados)) {
+    const a = premios(state.fundadorAvisados), b = premios(gravado?.fundadorAvisados);
+    state.fundadorAvisados = FUNDADOR_PREMIOS.filter((id) => a.includes(id) || b.includes(id));
+  }
   state.fundadorDias = d;
   if (u) state.fundadorUltimoDia = u; else delete state.fundadorUltimoDia;
   if (temPremiosEmAlgum) state.fundadorPremios = p; else delete state.fundadorPremios;

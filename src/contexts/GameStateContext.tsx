@@ -132,7 +132,7 @@ import { sanitizeAvatarId } from '../utils/avatar';
 import { migrateBestiary } from '../utils/bestiaryMigrate';
 import { migrateCatalogHabitDaily } from '../utils/catalogHabitMigrate';
 import { loadCatalog } from '../data/catalogoCarga';
-import { concederFundador, sanitizeFundadorDias, sanitizeFundadorPremios, sanitizeFundadorUltimoDia } from '../utils/fundador';
+import { concederFundador, sanitizeFundadorAvisados, sanitizeFundadorDias, sanitizeFundadorPremios, sanitizeFundadorUltimoDia } from '../utils/fundador';
 import { sanitizeDefeatedElements } from '../utils/elementDex';
 import { sanitizeLibraryAck, type LibraryAck } from '../utils/libraryNew';
 import { sanitizeStrayPlayersSeen, type StrayPlayerSeen } from '../utils/strayPlayers';
@@ -760,6 +760,8 @@ export interface GameState {
   fundadorDias?: number;
   fundadorUltimoDia?: string;
   fundadorPremios?: string[];
+  /** Prêmios do Fundador cujo popup já foi mostrado (aditivo; ausente = nenhum). */
+  fundadorAvisados?: string[];
   /** 🌳 TALENTOS do usuário (Combate v3 / PR7). Um id por GRAU comprado (`utils/talents.ts`); o resto (pontos, bônus) é
    *  derivado do Vínculo (`bondLevelFor(totalXP)`, nunca persistido). Vetor inválido é descartado na carga e no servidor
    *  (`functions/api/save.js`). Sobrevive à degeneração. Leitura: `?? []`. */
@@ -1928,6 +1930,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         fundadorDias: sanitizeFundadorDias(loadedState.fundadorDias),
         fundadorUltimoDia: sanitizeFundadorUltimoDia(loadedState.fundadorUltimoDia),
         fundadorPremios: sanitizeFundadorPremios(loadedState.fundadorPremios),
+        fundadorAvisados: sanitizeFundadorAvisados(loadedState.fundadorAvisados),
       } as GameState));
 }
 

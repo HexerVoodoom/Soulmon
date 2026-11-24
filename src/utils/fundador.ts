@@ -30,6 +30,8 @@ export interface FundadorEstado {
   fundadorDias?: number;
   fundadorUltimoDia?: string;
   fundadorPremios?: string[];
+  /** Prêmios cujo POPUP já foi mostrado (aditivo; ausente = nenhum). União no servidor, igual a `fundadorPremios`. */
+  fundadorAvisados?: string[];
   ownedBackgrounds?: string[];
   ownedFrames?: string[];
   ownedFurniture?: string[];
@@ -109,4 +111,20 @@ export function concederTodosFundador<S extends FundadorEstado>(estado: S): S {
   for (const id of FUNDADOR_PREMIOS) s = darPosse(s, id);
   const mesmo = estado.fundadorPremios?.length === FUNDADOR_PREMIOS.length && FUNDADOR_PREMIOS.every(id => estado.fundadorPremios!.includes(id)) && s.ownedBackgrounds === estado.ownedBackgrounds && s.ownedFrames === estado.ownedFrames && s.ownedFurniture === estado.ownedFurniture;
   return mesmo ? estado : s;
+}
+
+/** Prêmios ganhos e ainda NÃO avisados, na ordem de entrega (o popup do aviso). Vazio = nada a mostrar. */
+export function fundadorPendentes(s: Pick<FundadorEstado, 'fundadorPremios' | 'fundadorAvisados'>): string[] {
+  const ganhos = s.fundadorPremios ?? [];
+  const vistos = s.fundadorAvisados ?? [];
+  return FUNDADOR_PREMIOS.filter(id => ganhos.includes(id) && !vistos.includes(id));
+}
+/** Marca ids como avisados (união, ordem canônica). Devolve o MESMO objeto se nada muda. */
+export function marcarFundadorAvisados<S extends FundadorEstado>(s: S, ids: readonly string[]): S {
+  const atual = s.fundadorAvisados ?? [];
+  const novo = FUNDADOR_PREMIOS.filter(id => atual.includes(id) || ids.includes(id));
+  return novo.length === atual.length && Array.isArray(s.fundadorAvisados) ? s : { ...s, fundadorAvisados: novo };
+}
+export function sanitizeFundadorAvisados(raw: unknown): string[] {
+  return Array.isArray(raw) ? FUNDADOR_PREMIOS.filter(id => raw.includes(id)) : [];
 }
