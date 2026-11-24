@@ -2,7 +2,7 @@
 
 > ## 24/11/2026 (noite) — Estado do dia (REGISTRO §524–§533)
 > - **Mergeado hoje:** #1186 (Passeio não abre sozinho), #1187 (título inline sem placa), #1188 (cenários de combate + botões sm2), #1191/#1194/#1195/#1202/#1207 (Fundador), #1192 e #1216 (moedas; barra cobre #1214 FECHADA), #1199/#1200/#1205 (Evolution Center e Hexsmith), #1201/#1208 (borda A e quinas do dono), #1206/#1212 (respiro), #1209 (moldura do dono nos modais de NPC/prédio), #1211 (escolhedor Hábito/Tarefa), #1217 (rebuild do `dist/` do lote e re-medição da dívida de bytes).
-> - **Abertos:** #1203, #1213, #1215. **Aguarda o dono:** confirmar a leitura do Passeio (§526).
+> - **Abertos:** #1203, #1213, #1215. **Confirmado pelo dono em 24/11/2026:** a leitura do Passeio (§526).
 > - **Pendente de arte:** topo sem placa das folhas de baixo, cenas do Focus em vista de cima, FX de combate pixelados, ícones de hábitos (35 só emoji). Ver `ASSETS-A-GERAR.md`.
 > - **Processo:** sem `git stash` em worktree; soltar a junction com `[System.IO.Directory]::Delete` e confirmar antes do `worktree remove` (§533).
 

@@ -140,7 +140,7 @@ Estado de cada pedido (fonte: relatórios P2 a P7, site e marketing; "aberto" = 
 |---|---|
 | Borda A do popup cristal; quinas geradas pelo dono (§524) | #1201 e #1208 mergeados |
 | Título inline sem placa em ~22 modais, margem 24 -> 16 px, respiro; moldura do dono nos modais de NPC/prédio (§525) | #1187, #1206, #1212, #1209 mergeados; folhas de baixo (`AreaSheet`/`SheetFrame`) ainda com placa, falta arte de topo |
-| Passeio não abre sozinho no começo do dia (§526) | #1186 mergeado; leitura adotada, **aguarda confirmação do dono** |
+| Passeio não abre sozinho no começo do dia (§526) | #1186 mergeado; **CONFIRMADA pelo dono em 24/11/2026: a leitura adotada era essa** |
 | Evolution Center: barra B, conectores A, nós A, cadeado B, brilho por caminho, ✕ à esquerda e "i" à direita (§527) | #1199, #1200, #1205, #1177 mergeados; #1203 (arte final) aberto |
 | Fundador: um modal por prêmio, só ✕, chama centrada, fundo B (§528) | #1191, #1194, #1195, #1202, #1207 mergeados (#1166 também) |
 | Barra de moedas: chip anterior com moldura `chip-moeda`, ícone + valor (§529) | #1214 (barra cobre) fechado; #1216 mergeado |
@@ -148,4 +148,4 @@ Estado de cada pedido (fonte: relatórios P2 a P7, site e marketing; "aberto" = 
 | Arte aprovada (backgrounds, botões sm2, cenários); FX pixelados; cenas do Focus top-down (§531) | #1188 mergeado; #1215 (lote 2, cenas do Focus) aberto; FX e cenas top-down pendentes |
 | Bytes re-medidos (#1217) e regra de processo stash/junction (§532, §533) | #1217 mergeado; regra em vigor |
 
-**Ainda aguardam o dono:** (1) confirmar a leitura do Passeio (§526); (2) dos relatórios da Rodada 6, as perguntas acima que seguem sem resposta registrada.
+**Ainda aguardam o dono:** (1) dos relatórios da Rodada 6, as perguntas acima que seguem sem resposta registrada.
