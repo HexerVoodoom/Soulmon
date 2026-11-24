@@ -100,6 +100,7 @@ import { RewardPreview } from './ui/RewardPreview';
 import { TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
 import { seasonDaysLabel } from '../utils/tournamentSeason';
 import { Icon } from './ui/Icon';
+import { HonorIcon } from './ui/HonorIcon';
 import { InfoTip, InfoTipSection } from './ui/InfoTip';
 import { AvatarFrame, FrameSelector } from './ui/AvatarFrame';
 import { MiniGlass } from './ui/MiniGlass';
@@ -858,7 +859,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           aria-label={`${isPt ? 'Honra' : 'Honor'}: ${emblems}`}
           style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0, minHeight: 28 }}
         >
-          <Icon name="military_tech" size={20} tone="gold" fill={1} />
+          <HonorIcon size={20} />
           <span className="sm2-num" style={{ ...emblemNum, fontSize: 'var(--sm2-text-md)' }}>{emblems}</span>
         </span>
       </div>

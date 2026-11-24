@@ -61,7 +61,8 @@ describe('as três moedas nunca se misturam (D-25)', () => {
     expect(bits.querySelector('[data-bits-kind]')).not.toBeNull();
     expect(bits.querySelector('.sm2-icon')).toBeNull();
     expect(honor.querySelector('[data-bits-kind]')).toBeNull();
-    expect(honor.querySelector('.sm2-icon')).not.toBeNull();
+    expect(honor.querySelector('[data-honor-icon]')).not.toBeNull(); // 24/11/2026: a Honra B compacta (PNG), não mais o glifo
+    expect(honor.querySelector('[data-honor-icon]')!.getAttribute('src')).not.toBe(bits.querySelector('[data-bits-kind]')!.getAttribute('src'));
     fireEvent.click(honor);
     expect(picked).toEqual(['emblems']);
   });

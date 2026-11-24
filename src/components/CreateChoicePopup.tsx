@@ -32,8 +32,8 @@ export function CreateChoicePopup({ open, language, onClose, onPick, onCommit }:
           {ESCOLHEDOR_ICON_ART.habito ? <img data-escolhedor-icone="habit" src={ESCOLHEDOR_ICON_ART.habito} alt="" width={32} height={32} draggable={false} /> : <Icon name="event_repeat" size={24} tone="inherit" />}{pt ? 'Novo hábito' : 'New habit'}
         </button>
         {onCommit && (
-          <button type="button" data-create-choice="commit" className="sm2-escolhedor__op" onClick={onCommit}>
-            <Icon name="flag" size={24} tone="inherit" />{pt ? 'Comprometer-me' : 'Commit to a task'}
+          <button type="button" data-create-choice="commit" className="sm2-escolhedor__op" aria-label={pt ? 'Comprometer-me' : 'Commit to a task'} onClick={onCommit}>
+            {ESCOLHEDOR_ICON_ART.compromisso ? <img data-escolhedor-icone="commit" src={ESCOLHEDOR_ICON_ART.compromisso} alt="" width={32} height={32} draggable={false} /> : <Icon name="flag" size={24} tone="inherit" />}{pt ? 'Comprometer-me' : 'Commit to a task'}
           </button>
         )}
       </div>

@@ -42,7 +42,8 @@ import masmorraBauFechado from './masmorra-bau-fechado.png';
 import masmorraBauAberto from './masmorra-bau-aberto.png';
 import masmorraEscada from './masmorra-escada.png';
 import moedaBits from './moeda-bits.png';
-import moedaEmblema from './moeda-emblema.png';
+// 24/11/2026: a Honra "B compacta" (alfa real; 64 é o arquivo único da chave, como os demais ícones de moeda).
+import moedaEmblema from './icone-honra-B-compacta-64.png';
 import moedaCreditos from './moeda-creditos.png';
 import atributoPoder from './atributo-poder.png';
 import atributoHarmonia from './atributo-harmonia.png';
@@ -130,7 +131,7 @@ export const DUNGEON_PROP_ART = {
  *  (vetorial, REGISTRO §105 revogado pela D-62), não por este PNG; Honra/Créditos ficam na UI de
  *  sistema, que é vetorial (D2).
  *  EXCEÇÃO (18/11/2026): `creditos` (256², diamante turquesa com chama da alma) TEM chamada: `components/ui/CreditIcon.tsx`, em todos os pontos de Créditos.
- *  `emblema` é a moeda do Torneio (campo `emblems`, rótulo "Honra"/"Honor" na UI). */
+ *  `emblema` é a Honra "B compacta" (`HonorIcon`: pílulas, Torneio, Mercado, resultado) — a moeda do Torneio (campo `emblems`, rótulo "Honra"/"Honor" na UI). */
 export const CURRENCY_ART = {
   bits: moedaBits,
   emblema: moedaEmblema,

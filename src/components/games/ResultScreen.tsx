@@ -18,6 +18,7 @@ import { GameVisor, VisorSprite, VisorSparks } from './GameKit';
 import { PixelMeter } from '../pixel/PixelKit';
 import { BitsAmount } from '../ui/BitsAmount';
 import { Icon } from '../ui/Icon';
+import { HonorIcon } from '../ui/HonorIcon';
 import { RewardIcon, RewardPop } from '../ui/RewardPop';
 import { ResultBanner, SpriteFx, bannerForOutcome, type BannerSet } from '../ui/SpriteFx';
 import type { ResultBannerKind } from '../../utils/fxPackArt';
@@ -464,7 +465,7 @@ export function ResultScreen(p: ResultScreenProps) {
                             <BitsAmount value={r.value} sign="+" size={18} roll={{ run: reveal.isRolling(key), still: still || reveal.isLanded(key) }} />
                           </RewardPop>
                         )}
-                        {r.kind === 'honor' && <RewardPop on={shown} still={still}><span className="sm2-num" data-result-honor style={{ ...emblemStyle, fontSize: 20 }}>+{r.value}</span></RewardPop>}
+                        {r.kind === 'honor' && <RewardPop on={shown} still={still}><span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><HonorIcon size={20} /><span className="sm2-num" data-result-honor style={{ ...emblemStyle, fontSize: 20 }}>+{r.value}</span></span></RewardPop>}
                         {r.kind === 'xp' && <RewardPop on={shown} still={still}><span className="sm2-num" data-result-xp style={{ fontSize: 20 }}>+{r.value}</span></RewardPop>}
                         {r.kind === 'node' && <span style={{ display: 'inline-flex', alignItems: 'center' }}>{r.node}</span>}
                         {r.kind === 'essence' && <span className="sm2-num" data-result-essence={r.id} style={{ fontWeight: 600 }}>×{r.qty}</span>}
