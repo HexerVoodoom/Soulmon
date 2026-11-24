@@ -7537,10 +7537,15 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 /* Mapa do Soulsmith: o título vai na placa da moldura (o do HUD fica só para o nome acessível). */
 [data-forge-view="map"] .sm2-vit-title { opacity: 0; }
 /* Mapa do Soulsmith DENTRO do modal da área (23/11/2026): sem tela cheia; palco na largura do modal, ancorado no topo (chakras ≤53% da arte + folga do balão). */
-.sm2-vit-map[data-vitra-inline] { position: relative; inset: auto; z-index: auto; width: 100%; aspect-ratio: 852 / 1250; border-radius: var(--sm2-radius-md, 12px); }
-.sm2-vit-map[data-vitra-inline] .sm2-vit-stage { top: 0; width: 100%; transform: translateX(-50%); }
+/* Sem rolagem (24/11/2026): o contêiner mostra só a faixa 18%..75% da arte (chakras em 30..53%), com o palco puxado para cima em 18% da PRÓPRIA altura; chakras seguem em % do palco. */
+.sm2-vit-map[data-vitra-inline] { position: relative; inset: auto; z-index: auto; inline-size: 100%; aspect-ratio: 852 / 1052; border-radius: var(--sm2-radius-md, 12px); }
+.sm2-vit-map[data-vitra-inline] .sm2-vit-stage { top: 0; width: 100%; transform: translate(-50%, -18%); }
 .sm2-vit-map[data-vitra-inline] .sm2-vit-foot { padding: 16px 12px 12px; }
-.sm2-vit-map[data-vitra-inline] .sm2-vit-pop { width: min(250px, calc(100% - 16px)); }
+[data-area-sheet-body]:has([data-vitra-inline]) { overflow-y: hidden !important; }
+/* Balão horizontal sobre o chakra: centrado no palco, largura relativa ao modal (cqw do palco), duas opções lado a lado. */
+.sm2-vit-pop[data-horizontal] { inline-size: calc(100cqw - 16px); max-inline-size: 30rem; }
+.sm2-vit-pop[data-horizontal] .sm2-vit-opts { grid-template-columns: 1fr 1fr; }
+.sm2-vit-pop[data-horizontal] .sm2-vit-card { padding: var(--sm2-space-2); gap: var(--sm2-space-1); }
 @keyframes sm-summon-flash{0%{opacity:0;transform:scale(.6)}35%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.15)}}
 
 /* MOLDURA DE POPUP 'CRISTAL' (23/11/2026, arte do P6 aprovada pelo dono): popup central (`ModalSheet placement=center`) sem folha/cipó de prédio.

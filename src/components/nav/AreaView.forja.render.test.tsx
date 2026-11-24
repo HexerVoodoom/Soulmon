@@ -5,7 +5,9 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ComponentProps } from 'react';
-import { cleanup, screen, waitFor } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fireEvent, cleanup, screen, waitFor } from '@testing-library/react';
 import { renderWithCss, installDomGlobals } from '../../test/renderEnv';
 import { GameStateProvider } from '../../contexts/GameStateContext';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
@@ -35,7 +37,7 @@ afterEach(cleanup);
 for (const largura of [360, 375, 412]) {
   describe(`Soulsmith em ${largura}px`, () => {
     beforeEach(() => { Object.defineProperty(window, 'innerWidth', { configurable: true, value: largura }); window.dispatchEvent(new Event('resize')); });
-    it('folha com a Vitra e a Forja dentro, rolável, um ✕ só, sem tela cheia nem folha antiga', async () => {
+    it('folha com a Vitra e a Forja dentro, sem rolagem interna, um ✕ só, sem tela cheia nem folha antiga', async () => {
       const { container } = renderWithCss(<GameStateProvider><AreaView {...base()} /></GameStateProvider>);
       await waitFor(() => expect(container.querySelector('[data-forge-card]')).not.toBeNull());
       const folha = container.querySelector('[data-area-sheet]')!;
@@ -51,7 +53,17 @@ for (const largura of [360, 375, 412]) {
       expect(container.querySelector('[data-vitra-bar][hidden]')).not.toBeNull();
       expect(container.querySelector('.sm2-moldura-tela')).toBeNull();
       expect(container.querySelectorAll('[data-area-sheet-close]')).toHaveLength(1);
-      expect(getComputedStyle(corpo).overflowY).toMatch(/auto|scroll/);
+      // sem scroll: o corpo corta (a faixa da arte cabe) e o mapa inline mostra só a faixa dos chakras
+      expect(getComputedStyle(corpo).overflowY).toBe('hidden');
+      const css = readFileSync(resolve(process.cwd(), 'src/index.css'), 'utf8');
+      expect(css).toMatch(/\.sm2-vit-map\[data-vitra-inline\] \.sm2-vit-stage \{[^}]*translate\(-50%, -18%\)/);
+      expect(css).toMatch(/\.sm2-vit-pop\[data-horizontal\] \{[^}]*inline-size: calc\(100cqw - 16px\)/);
+      // balão do chakra: horizontal, filho do palco (largura relativa), não solto na viewport
+      fireEvent.click(container.querySelector('[data-vitra-chakra="nucleo"]')!);
+      const pop = container.querySelector('[data-vitra-pop="nucleo"]')!;
+      expect(pop.getAttribute('data-horizontal')).not.toBeNull();
+      expect(pop.getAttribute('data-side')).toBe('below');
+      expect(container.querySelector('[data-vitra-stage]')!.contains(pop)).toBe(true);
       expect(screen.queryByText(/Ir para a Forja de Alma|Go to the Soul Forge|gear takes shape/i)).toBeNull();
     });
   });
