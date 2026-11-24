@@ -140,6 +140,8 @@ export function sm2Button(variant: Sm2ButtonVariant, disabled = false, size: Sm2
     // Lidos só pelo CSS da arte (`html[data-ui="arte"]`): variante fixa e altura em px.
     ['--sm2-btn-kind' as string]: variant,
     ['--sm2-btn-h' as string]: `${metric.minHeight}px`,
+    // `sm` = chip inline (bordinha, sem arte de gema): o CSS da arte exclui `--sm2-btn-chip`.
+    ...(size === 'sm' ? { ['--sm2-btn-chip' as string]: '1' } : {}),
   };
   if (disabled) {
     if (variant === 'ghost' || variant === 'quiet') {
