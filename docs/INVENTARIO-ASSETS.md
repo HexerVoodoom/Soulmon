@@ -526,3 +526,6 @@ Notas: a cota do ChatGPT foi atingida em 23/11 (retoma ao liberar); arquivo novo
 
 ## P6 — fundo do Fundador refeito (24/11/2026)
 `backgrounds/founder-fundo.webp` (mesma chave/nome, 1200×648, 76 KB) substituído pelo fundo novo B do dono (parede de pedra rachada, tubos de cobre, frisos, circuitos turquesa acesos e cristais; inspirado nos painéis da intro): recorte PAISAGEM da arte vertical aprovada, com o topo do chão a ~74% da caixa (GROUND_Y) — o consumidor (`fundadorCatalogo.ts` cenário `center bottom / cover` e o thumbnail 200×120 do `FundadorAvisoModal`) fica igual. Versão VERTICAL 720×1440 e a variante A (sem luz) alinhada ficam em `E:\Soulmon-assets\p6-founder-bg\` (sem consumidor ainda).
+
+## P6 — moldura cristal com as quinas geradas (24/11/2026)
+`ui/moldura-cristal/popup-cristal-1024.webp` substituída (1024², `border-image-slice` 225, sem mudança de CSS): quinas de cobre + gema turquesa + vinha redesenhadas no ChatGPT pelo dono (alfa real) com a faixa turquesa lisa contínua entrando nelas, sem fio de bronze. Faixa um pouco mais grossa (~36 px nativos) que a anterior (20 px): o P7 confere o respiro. Originais: `E:\Soulmon-assets\p6-popup-cristal\quinas-v2\` (dono-transparente.png, popup-cristal-novo-1024.png).
