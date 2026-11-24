@@ -19,8 +19,8 @@ import { GUILD_ERROR_KEY, type GuildKey } from '../../utils/guildCopy';
 import type { PlayerDayAnchor } from '../../utils/playerDay';
 import { Icon } from '../ui/Icon';
 
+import { sm2Button } from '../form/FormKit';
 type T = (k: GuildKey, vars?: Record<string, string | number>) => string;
-const btn = 'sm2-kit-btn sm2-kit-btn-md';
 const lista = { listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-2)' } as const;
 const kindDe = (e: unknown) => (e instanceof GuildError ? e.kind : 'server' as const);
 
@@ -88,9 +88,7 @@ export function ProcurarCla({ saveId, t, tz, onJoined }: {
             type="button"
             disabled={ocupado}
             data-guild-cancelar-pedido
-            onClick={() => void agir(() => cancelGuildRequest(saveId, tzRef.current))}
-            className={`${btn} sm2-kit-btn-outline`}
-          >
+            onClick={() => void agir(() => cancelGuildRequest(saveId, tzRef.current))} style={sm2Button('outline', ocupado, 'sm')}>
             <Icon name="close" size={20} />
             {t('guild.procurar.cancelar')}
           </button>
@@ -105,9 +103,7 @@ export function ProcurarCla({ saveId, t, tz, onJoined }: {
         <button
           type="button"
           data-guild-procurar-abrir
-          onClick={() => { setAberto(true); void carregar(); }}
-          className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}
-        >
+          onClick={() => { setAberto(true); void carregar(); }} style={{ ...sm2Button('outline', false, 'sm'), width: '100%' }}>
           <Icon name="search" size={20} />
           {t('guild.procurar.botao.abrir')}
         </button>
@@ -128,9 +124,7 @@ export function ProcurarCla({ saveId, t, tz, onJoined }: {
                     type="button"
                     disabled={ocupado}
                     data-guild-pedir
-                    onClick={() => void agir(() => requestToJoinGuild(saveId, c.dirId, tzRef.current))}
-                    className={`${btn} sm2-kit-btn-primary`}
-                  >
+                    onClick={() => void agir(() => requestToJoinGuild(saveId, c.dirId, tzRef.current))} style={sm2Button('primary', ocupado, 'sm')}>
                     {t('guild.procurar.pedir')}
                   </button>
                 </li>
@@ -251,11 +245,11 @@ export function PedidosDeEntrada({ saveId, t, tz, guildKey, onGuild }: {
             <li key={p.requestId} className="sm2-guild-row" aria-label={t('guild.pedidos.aria', { nome })} data-guild-pedido={p.requestId}>
               <span className="sm2-lib-s" style={{ margin: 0, overflowWrap: 'anywhere' }}>{nome}</span>
               {/* Esquerda = recusar, direita = confirmar (regra do dono). */}
-              <button type="button" disabled={ocupado} data-guild-recusar onClick={() => void decidir(p.requestId, false)} className={`${btn} sm2-kit-btn-outline`}>
+              <button type="button" disabled={ocupado} data-guild-recusar onClick={() => void decidir(p.requestId, false)} style={sm2Button('outline', ocupado, 'sm')}>
                 <Icon name="close" size={20} />
                 {t('guild.pedidos.recusar')}
               </button>
-              <button type="button" disabled={ocupado} data-guild-aceitar onClick={() => void decidir(p.requestId, true)} className={`${btn} sm2-kit-btn-primary`}>
+              <button type="button" disabled={ocupado} data-guild-aceitar onClick={() => void decidir(p.requestId, true)} style={sm2Button('primary', ocupado, 'sm')}>
                 <Icon name="check" size={20} />
                 {t('guild.pedidos.aceitar')}
               </button>

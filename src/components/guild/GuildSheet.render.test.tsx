@@ -306,16 +306,14 @@ describe('a roda por tamanho', () => {
     const convidar = document.querySelector('[data-guild-convidar]') as HTMLButtonElement;
     expect(convidar.tagName).toBe('BUTTON');
     expect(convidar.classList.contains('sm2-cta')).toBe(false);
-    expect(convidar.className).toMatch(/\bsm2-kit-btn\b/);
-    expect(convidar.className).toMatch(/\bsm2-kit-btn-md\b/);
-    // a régua da largura é a mesma dos botões dos Ajustes (`sm2-guild-btn` = 100%)
+    expect(convidar.style.getPropertyValue('--sm2-btn')).toBe('primary'); // botao sm2Button, nao classe do kit
+    // a régua da largura é a mesma dos botões dos Ajustes (inline `width: 100%`)
     const abrir = screen.getByRole('button', { name: PT('guild.ajustes.aria') });
     fireEvent.click(abrir);
     const ajustes = [...document.getElementById(abrir.getAttribute('aria-controls')!)!.querySelectorAll('button')] as HTMLElement[];
     expect(ajustes.length).toBeGreaterThan(0);
     for (const b of [convidar, ...ajustes]) {
-      expect(b.classList.contains('sm2-guild-btn')).toBe(true);
-      expect(computed(b, 'width')).toBe('100%');
+      expect(b.style.width).toBe('100%');
       expect(parseFloat(computed(b, 'min-height'))).toBeGreaterThanOrEqual(44);
     }
   });
