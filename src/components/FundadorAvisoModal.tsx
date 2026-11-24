@@ -42,7 +42,7 @@ export function FundadorAvisoModal({ language, premios, dias, onClose, onEquip }
     ? (pt ? `Ganho por constância: ${dias} ${dias === 1 ? 'dia' : 'dias'}.` : `Earned by consistency: ${dias} ${dias === 1 ? 'day' : 'days'}.`)
     : (pt ? 'Presente para quem chegou cedo.' : 'A gift for those who arrived early.');
   return (
-    <ModalSheet open placement="center" titulo="inline" sobreTelas title={titulo} onClose={onClose} language={language} maxWidth={328}
+    <ModalSheet open placement="center" titulo="inline" title={titulo} onClose={onClose} language={language} maxWidth={328}
       footer={(
         <div className="sm2-forja-resultado-acoes">
           {equipavel && <button type="button" data-fundador-equip className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary" onClick={() => onEquip(unico!)}>{pt ? 'Equipar' : 'Equip'}</button>}

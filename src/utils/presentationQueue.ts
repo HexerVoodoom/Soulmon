@@ -78,6 +78,7 @@ export const PRESENTATION_ORDER = [
   'catalogOnboarding',
   'dayGoals',
   'checkIn',
+  'fundador',
   'levelUp',
   'evolveTask',
   'groveMilestone',
