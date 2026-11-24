@@ -553,3 +553,6 @@ Notas: a cota do ChatGPT foi atingida em 23/11 (retoma ao liberar); arquivo novo
 - **Sortear de novo** `icones-ui/interacao/icon-sortear-de-novo.png` (96², sem consumidor; `DueloSheet` hoje só texto).
 - **Rift** `rift/rift-camada.png` (165×192, marcador de camada) e `rift/rift-portal.png` (331×420); sem consumidor.
 - Originais e folhas de contato: `E:\Soulmon-assets\p6-novos-lote3\`.
+
+## P6 — botões sm2 sem as gemas das pontas (24/11/2026, dono)
+`ui/sm2/sm2-{primary,outline,danger}-{normal,pressed,disabled}.webp` refeitos por edição de pixel (gema e engaste removidos, ponta fechada com cobre/borda; 703×169, alfa real, mesmos nomes). Cortes novos: `esq`/`dir` 62 px (o CSS ainda usa `0 75` em `border-image`; a P5 troca). Originais e JSON: `E:\Soulmon-assets\p6-sm2-sem-gema\`.
