@@ -228,7 +228,7 @@ export const SPAR_HONOR_DAILY_CAP = 20;
  * Bits, nunca o retorno do custo em corações") — um teto de ganho é ainda mais
  * suave que um custo de entrada, porque não pode deixar ninguém sem jogar.
  */
-export const MINIGAME_BITS_PER_DAY = 150;
+export const MINIGAME_BITS_PER_DAY = 180; // 24/11/2026 (dono): 180 total/dia (era 150); cada atividade segue com teto próprio de 75
 
 /**
  * O registro do teto, no SAVE, nunca no localStorage — mesmo argumento do

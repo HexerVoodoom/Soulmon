@@ -10,6 +10,7 @@
  *  · o convite passivo vem DEPOIS do que a pessoa veio ver, só para `demo`;
  *  · Conquistas sem coluna de zeros, com a condição em palavras.
  */
+import { MINIGAME_BITS_PER_DAY } from '../../utils/currencies';
 import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent, act } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
@@ -66,7 +67,7 @@ describe('compra', () => {
     expect(onBuy).not.toHaveBeenCalled();
     const modal = screen.getByRole('dialog', { name: 'How to get Bits' });
     // As regras REAIS, lidas das constantes: os minijogos (com o teto diário) e a troca de Créditos.
-    expect(modal.querySelector('[data-how-to-earn-way="jogos"]')!.textContent).toContain('150');
+    expect(modal.querySelector('[data-how-to-earn-way="jogos"]')!.textContent).toContain(String(MINIGAME_BITS_PER_DAY));
     expect(modal.querySelector('[data-how-to-earn-way="creditos"]')!.textContent).toContain('packs of 200, 500, 1000 Bits, up to 1000 Bits a day');
     expect(modal.textContent).toContain(`${bitsBg.nameEn} costs ${bitsBg.price} Bits.`);
     expect(container.innerHTML).not.toContain('danger');

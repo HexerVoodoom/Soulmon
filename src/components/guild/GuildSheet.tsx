@@ -1356,7 +1356,6 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           {!missao && <span data-feira-como style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.como')}</span>}
           <span data-feira-ganho style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.ganho')}</span>
           <span data-feira-cabecalho style={{ display: 'block', marginTop: 6 }}>{t(dissipada ? 'guild.feira.dissipado.mundo' : 'guild.feira.aberta.mundo')}</span>
-          <span data-feira-linha style={{ display: 'block', marginTop: 6 }}>{t(`guild.feira.fenomeno.${raid.phenomenon}.linha`)}</span>
           {!dissipada && raid.lastWeek && <span data-feira-semana-passada={raid.lastWeek} style={{ display: 'block', marginTop: 6 }}>{t(raid.lastWeek === 'dissipada' ? 'guild.feira.dissipado.mundo' : 'guild.feira.recuou.mundo')}</span>}
           {missao && <span data-missao-historia style={{ display: 'block', marginTop: 6 }}>{t('guild.missao.historia')}</span>}
           {missao && voltouHoje && fala && (<>
@@ -1368,6 +1367,8 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           <span style={{ display: 'block', marginTop: 6 }}>{t('guild.feira.sobria', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR })}</span>
         </InfoTip>
       </div>
+      {/* 24/11/2026 (dono): a linha curta do fenômeno em curso volta à vista (#1162 a tinha escondido no "i"). */}
+      <p className="sm2-grove-line" data-feira-linha>{t(`guild.feira.fenomeno.${raid.phenomenon}.linha`)}</p>
       {!dissipada && !missao && !desafioAtivo && (
         <button
           type="button"
