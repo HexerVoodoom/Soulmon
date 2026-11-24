@@ -4799,6 +4799,8 @@ button[style*="--sm2-btn: ghost"]:active {
   &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
   &:disabled { cursor: default; }
 }
+/* Faixa de áreas do catálogo: todos os chips com a MESMA altura (44), UMA linha, ícone + rótulo; a faixa rola na horizontal. */
+.sm2-catalogo-areas .sm2-form-segment { flex: 0 0 auto !important; flex-direction: row !important; height: 44px; white-space: nowrap; padding: 0 12px !important; gap: 6px !important; }
 .sm2-form-segment {
   &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
 }
