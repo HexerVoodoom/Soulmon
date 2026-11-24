@@ -577,7 +577,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
       ? 'Hábito: acontece todo dia e aparece sempre no Hoje. Tarefa: pontual ou em dias específicos, do seu jeito.'
       : 'Habit: happens every day and always shows in Today. Task: one-off or on specific days, your way.',
     oneTime: isPt ? 'Uma vez' : 'One-time',
-    allDays: isPt ? 'Marcar todos' : 'Select all',
+    allDays: isPt ? 'Marcar todos' : 'Mark all',
     quandoHint: isPt ? 'Marque ao menos um dia ou "Uma vez".' : 'Pick at least one day or "One-time".',
     onDays: isPt ? 'Dias específicos' : 'Specific days',
     frequency: isPt ? 'Quando' : 'When',
