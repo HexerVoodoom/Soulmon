@@ -61,14 +61,18 @@ export function EscolhaLinha({ lead, title, sub, reward, actionLabel, actionAria
 }
 
 /** O "Sortear N novos" no fim da lista (mesmo botão do Torneio): contorno, largura cheia, ícone de sorteio. */
-export function SortearNovos({ label, ariaLabel, onClick, disabled = false, spinning = false, buttonProps }: {
+export function SortearNovos({ label, ariaLabel, onClick, disabled = false, spinning = false, buttonProps, iconSrc }: {
   /** Texto visível (nó: a Arena põe o custo dentro de um `span` próprio). */
   label: ReactNode; ariaLabel?: string; onClick: () => void; disabled?: boolean; spinning?: boolean;
   buttonProps?: Record<string, string | number | boolean | undefined>;
+  /** Arte própria no lugar do glifo `sync` (20 px; degrau de ícone da escala §6.1). Sem ela, fica o glifo. */
+  iconSrc?: string;
 }) {
   return (
     <button type="button" {...buttonProps} disabled={disabled} aria-label={ariaLabel} onClick={onClick} style={{ ...sm2Button('outline', disabled), width: '100%' }}>
-      <Icon name="sync" size={20} className={spinning ? 'animate-spin' : undefined} />
+      {iconSrc
+        ? <img data-sortear-icone src={iconSrc} alt="" width={20} height={20} draggable={false} className={spinning ? 'animate-spin' : undefined} style={{ imageRendering: 'pixelated' }} />
+        : <Icon name="sync" size={20} className={spinning ? 'animate-spin' : undefined} />}
       {label}
     </button>
   );

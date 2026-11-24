@@ -1,7 +1,7 @@
 import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { SLOT_ORDER, decorFitsSetting, decorRenderBox, itemCabeNoSlot, slotBoxStyle, slotParaItem, type SlotId } from '../utils/petStage';
-import { DECOR_ART, DECOR_CHAMA } from '../utils/decorArt';
+import { DECOR_ART, DECOR_APAGADA, DECOR_CHAMA } from '../utils/decorArt';
 import { ArcadeTela } from './ArcadeTela';
 import campfireBase from '../assets/decor-fx/furn-campfire-base.png';
 import campfireFrente from '../assets/decor-fx/furn-campfire-frente.png';
@@ -106,10 +106,12 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
         if (!slot) return null;
         const box = slotBoxStyle(slot);
         const label = isPt ? item.namePt : item.nameEn;
-        const art = item.id === 'furn-campfire' ? campfireBase : DECOR_ART[item.id]; // a Fogueira do palco é a arte SEM fogo em 2 camadas (base: toras e pedras; frente: aro e postes); o fogo do pixelfx passa ENTRE as duas (§481)
+        const artAcesa = item.id === 'furn-campfire' ? campfireBase : DECOR_ART[item.id]; // a Fogueira do palco é a arte SEM fogo em 2 camadas (base: toras e pedras; frente: aro e postes); o fogo do pixelfx passa ENTRE as duas (§481)
         const luz = DECOR_LUZ[item.id];
         const acesa = luz ? decorLuzAcesa(luz, isSleeping) : false;
-        const artFiltro = luz && !acesa ? 'brightness(.5) saturate(.55) drop-shadow(0 1px 2px rgba(0,0,0,0.35))' : 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))';
+        const artApagada = luz && luz.modo === 'luz' && !acesa ? DECOR_APAGADA[item.id] : undefined; // arte própria da luz apagada (mesma caixa); sem ela, cai no filtro escurecido de antes
+        const art = artApagada ?? artAcesa;
+        const artFiltro = luz && !acesa && !artApagada ? 'brightness(.5) saturate(.55) drop-shadow(0 1px 2px rgba(0,0,0,0.35))' : 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))';
 
         // Tapete: caixa larga e baixa, arte já desenhada em perspectiva rasa
         // (foreshortening) exatamente para esse formato — ver utils/decorArt.ts.

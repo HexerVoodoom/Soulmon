@@ -105,3 +105,19 @@ export function injetarArteDeDecor(...tabelas: ReadonlyArray<Readonly<Record<str
 export interface DecorChama { src: string; quadros: number }
 export const DECOR_CHAMA: Record<string, DecorChama> = {};
 export function injetarChamasDeDecor(t: Readonly<Record<string, DecorChama>>): void { Object.assign(DECOR_CHAMA, t); }
+
+// Estado APAGADA das 6 luzes de decoração (modo 'luz' de decorLuz.ts): arte própria, mesma caixa da acesa; substitui o filtro escurecido quando o pet dorme.
+import apagadaLamp from '../assets/decor-apagadas/lamp-apagada.png';
+import apagadaLantern from '../assets/decor-apagadas/lantern-apagada.png';
+import apagadaCampfire from '../assets/decor-apagadas/campfire-apagada.png';
+import apagadaCerejeiraLanterna from '../assets/decor-apagadas/cerejeira-lanterna-de-petalas-apagada.png';
+import apagadaLavaAltar from '../assets/decor-apagadas/lava-altar-de-magma-apagada.png';
+import apagadaLavaFlor from '../assets/decor-apagadas/lava-flor-de-brasa-apagada.png';
+export const DECOR_APAGADA: Readonly<Record<string, string>> = {
+  'furn-lamp': apagadaLamp,
+  'furn-lantern': apagadaLantern,
+  'furn-campfire': apagadaCampfire,
+  'furn-cerejeira-lanterna-de-petalas': apagadaCerejeiraLanterna,
+  'furn-lava-altar-de-magma': apagadaLavaAltar,
+  'furn-lava-flor-de-brasa': apagadaLavaFlor,
+};
