@@ -213,7 +213,8 @@ const GLOW_COLOR: Record<Attr, string> = { power: ATTR_COLOR.power, harmony: ATT
  *  `split` sai da forma atual; `join` é o espelho vertical (`.sm2-evo-ligacao--join`). Decorativo (aria-hidden). */
 function TreeLinks({ mode, currentBranch }: { mode: 'split' | 'join'; currentBranch: Attr }) {
   const vars = { ['--sm2-evo-poder' as string]: GLOW_COLOR.power, ['--sm2-evo-harmonia' as string]: GLOW_COLOR.harmony, ['--sm2-evo-bene' as string]: GLOW_COLOR.benevolence } as CSSProperties;
-  const descidas = [['esq', ATTR_ORDER[0]], ['meio', ATTR_ORDER[1]], ['dir', ATTR_ORDER[2]]] as const;
+  // Classes escritas por extenso (o contrato de CSS só enxerga literais, não template strings).
+  const descidas = [['sm2-evo-lig__descida--esq', ATTR_ORDER[0]], ['sm2-evo-lig__descida--meio', ATTR_ORDER[1]], ['sm2-evo-lig__descida--dir', ATTR_ORDER[2]]] as const;
   return (
     <div
       aria-hidden="true"
@@ -223,12 +224,12 @@ function TreeLinks({ mode, currentBranch }: { mode: 'split' | 'join'; currentBra
     >
       <span className="sm2-evo-lig__tronco" data-conector="tronco" />
       <span className="sm2-evo-lig__barra" data-conector="barra" />
-      {descidas.map(([lado, a]) => (
+      {descidas.map(([classe, a]) => (
         <span
           key={a}
           data-conector={a === currentBranch ? 'ativo' : 'inativo'}
           data-conector-ramo={a}
-          className={`sm2-evo-lig__descida sm2-evo-lig__descida--${lado}`}
+          className={`sm2-evo-lig__descida ${classe}`}
           style={{ backgroundColor: GLOW_COLOR[a] }}
         />
       ))}

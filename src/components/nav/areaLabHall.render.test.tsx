@@ -162,7 +162,7 @@ describe('Centro de Evolução — menu inline (P5)', () => {
     const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf8');
     for (const k of ['.sm2-lab-choice', '.sm2-evo-namerow', '.sm2-evo-lock', '.sm2-evo-revert']) expect(css).toContain(k);
     expect(css).toMatch(/\.sm2-evo-revert \{[^}]*justify-content: center[^}]*margin-block-start: var\(--sm2-space-5\)/);
-    expect(css).toMatch(/\.sm2-evo-ligacao \{[^}]*aspect-ratio: 300 \/ 48/);
+    expect(css).toMatch(/\.sm2-evo-ligacao \{[^}]*inline-size: 100%[^}]*block-size: var\(--sm2-space-5\)/);
     expect(css).toMatch(/\.sm2-evo-lock \{[^}]*min-inline-size: 44px/);
   });
 });
