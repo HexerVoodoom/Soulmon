@@ -91,7 +91,7 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
   /* O MESMO molde dos prédios (`AreaSheet`): NPC grande por cima da folha, por fora, com a fala (pedido do dono, 27/10/2026). O wrapper `fixed` é o de `DailyReportModal`, já que aqui não há a cena. */
   return (
     <div data-missions-frame style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
-    <AreaSheet
+    <AreaSheet fundoVazio
       open={open} title={isPt ? 'Missões' : 'Missions'} onClose={onClose} language={language}
       closeLabel={isPt ? 'Fechar' : 'Close'}
       npcArt={FUNCTION_NPC_ART.onboarding} npcVoice={functionNpcVoice('onboarding', language)}
