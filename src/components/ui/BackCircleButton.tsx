@@ -38,6 +38,7 @@ export function BackCircleButton({ onClick, label, language, overScene = false, 
       aria-label={name}
       title={name}
       data-back-circle
+      data-back-icon={icon}
       className="sm2-area-back"
       {...rest}
       style={{
