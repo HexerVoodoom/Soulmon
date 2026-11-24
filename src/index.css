@@ -7791,6 +7791,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-evo-ligacao--join { transform: scaleY(-1); }
 .sm2-evo-conector { position: absolute; inset: 0; display: block; inline-size: 100%; block-size: 100%; object-fit: fill; overflow: visible; }
 .sm2-evo-lock-img { display: block; inline-size: 28px; block-size: 28px; }
+.sm2-evo-no-arte { position: relative; }
 .sm2-evo-no-arte[data-busy="true"] { opacity: .75; }
 .sm2-evo-no-matiz { position: absolute; inset: 0; display: block; mix-blend-mode: color; opacity: .85; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; pointer-events: none; }
 
