@@ -17,7 +17,7 @@ describe('Novo hábito: tudo visível', () => {
   it('pt: categoria aberta, rótulo Quando, Exemplo, sem Mais opções nem Nome', () => {
     mk('pt-BR');
     expect(screen.queryByRole('button', { name: /Mais opções|Menos opções/ })).toBeNull();
-    expect(screen.getByRole('group', { name: 'Categoria' })).toBeTruthy();
+    expect(screen.getByRole('combobox', { name: 'Categoria' })).toBeTruthy();
     expect(screen.getByText('Quando')).toBeTruthy();
     expect(screen.queryByText(/Horário/)).toBeNull();
     expect((document.getElementById('sm-quick-add') as HTMLInputElement).placeholder).toBe('Exemplo: Deitar às 22h30');
@@ -27,7 +27,7 @@ describe('Novo hábito: tudo visível', () => {
   it('en: When, Example, no More options, no Name', () => {
     mk('en-US');
     expect(screen.queryByRole('button', { name: /More options|Fewer options/ })).toBeNull();
-    expect(screen.getByRole('group', { name: 'Category' })).toBeTruthy();
+    expect(screen.getByRole('combobox', { name: 'Category' })).toBeTruthy();
     expect(screen.getByText('When')).toBeTruthy();
     expect((document.getElementById('sm-quick-add') as HTMLInputElement).placeholder).toBe('Example: Lights out at 10:30 p.m.');
     expect(document.getElementById('sm-create-name')).toBeNull();
@@ -74,7 +74,8 @@ describe('Nova tarefa: o campo único é o nome', () => {
   it('o exemplo só aparece com o campo vazio e acompanha a categoria', () => {
     render(<CreateModal isOpen initialKind="task" onClose={() => {}} onSaveTask={vi.fn()} onSaveActivity={vi.fn()} language="en-US" />);
     expect(quick().placeholder).toBe('Example: Lights out at 10:30 p.m.');
-    fireEvent.click(screen.getByText('Body'));
+    fireEvent.click(screen.getByRole('combobox', { name: 'Category' }));
+    fireEvent.click(screen.getByRole('option', { name: /Body/ }));
     expect(quick().placeholder).toBe('Example: Walk 20 minutes');
     fireEvent.change(quick(), { target: { value: 'abc' } });
     expect(quick().value).toBe('abc');

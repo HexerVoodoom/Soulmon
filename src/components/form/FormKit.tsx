@@ -403,8 +403,10 @@ export function CheckRow({
  * Foco preso, Escape fecha e o foco volta para quem abriu (`useDialogA11y`).
  */
 export function ModalSheet({
-  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom', sobreTelas = false, titulo = 'inline', fundo,
+  open, title, onClose, language, children, footer, maxWidth = 480, closeSide = 'start', onBack, info, dismissOnBackdrop, placement = 'bottom', sobreTelas = false, titulo = 'inline', fundo, moldura,
 }: {
+  /** 24/11/2026 (dono): só na folha de BAIXO com moldura. `'dono'` = a moldura final (`.sm2-moldura-modal--dono`, arte `moldura/npc-*`): placa teal, ✕ CENTRADO no medalhão esquerdo, (i) no ornamento direito. O padrão não muda. */
+  moldura?: 'dono';
   /** 24/11/2026: só no popup central com moldura. URL de UM tile só, grande (cover, sem repetir), em opacidade baixa atrás do conteúdo. */
   fundo?: string;
   /** 23/11/2026 (dono, teste A/B): só no popup CENTRAL com moldura. `'placa'` (padrão) = título na placa de bronze sobre o topo; `'inline'` = SEM placa:
@@ -465,6 +467,7 @@ export function ModalSheet({
   const framed = !noMiolo && (centered ? MOLDURA_HOME_DIALOGOS : MOLDURA_HOME_FOLHAS);
   const Casca: ElementType = framed ? (centered ? ModalFrame : SheetFrame) : 'div';
   const inline = framed && centered && titulo === 'inline';
+  const donoSheet = !!framed && !centered && moldura === 'dono' && closeSide === 'start' && !onBack;
   if (!open) return null;
   const folha = (
     <ModalInfoSlotProvider slot={slot} inherit={noMiolo}>
@@ -492,7 +495,7 @@ export function ModalSheet({
         {...(inline ? { 'aria-labelledby': tituloId } : { 'aria-label': title })}
         data-placement={placement}
         {...(inline && fundo ? { fundo, fillOpacity: 0.12, 'data-fundo-unico': '' } : null)}
-        className={centered ? (inline ? 'sm2-sheet-fade sm2-moldura-modal--titulo-inline' : 'sm2-sheet-fade') : 'sm2-sheet-rise'}
+        className={centered ? (inline ? 'sm2-sheet-fade sm2-moldura-modal--titulo-inline' : 'sm2-sheet-fade') : donoSheet ? 'sm2-sheet-rise sm2-moldura-modal--dono' : 'sm2-sheet-rise'}
         {...(framed && centered ? { variante: 'cristal' } : null)}
         {...(framed ? { 'data-theme': 'dark', title: inline ? undefined : title, info: info ? { label: info.label, content: info.content, language } : undefined } : null)}
         style={{
@@ -536,8 +539,8 @@ export function ModalSheet({
         ) : closeSide === 'start' ? (
           /* I3: o fechar é a mesma peça do voltar (`BackArrow`, ícone `close`),
              no canto superior ESQUERDO, numa linha PRÓPRIA acima do título. */
-          <div className="sm2-modal-fechar-linha" style={{ padding: framed ? '0 6px 0 6px' : '2px 18px 0 18px', flexShrink: 0 }}>
-            <BackArrow icon={onBack ? 'arrow_back' : 'close'} onClick={onBack ?? onClose} language={language} style={{ margin: '0 0 0 -10px' }} />
+          <div className={donoSheet ? 'sm2-modal-fechar-linha sm2-moldura-dono__fechar' : 'sm2-modal-fechar-linha'} style={{ padding: framed ? '0 6px 0 6px' : '2px 18px 0 18px', flexShrink: 0 }}>
+            <BackArrow icon={onBack ? 'arrow_back' : 'close'} onClick={onBack ?? onClose} language={language} style={{ margin: donoSheet ? 0 : '0 0 0 -10px' }} />
           </div>
         ) : null}
         {framed && (closeSide !== 'end' || inline) ? null : (
