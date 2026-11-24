@@ -88,3 +88,26 @@ describe('modal do elemento (padrão popup central)', () => {
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 });
+
+describe('navegação no pop-up do elemento (setas)', () => {
+  it('setas trocam título/conteúdo sem fechar; extremos desabilitados; item fica marcado ao fechar', () => {
+    localStorage.clear();
+    renderWithCss(<ElementDex defeated={['fogo', 'agua']} language="en-US" />);
+    click('[data-element-cell="fogo"]');
+    const titulo = () => document.querySelector('[data-popup-titulo]')!.textContent;
+    const prev = () => document.querySelector('[data-drive-prev]') as HTMLButtonElement;
+    const next = () => document.querySelector('[data-drive-next]') as HTMLButtonElement;
+    expect(prev().disabled).toBe(true);
+    expect(prev().getAttribute('aria-label')).toBe('Previous');
+    const t0 = titulo();
+    fireEvent.click(next());
+    expect(titulo()).not.toBe(t0);
+    expect(document.querySelector('[data-element-detail]')).toBeTruthy();
+    expect(next().disabled).toBe(true);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    const marcado = document.querySelector('[data-element-cell][data-last="1"]')!.getAttribute('data-element-cell');
+    expect(['fogo', 'agua']).toContain(marcado);
+    expect(marcado).not.toBe('fogo');
+  });
+});

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useSwipeNav } from '../hooks/useSwipeNav';
+import { DriveNavArrows } from './DriveNavArrows';
 import { sm2Button } from './form/FormKit';
 import { ModalSheet } from './form/FormKit';
 import { PEDRA_RUNAS_URL } from '../assets/soulmon/ui/moldura/fundos';
@@ -53,19 +55,25 @@ function RefList({ title, ids, unlocked, isPt, onOpen }: { title: string; ids: r
   );
 }
 
-export function ElementModal({ id, unlocked, isPt, onClose }: { id: string; unlocked: ReadonlySet<string>; isPt: boolean; onClose: () => void }) {
+/** `navIds` (opcional): a lista abrível, na ordem de exibição; liga swipe e setas anterior/próximo (sem fechar). `onNavigate` avisa o item atual. */
+export function ElementModal({ id, unlocked, isPt, onClose, navIds, onNavigate }: { id: string; unlocked: ReadonlySet<string>; isPt: boolean; onClose: () => void; navIds?: readonly string[]; onNavigate?: (id: string) => void }) {
   const [stack, setStack] = useState<string[]>([id]);
+  const [dir, setDir] = useState<'next' | 'prev' | null>(null);
   const openId = stack[stack.length - 1];
   const canBack = stack.length > 1;
   const back = () => setStack(s => (s.length > 1 ? s.slice(0, -1) : s));
   useBackLayer(canBack, back);
+  const pos = navIds && !canBack ? navIds.indexOf(openId) : -1;
+  const hasPrev = pos > 0, hasNext = pos >= 0 && !!navIds && pos < navIds.length - 1;
+  const go = (d: 1 | -1) => { if (!navIds) return; const next = navIds[pos + d]; if (next === undefined) return; setDir(d === 1 ? 'next' : 'prev'); setStack([next]); onNavigate?.(next); };
+  const swipe = useSwipeNav({ onPrev: () => go(-1), onNext: () => go(1), hasPrev, hasNext });
   const comps = elementComponents(openId) ?? curatedComponents(openId);
   // Curado: a vantagem é a do 1º componente (o dominante, que dá os golpes); neutro não tem anel (listas vazias).
   const m = openId === 'neutro' ? { strong: [], weak: [] } : elementMatchups(curatedComponents(openId)?.[0] ?? openId);
   const texto = textoDoElementoBase(openId, isPt);
   return (
     <ModalSheet open placement="center" title={dexElementName(openId, isPt)} onClose={onClose} language={isPt ? 'pt-BR' : 'en-US'} maxWidth={320} fundo={PEDRA_RUNAS_URL || undefined}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }} data-element-detail={openId}>
+      <div key={openId} className="sm2-drive-nav-conteudo" data-anim={dir ? '' : undefined} data-dir={dir ?? undefined} {...(pos >= 0 ? swipe : null)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }} data-element-detail={openId}>
         {elementIcon(openId) && <img src={elementIcon(openId)} alt="" aria-hidden="true" width={96} height={96} draggable={false} style={{ width: 96, height: 96, imageRendering: 'pixelated' }} />}
         <div style={{ alignSelf: 'stretch', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {texto && <p className="sm2-lib-s" data-element-text style={{ margin: 0 }}>{texto}</p>}
@@ -79,6 +87,7 @@ export function ElementModal({ id, unlocked, isPt, onClose }: { id: string; unlo
           )}
         </div>
       </div>
+      {pos >= 0 && <DriveNavArrows isPt={isPt} hasPrev={hasPrev} hasNext={hasNext} onPrev={() => go(-1)} onNext={() => go(1)} />}
     </ModalSheet>
   );
 }

@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ModalSheet } from './form/FormKit';
+import { useSwipeNav } from '../hooks/useSwipeNav';
+import { DriveNavArrows } from './DriveNavArrows';
 import { elementIcon } from '../utils/elementIconArt';
 import { dexElementName, ElementModal } from './ElementModal';
 import { dexUnlockedSet } from '../utils/elementDex';
@@ -31,6 +33,8 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
   const entries = useMemo(() => [...ENEMY_ROSTER].sort((a, b) => ENEMY_STAGES.indexOf(a.stage) - ENEMY_STAGES.indexOf(b.stage)), []);
   const [openKey, setOpenKey] = useState<string | null>(null);
   // P5/24.6: o ícone do elemento da criatura abre o MESMO modal do dex, só se o elemento já foi destrancado.
+  const [ultimo, setUltimo] = useState<string | null>(null); // último item visto: fica destacado na grade ao fechar
+  const [dir, setDir] = useState<'next' | 'prev' | null>(null);
   const [elemId, setElemId] = useState<string | null>(null);
   const elemUnlocked = useMemo(() => dexUnlockedSet(defeatedElements), [defeatedElements]);
   const { fechados, alternar } = useAcordeaoFechados();
@@ -48,6 +52,12 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
   // Desgarrados de jogador (§213) entram no fim do último estágio (mega), como antes entravam no fim da seção Desgarrado.
   const stageGroups = ENEMY_STAGES.map((stage, k, all) => ({ stage, last: k === all.length - 1, cells: shownEntries.filter(({ e }) => e.stage === stage) }))
     .filter(g => g.cells.length > 0 || (g.last && shownExtra.length > 0));
+  // Lista navegável do pop-up: a visível (filtro + seções abertas), só vistos, na ordem de exibição.
+  const navKeys = stageGroups.filter(g => !fechados.includes(g.stage)).flatMap(g => g.cells.filter(({ e }) => seenSet.has(e.key)).map(({ e }) => e.key));
+  const pos = openKey ? navKeys.indexOf(openKey) : -1;
+  const hasPrev = pos > 0, hasNext = pos >= 0 && pos < navKeys.length - 1;
+  const go = (d: 1 | -1) => { const k = navKeys[pos + d]; if (k === undefined) return; setDir(d === 1 ? 'next' : 'prev'); setOpenKey(k); setUltimo(k); };
+  const swipe = useSwipeNav({ onPrev: () => go(-1), onNext: () => go(1), hasPrev, hasNext });
   return (
     <section data-bestiary="all" aria-label={isPt ? 'Selvagens' : 'Wild'}>
       <p className="sm2-lib-s" style={{ margin: '0 0 8px' }}>
@@ -80,7 +90,7 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
                 );
                 const st = { position: 'relative' as const, flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 2 };
                 return vista ? (
-                  <button type="button" data-bestiary-open={e.key} aria-label={`${e.name} (${wildFoeLabel(e.stage, isPt)} #${i + 1})`} onClick={() => setOpenKey(e.key)}
+                  <button type="button" data-bestiary-open={e.key} aria-label={`${e.name} (${wildFoeLabel(e.stage, isPt)} #${i + 1})`} data-last={ultimo === e.key ? '1' : undefined} onClick={() => { setOpenKey(e.key); setUltimo(e.key); }}
                     style={{ ...st, minHeight: 56, padding: 0, background: 'none', border: 0, cursor: 'pointer', color: 'inherit' }}>{inner}</button>
                 ) : <div style={st}>{inner}</div>;
               })()}
@@ -110,7 +120,7 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
       )}
       {openEntry && (
         <ModalSheet open placement="center" title={openEntry.name} onClose={() => setOpenKey(null)} language={isPt ? 'pt-BR' : 'en-US'} maxWidth={320}>
-          <div data-bestiary-detail={openEntry.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <div key={openEntry.key} className="sm2-drive-nav-conteudo" data-anim={dir ? '' : undefined} data-dir={dir ?? undefined} {...(pos >= 0 ? swipe : null)} data-bestiary-detail={openEntry.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
             {rosterSpriteOf(openEntry) && (
               <img src={rosterSpriteOf(openEntry)} alt="" aria-hidden="true" draggable={false} width={160} height={160}
                 style={{ width: 160, height: 160, imageRendering: 'pixelated', objectFit: 'contain' }} />
@@ -126,6 +136,7 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
               )}
             </p>
           </div>
+        {pos >= 0 && <DriveNavArrows isPt={isPt} hasPrev={hasPrev} hasNext={hasNext} onPrev={() => go(-1)} onNext={() => go(1)} />}
         </ModalSheet>
       )}
       {elemId && <ElementModal id={elemId} unlocked={elemUnlocked} isPt={isPt} onClose={() => setElemId(null)} />}

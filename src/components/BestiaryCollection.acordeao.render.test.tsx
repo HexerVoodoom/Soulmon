@@ -99,3 +99,22 @@ describe('BestiaryCollection — detalhe em popup central (padrão Drive)', () =
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 });
+
+describe('BestiaryCollection — navegação no popup', () => {
+  it('setas trocam o título; extremos desabilitados; ✕ fecha', () => {
+    const [a, b] = ENEMY_ROSTER.filter(e => e.stage === ENEMY_ROSTER[0].stage);
+    const { container } = render(<BestiaryCollection seen={[a.key, b.key]} language="en-US" />);
+    fireEvent.click(container.querySelector(`[data-bestiary-open="${a.key}"]`)!);
+    const titulo = () => document.querySelector('[data-popup-titulo]')!.textContent;
+    expect(titulo()).toBe(a.name);
+    expect((document.querySelector('[data-drive-prev]') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(document.querySelector('[data-drive-next]')!);
+    expect(titulo()).toBe(b.name);
+    expect((document.querySelector('[data-drive-next]') as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(document.querySelector('[data-drive-prev]')!);
+    expect(titulo()).toBe(a.name);
+    fireEvent.click(document.querySelector('.sm2-popup-fechar')!);
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    expect(container.querySelector('[data-bestiary-open][data-last="1"]')!.getAttribute('data-bestiary-open')).toBe(a.key);
+  });
+});
