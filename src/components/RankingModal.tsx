@@ -5,6 +5,8 @@ import { useDialogA11y } from '../hooks/useDialogA11y';
 import { ModalFrame } from './ui/ModalFrame';
 import { Icon } from './ui/Icon';
 import { CristalChama } from './ui/CristalChama';
+import { ModalInfo } from './ui/InfoTip';
+import { useMolduraAtiva } from '../contexts/UiSkinContext';
 
 /**
  * MODAL DO RANKING (18/11/2026, pedido do dono; REGISTRO §485): a moldura própria do ranking (`assets/soulmon/ui/ranking/`: ouro envelhecido,
@@ -25,6 +27,7 @@ export function RankingModal({ open, onClose, language, title, info, sobreTelas 
 }) {
   const isPt = language === 'pt-BR';
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
+  const peleComMoldura = useMolduraAtiva();
   if (!open) return null;
   // No <body>: dentro de uma folha com `transform` (AreaSheet) o `position: fixed` vira relativo a ela e o modal ficava com largura/altura erradas (texto cortado).
   const tela = (
@@ -33,6 +36,7 @@ export function RankingModal({ open, onClose, language, title, info, sobreTelas 
       data-ranking-modal-bg=""
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
+      {peleComMoldura ? (
       <ModalFrame
         ref={dialogRef}
         role="dialog"
@@ -51,6 +55,27 @@ export function RankingModal({ open, onClose, language, title, info, sobreTelas 
         </button>
         <div className="sm3-ranking-corpo" data-ranking-corpo="">{children}</div>
       </ModalFrame>
+      ) : (
+        /* Pele 'minimal' (P7 fase 2): folha lisa (`--sm2-surface`), sem arte de moldura e sem borda; ✕ à esquerda, título, "i" à direita (alvos de 44 px). */
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal={true}
+          aria-label={title}
+          tabIndex={-1}
+          className="sm3-ranking sm3-ranking--lisa sm2-sheet-rise"
+          data-ranking-modal=""
+        >
+          <div className="sm3-ranking-lisa__cabeca">
+            <button type="button" className="sm3-ranking-lisa__fechar" data-ranking-fechar="" onClick={onClose} aria-label={isPt ? 'Fechar' : 'Close'}>
+              <Icon name="close" size={24} tone="inherit" />
+            </button>
+            <h2 className="sm2-title sm3-ranking-lisa__titulo">{title}</h2>
+            {info ? <ModalInfo language={language} label={isPt ? 'Sobre o ranking' : 'About the ranking'}>{info}</ModalInfo> : <span className="sm3-ranking-lisa__info-vazio" aria-hidden="true" />}
+          </div>
+          <div className="sm3-ranking-lisa__corpo" data-ranking-corpo="">{children}</div>
+        </div>
+      )}
     </div>
   );
   return typeof document === 'undefined' ? tela : createPortal(tela, document.body);

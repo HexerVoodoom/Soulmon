@@ -12,6 +12,9 @@ import { ModalSheet } from '../form/FormKit';
 import { RitualDialog } from '../ritual/RitualKit';
 import { GameRoot } from '../games/GameKit';
 import { TelaMoldura } from './TelaMoldura';
+import { CardFrame } from './CardFrame';
+import { RankingModal } from '../RankingModal';
+import { ElementModal } from '../ElementModal';
 import { UiSkinProvider } from '../../contexts/UiSkinContext';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { molduraDaPele } from '../../utils/uiSkin';
@@ -100,5 +103,76 @@ describe('TelaMoldura / GameRoot por pele', () => {
     m.unmount();
     const t = pele('minimal', <TelaMoldura tela="calabouco" title="T" />);
     expect(t.container.querySelector('[data-tela-moldura]')).toBeNull();
+  });
+});
+
+/** Peças de arte de moldura (ModalFrame, CardFrame, ranking): na minimal nenhuma pode existir no DOM. */
+const ARTE = '[data-moldura-modal], .sm2-moldura-modal, .sm2-moldura-modal__topo, .sm2-moldura-modal__base, .sm2-moldura-modal__lado, .sm2-moldura-card__topo, .sm2-moldura-card__base, .sm2-moldura-card__lado, .sm2-cristal-chama, [data-tela-moldura]';
+
+describe('RankingModal por pele', () => {
+  const rk = (info?: string) => <RankingModal open onClose={() => {}} language="pt-BR" title="Ranking" info={info}><p>lista</p></RankingModal>;
+  it('arte: moldura do ranking com X só-glifo', () => {
+    pele('arte', rk());
+    const d = document.querySelector('[data-ranking-modal]') as HTMLElement;
+    expect(d.className).toContain('sm2-moldura-modal--ranking');
+    expect(document.querySelector('.sm3-ranking-fechar')).not.toBeNull();
+  });
+  it('fora do provider: igual à arte', () => {
+    pele(null, rk());
+    expect(document.querySelector('.sm2-moldura-modal--ranking')).not.toBeNull();
+  });
+  it('minimal: folha lisa, sem peça de arte, título/corpo/fechar presentes e fechar chama onClose', () => {
+    let fechou = 0;
+    pele('minimal', <RankingModal open onClose={() => { fechou++; }} language="pt-BR" title="Ranking" info="Top 50"><p>lista</p></RankingModal>);
+    expect(document.querySelector(ARTE)).toBeNull();
+    expect(document.querySelector('[data-ranking-modal] img')).toBeNull();
+    const d = document.querySelector('[role="dialog"]') as HTMLElement;
+    expect(d.getAttribute('aria-label')).toBe('Ranking');
+    expect(d.className).toContain('sm3-ranking--lisa');
+    expect(d.querySelector('h2')?.textContent).toBe('Ranking');
+    expect(d.textContent).toContain('lista');
+    expect(d.querySelector('button[aria-label="Sobre o ranking"]')).not.toBeNull();
+    (d.querySelector('[data-ranking-fechar]') as HTMLButtonElement).click();
+    expect(fechou).toBe(1);
+  });
+  it('minimal sem info: sem botão "i"', () => {
+    pele('minimal', rk());
+    expect(document.querySelector('button[aria-label="Sobre o ranking"]')).toBeNull();
+  });
+});
+
+describe('CardFrame por pele', () => {
+  const card = <CardFrame art={<img src="x.png" alt="" />} name="Nome" description="Desc" reward="+3" />;
+  it('arte (e fora do provider): topo, base e laterais', () => {
+    for (const s of [null, 'arte'] as const) {
+      const { container, unmount } = pele(s, card);
+      for (const q of ['topo', 'base', 'lado--e', 'lado--d']) expect(container.querySelector(`.sm2-moldura-card__${q.startsWith('lado') ? 'lado.sm2-moldura-card__' + q : q}`), String(s) + q).not.toBeNull();
+      expect(container.querySelector('.sm2-moldura-card--lisa')).toBeNull();
+      unmount();
+    }
+  });
+  it('minimal: cartão liso, sem peça de arte, com arte/nome/descrição/recompensa', () => {
+    const { container } = pele('minimal', card);
+    expect(container.querySelector(ARTE)).toBeNull();
+    expect(container.querySelector('.sm2-moldura-card--lisa')).not.toBeNull();
+    expect(container.querySelector('[data-moldura-arte] img')).not.toBeNull();
+    expect(container.querySelector('[data-moldura-nome]')?.textContent).toBe('Nome');
+    expect(container.querySelector('[data-moldura-desc]')?.textContent).toBe('Desc');
+    expect(container.querySelector('[data-moldura-recompensa]')?.textContent).toBe('+3');
+  });
+});
+
+describe('ElementModal por pele', () => {
+  const el = <ElementModal id="fogo" unlocked={new Set(['fogo'])} isPt onClose={() => {}} />;
+  it('arte: ModalFrame do ModalSheet central; minimal: folha lisa com título e fechar', () => {
+    const a = pele('arte', el);
+    expect(document.querySelector('[data-moldura-modal]')).not.toBeNull();
+    a.unmount();
+    pele('minimal', el);
+    expect(document.querySelector(ARTE)).toBeNull();
+    const d = document.querySelector('[role="dialog"]') as HTMLElement;
+    expect(d).not.toBeNull();
+    expect(d.querySelector('[data-element-detail="fogo"]')).not.toBeNull();
+    expect(d.querySelector('button[aria-label="Fechar"]')).not.toBeNull();
   });
 });

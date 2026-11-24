@@ -12,6 +12,7 @@ import { curatedComponents, curatedElementName, isCuratedElement } from '../util
 import { elementMatchups } from '../utils/elementDexMatchups';
 import { textoDoElementoBase } from '../utils/elementoTextos.data';
 import { useBackLayer } from '../utils/backStack';
+import { useMolduraAtiva } from '../contexts/UiSkinContext';
 
 /**
  * MODAL DO ELEMENTO (P5/24.5 e 24.6): a ficha de um elemento destrancado, extraída do `ElementDex` para ser a MESMA em todo lugar
@@ -57,6 +58,7 @@ function RefList({ title, ids, unlocked, isPt, onOpen }: { title: string; ids: r
 
 /** `navIds` (opcional): a lista abrível, na ordem de exibição; liga swipe e setas anterior/próximo (sem fechar). `onNavigate` avisa o item atual. */
 export function ElementModal({ id, unlocked, isPt, onClose, navIds, onNavigate }: { id: string; unlocked: ReadonlySet<string>; isPt: boolean; onClose: () => void; navIds?: readonly string[]; onNavigate?: (id: string) => void }) {
+  const peleComMoldura = useMolduraAtiva();
   const [stack, setStack] = useState<string[]>([id]);
   const [dir, setDir] = useState<'next' | 'prev' | null>(null);
   const openId = stack[stack.length - 1];
@@ -72,7 +74,7 @@ export function ElementModal({ id, unlocked, isPt, onClose, navIds, onNavigate }
   const m = openId === 'neutro' ? { strong: [], weak: [] } : elementMatchups(curatedComponents(openId)?.[0] ?? openId);
   const texto = textoDoElementoBase(openId, isPt);
   return (
-    <ModalSheet open placement="center" title={dexElementName(openId, isPt)} onClose={onClose} language={isPt ? 'pt-BR' : 'en-US'} maxWidth={320} fundo={PEDRA_RUNAS_URL || undefined}>
+    <ModalSheet open placement="center" title={dexElementName(openId, isPt)} onClose={onClose} language={isPt ? 'pt-BR' : 'en-US'} maxWidth={320} fundo={peleComMoldura ? PEDRA_RUNAS_URL || undefined : undefined}>
       <div key={openId} className="sm2-drive-nav-conteudo" data-anim={dir ? '' : undefined} data-dir={dir ?? undefined} {...(pos >= 0 ? swipe : null)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }} data-element-detail={openId}>
         {elementIcon(openId) && <img src={elementIcon(openId)} alt="" aria-hidden="true" width={96} height={96} draggable={false} style={{ width: 96, height: 96, imageRendering: 'pixelated' }} />}
         <div style={{ alignSelf: 'stretch', display: 'flex', flexDirection: 'column', gap: 12 }}>
