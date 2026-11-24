@@ -4782,6 +4782,66 @@ button[style*="--sm2-btn: ghost"]:active {
   background-color: var(--sm2-primary-soft) !important;
 }
 
+/* ── Arte dos botões `sm2Button` (P6 aprovou 24/11/2026; P7 liga) ───────────
+   ESCOPADO: só vale dentro de um contêiner `.sm2-btn-arte`. Para ligar no app
+   inteiro basta pôr a classe no root; sem ela nada muda nos ~350 botões.
+   `sm2Button()` grava `--sm2-btn-kind` (primary|outline|danger|quiet|ghost) e
+   `--sm2-btn-h` (44/48/56 px) no style; aqui só primary/outline/danger ganham
+   arte (quiet/ghost ficam sem). 9-slice horizontal 703×169: a ponta com a gema
+   ocupa ~75 px → `--cap` = altura × 75/169. Estados = 3 arquivos (normal,
+   pressed no `:active`, disabled no `:disabled`). Texto claro em qualquer tema
+   porque o miolo da arte é escuro/teal nos dois (contraste no PR #P7). */
+.sm2-btn-arte { --sm2-btn-arte-ink: #FFFFFF; }
+.sm2-btn-arte button[style*="--sm2-btn-kind:primary"],
+.sm2-btn-arte button[style*="--sm2-btn-kind: primary"] { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-normal.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:primary"]:active:not(:disabled),
+.sm2-btn-arte button[style*="--sm2-btn-kind: primary"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-pressed.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:primary"]:disabled,
+.sm2-btn-arte button[style*="--sm2-btn-kind: primary"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-disabled.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:outline"],
+.sm2-btn-arte button[style*="--sm2-btn-kind: outline"] { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-normal.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:outline"]:active:not(:disabled),
+.sm2-btn-arte button[style*="--sm2-btn-kind: outline"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-pressed.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:outline"]:disabled,
+.sm2-btn-arte button[style*="--sm2-btn-kind: outline"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-disabled.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:danger"],
+.sm2-btn-arte button[style*="--sm2-btn-kind: danger"] { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-normal.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:danger"]:active:not(:disabled),
+.sm2-btn-arte button[style*="--sm2-btn-kind: danger"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-pressed.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind:danger"]:disabled,
+.sm2-btn-arte button[style*="--sm2-btn-kind: danger"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-disabled.webp'); }
+.sm2-btn-arte button[style*="--sm2-btn-kind: primary"],
+.sm2-btn-arte button[style*="--sm2-btn-kind:primary"],
+.sm2-btn-arte button[style*="--sm2-btn-kind: outline"],
+.sm2-btn-arte button[style*="--sm2-btn-kind:outline"],
+.sm2-btn-arte button[style*="--sm2-btn-kind: danger"],
+.sm2-btn-arte button[style*="--sm2-btn-kind:danger"] {
+  --cap: calc(var(--sm2-btn-h, 48px) * 75 / 169);
+  background: none !important;
+  border-style: solid !important;
+  border-color: transparent !important;
+  border-width: 0 var(--cap) !important;
+  border-radius: 0 !important;
+  border-image: var(--arte) 0 75 fill / 0 var(--cap) stretch !important;
+  padding-inline: 8px !important;
+  color: var(--sm2-btn-arte-ink) !important;
+  text-shadow: 0 1px 2px rgba(4, 18, 20, .55);
+}
+.sm2-btn-arte button[style*="--sm2-btn-kind"]:disabled {
+  color: rgb(255 255 255 / .72) !important;
+  text-shadow: none;
+}
+/* ✕ de remover item (CreateModal): disco da arte `sm2-fechar` no lugar do glifo. */
+.sm2-btn-arte button[aria-label^="Remover passo"],
+.sm2-btn-arte button[aria-label^="Remove step"] {
+  background: url('./assets/soulmon/ui/sm2/sm2-fechar.webp') center / contain no-repeat !important;
+  border-radius: 50% !important;
+}
+.sm2-btn-arte button[aria-label^="Remover passo"] > *,
+.sm2-btn-arte button[aria-label^="Remove step"] > * { visibility: hidden; }
+.sm2-btn-arte button[aria-label^="Remover passo"]:active,
+.sm2-btn-arte button[aria-label^="Remove step"]:active { filter: brightness(.8); transform: scale(.96); }
+
 /* ── Campo filled ───────────────────────────────────────────────────────── */
 .sm2-form-field {
   &::placeholder { color: var(--sm2-muted); opacity: 1; }

@@ -91,7 +91,7 @@ export const sm2TitleStyle: CSSProperties = {
   margin: 0,
 };
 
-export type Sm2ButtonVariant = 'primary' | 'outline' | 'ghost' | 'quiet';
+export type Sm2ButtonVariant = 'primary' | 'outline' | 'ghost' | 'quiet' | 'danger';
 /** sm 44/14 · md 48/16 · lg 56/16 (canvas `Botoes`). */
 export type Sm2ButtonSize = 'sm' | 'md' | 'lg';
 
@@ -104,6 +104,14 @@ export type Sm2ButtonSize = 'sm' | 'md' | 'lg';
  *                 antigo; renomeado pelo canvas, chamadores migrados).
  *  · `ghost`    — ação leve em ciano, sem borda; pressed `primary-soft`.
  *  · `quiet`    — sair sem peso ("Not now"): `muted`, sem borda.
+ *
+ *  · `danger`   — ação destrutiva: no `style` é o fill `danger-fill` + `on-primary`;
+ *                 com a arte ligada (`.sm2-btn-arte`) vira o botão vermelho.
+ *
+ * Além de `--sm2-btn` (variante, ou `disabled`), o `style` grava `--sm2-btn-kind`
+ * (a variante, mesmo desabilitado) e `--sm2-btn-h` (altura em px): o CSS da arte
+ * (`.sm2-btn-arte`, `index.css`) lê os dois para escolher o 9-slice e o tamanho
+ * da ponta. Nada do inline visual muda.
  *
  * Desativado (qualquer variante): `surface-2` + `muted`, sem borda. O foco
  * visível e o pressed ficam em `.sm2-form-*` no `index.css` (ver cabeçalho).
@@ -129,12 +137,18 @@ export function sm2Button(variant: Sm2ButtonVariant, disabled = false, size: Sm2
     transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease), color var(--sm2-dur-tap) var(--sm2-ease)',
     // Marcador lido pelo CSS (`[style*="--sm2-btn:…"]`) para o pressed.
     ['--sm2-btn' as string]: disabled ? 'disabled' : variant,
+    // Lidos só pelo CSS da arte (`.sm2-btn-arte`): variante fixa e altura em px.
+    ['--sm2-btn-kind' as string]: variant,
+    ['--sm2-btn-h' as string]: `${metric.minHeight}px`,
   };
   if (disabled) {
     if (variant === 'ghost' || variant === 'quiet') {
       return { ...base, border: 'none', background: 'none', color: 'var(--sm2-muted)' };
     }
     return { ...base, border: '1px solid transparent', backgroundColor: 'var(--sm2-surface-2)', color: 'var(--sm2-muted)' };
+  }
+  if (variant === 'danger') {
+    return { ...base, border: '1px solid transparent', backgroundColor: 'var(--sm2-danger-fill)', color: 'var(--sm2-on-primary)' };
   }
   if (variant === 'primary') {
     // Texto sobre fill usa `--sm2-on-*`, nunca o `*-ink` do mesmo acento.
