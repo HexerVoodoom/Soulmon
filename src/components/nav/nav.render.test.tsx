@@ -74,18 +74,19 @@ describe('MapPage', () => {
     expect(onOpen.mock.calls.map(c => c[0])).toEqual([...AREAS]);
   });
 
-  it('menu discreto de moedas: as 3, com o saldo passado por prop', () => {
+  it('barrinha do topo: as 3 moedas com o saldo passado por prop (as pílulas do canto inferior saíram)', () => {
     const { container } = renderWithCss(<MapPage language="en-US" onOpenArea={() => {}} {...mapProps} />);
-    const menu = container.querySelector('[data-map-currencies]')!;
-    // Só ícone + valor (24/11/2026): o nome da moeda vive no rótulo acessível de cada pílula.
+    const menu = container.querySelector('[data-topbar]')!;
+    expect(container.querySelector('[data-map-currencies]')).toBeNull();
+    // Só ícone + valor: o nome da moeda vive no rótulo acessível de cada slot.
     expect(menu.textContent).toContain('260');
     expect(menu.textContent).toContain('12');
     expect(menu.textContent).toContain('3');
     const nomes = Array.from(menu.querySelectorAll('[data-info-tip]')).map(b => b.getAttribute('aria-label') ?? '');
-    expect(nomes).toHaveLength(3);
-    expect(nomes[0]).toContain('Bits');
-    expect(nomes[1]).toContain('Honor');
+    expect(nomes).toHaveLength(5);
     expect(nomes[2]).toContain('Credits');
+    expect(nomes[3]).toContain('Honor');
+    expect(nomes[4]).toContain('Bits');
   });
 
   it('fundo isométrico real (imagem de cena, não placeholder de ícone)', () => {
