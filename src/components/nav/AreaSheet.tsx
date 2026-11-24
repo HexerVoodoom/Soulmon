@@ -35,7 +35,7 @@ export const MOLDURA_MODAL = true;
  * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
  * abrir/fechar, o NPC certo, a fala e a proporção.
  */
-export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcArt2, npcVoice, headSlotRef, closeInSheet = false, hideClose = false, npcFrame, footer, npcOverlay, moldura = 'padrao', titulo = 'placa', children }: {
+export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcArt2, npcVoice, headSlotRef, closeInSheet = false, hideClose = false, npcFrame, footer, npcOverlay, fundoVazio = false, moldura = 'padrao', titulo = 'placa', children }: {
   /** Ausente só quando `npcArt` + `npcVoice` vêm de fora (NPC de FUNÇÃO, ex.: Ambra nas Missões). */
   areaId?: AreaId;
   /** Id do lote aberto (ex.: `'itens'`, `'torneio'`) — resolve o NPC certo
@@ -70,6 +70,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   footer?: ReactNode;
   /** Peça por cima da cena, na ZONA DO NPC, entre o NPC e o balão (ex.: o leque de tickets do Salão). Largura zero: o filho se posiciona sozinho. */
   npcOverlay?: ReactNode;
+  /** Fundo turquesa escuro liso (`sm2-moldura-modal--vazio`), sem textura (ex.: Missões). */
+  fundoVazio?: boolean;
   /** Variante da moldura (só com `MOLDURA_MODAL`). `'aco'` (18/11/2026, decisão do dono: SÓ a Hexsmith) = a moldura de AÇO com runas
    *  (`assets/soulmon/ui/hex-moldura/`): o ✕ entra no disco ESQUERDO do topo, o "i" no direito, o título na placa central e o cristal-chama no encaixe. */
   moldura?: 'padrao' | 'aco';
@@ -186,6 +188,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           data-area-sheet
           title={inline ? undefined : title}
           fundo={fundoDoLote(areaId, lotId)}
+          fundoVazio={fundoVazio}
           className={aco ? 'sm2-sheet-rise sm2-moldura-modal--aco' : inline ? 'sm2-sheet-rise sm2-moldura-modal--titulo-inline sm2-area-sheet-inline' : dono ? 'sm2-sheet-rise sm2-moldura-modal--dono' : 'sm2-sheet-rise'}
           data-moldura-variante={aco ? 'aco' : undefined}
           // Toque dentro da folha não deve fechar (só o backdrop fecha).
@@ -284,6 +287,6 @@ function FecharAco({ label, onClose }: { label: string; onClose: () => void }) {
 }
 
 /** Casca da folha: moldura 9-slice (ligada por `MOLDURA_MODAL`) ou o `div` liso de antes. */
-function SheetShell({ fundo, title, ...props }: Omit<HTMLAttributes<HTMLDivElement>, 'title'> & { 'data-area-sheet'?: boolean | string; 'data-moldura-variante'?: string; fundo?: string; title?: string }) {
-  return MOLDURA_MODAL ? <ModalFrame fundo={fundo} title={title || undefined} {...props} /> : <div {...props} />;
+function SheetShell({ fundo, fundoVazio, title, ...props }: Omit<HTMLAttributes<HTMLDivElement>, 'title'> & { 'data-area-sheet'?: boolean | string; 'data-moldura-variante'?: string; fundo?: string; fundoVazio?: boolean; title?: string }) {
+  return MOLDURA_MODAL ? <ModalFrame fundo={fundo} fundoVazio={fundoVazio} title={title || undefined} {...props} /> : <div {...props} />;
 }
