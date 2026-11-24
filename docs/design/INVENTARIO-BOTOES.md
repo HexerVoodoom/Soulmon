@@ -29,7 +29,7 @@ Fonte única: `git grep` e um script de extração (`<button` … `</button>`, `
 | Outros `<button>` sem `sm2Button` nem classe de botão | 216 | chips, abas, segmentos, switches, checkboxes, steppers, cartas-botão, tiles de mapa, toasts: **controles, não botões de ação** (categoria C11) |
 | Modais/diálogos | `ModalSheet` 55 arquivos (61 usos) · `AreaSheet` 6 (10) · `ModalFrame` 5 · `ModalInfo` 12 arquivos (18) · `BlockedActionModal` 1 · 43 arquivos com `role="dialog"` | |
 
-`<button` por área (soma 700): raiz de `components/` 343 (telas e modais históricos) · guild 63 · play 55 · mente 45 · mercado 29 · ui 20 · nav 18 · refugio 17 · perfil 17 · games 17 · pixel 15 · catalog 12 · onboarding 11 · home 10 · hex 9 · form 7 · rift 6 · evolution 3 · ritual 1 · forge 1 · arena 1.
+`<button` por área (soma 700): raiz de `components/` 343 (telas e modais históricos) · guild 63 · play 55 · mente 45 · mercado 29 · ui 20 · nav 18 · refugio 17 · perfil 17 · games 17 · pixel 15 · catalog 12 (9 já com `sm2Button`; 3 só-ícone: §534) · onboarding 11 · home 10 · hex 9 · form 7 · rift 6 · evolution 3 · ritual 1 · forge 1 · arena 1.
 
 Legenda do apêndice: **P** primary · **O** outline · **Q** quiet · **G** ghost (todas `sm2Button`) · **P\*** `sm2Button` com variante dinâmica · **K** classe `sm2-kit-btn*` · **L** classe local de botão · **B** controle sem estilo de botão (chip/aba/ícone/cartão). Rótulo vazio = não extraído (vem de `t()`, prop ou só ícone).
 
@@ -383,9 +383,9 @@ Formato: `arquivo (N): linha código rótulo; …`. Códigos na legenda da seç�
 - `src/components/WelcomeTour.tsx` (3): 50 Q Pular; 91 G Voltar; 95 P Vamos lá
 - `src/components/WidgetFramePicker.tsx` (5): 89 O Usar; 108 O Usar; 116 P Confirmar; 120 P Comprar; 126 P Indisponível
 - `src/components/arena/DueloSheet.tsx` (1): 92 O Tentar de novo
-- `src/components/catalog/CatalogBrowserModal.tsx` (4): 121 B; 148 B; 196 P Adicionado; 208 O
+- `src/components/catalog/CatalogBrowserModal.tsx` (4): 121 B (só-ícone, fica cru); 148 B (só-ícone, fica cru); 196 P Adicionado; 208 O
 - `src/components/catalog/CatalogLevelInviteModal.tsx` (4): 40 O; 43 O; 63 P Vamos!; 66 O Continuar assim
-- `src/components/catalog/CatalogMindNotice.tsx` (2): 44 B; 95 P Adicionar
+- `src/components/catalog/CatalogMindNotice.tsx` (2): 44 B (seta, fica cru); 95 P Adicionar
 - `src/components/catalog/CatalogOnboardingFlow.tsx` (2): 108 P Continuar; 117 P Confirmar
 - `src/components/evolution/FormasAlternativasSheet.tsx` (2): 77 O Degenerar; 78 O Equipar
 - `src/components/evolution/SoulNode.tsx` (1): 137 B
