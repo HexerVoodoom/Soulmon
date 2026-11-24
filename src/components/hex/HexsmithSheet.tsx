@@ -344,14 +344,14 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
                         <button type="button" data-hex-unequip={id}
                           onClick={() => { onClear(); setStatus(`${name}: ${tx(HEX_UI.unequippedMsg, isPt)}`); }}
                           aria-label={`${tx(HEX_UI.unequip, isPt)}: ${name}`}
-                          className="sm2-kit-btn sm2-kit-btn-outline sm2-hex-equip-btn" data-state="equipped">
+                          className="sm2-hex-equip-btn" style={{ ...sm2Button('outline', false, 'md'), padding: '0 var(--sm2-space-4)', fontWeight: 700 }} data-state="equipped">
                           {tx(HEX_UI.unequip, isPt)}
                         </button>
                       ) : (
                         <button type="button" data-hex-equip={id}
                           onClick={() => { onEquip(id); setStatus(`${name}: ${tx(HEX_UI.equippedMsg, isPt)}`); }}
                           aria-label={`${tx(HEX_UI.equip, isPt)}: ${name}`}
-                          className="sm2-kit-btn sm2-kit-btn-primary sm2-hex-equip-btn" data-state="idle">
+                          className="sm2-hex-equip-btn" style={{ ...sm2Button('primary', false, 'md'), padding: '0 var(--sm2-space-4)', fontWeight: 700 }} data-state="idle">
                           {tx(HEX_UI.equip, isPt)}
                         </button>
                       )}

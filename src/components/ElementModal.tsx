@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { sm2Button } from './form/FormKit';
 import { RitualDialog } from './ritual/RitualKit';
 import { elementIcon } from '../utils/elementIconArt';
 import { elementLabel } from '../utils/arena';
@@ -74,7 +75,7 @@ export function ElementModal({ id, unlocked, isPt, onClose }: { id: string; unlo
           <RefList title={isPt ? 'Forte contra' : 'Strong against'} ids={m.strong} unlocked={unlocked} isPt={isPt} />
           <RefList title={isPt ? 'Fraco contra' : 'Weak against'} ids={m.weak} unlocked={unlocked} isPt={isPt} />
           {canBack && (
-            <button type="button" data-element-back onClick={back} className="sm2-kit-btn" style={{ alignSelf: 'flex-start', minHeight: 44 }}>
+            <button type="button" data-element-back onClick={back} style={{ ...sm2Button('outline', false, 'md'), alignSelf: 'flex-start', minHeight: 44 }}>
               {isPt ? 'Voltar' : 'Back'}
             </button>
           )}

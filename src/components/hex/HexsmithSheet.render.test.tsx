@@ -173,7 +173,8 @@ describe('HexsmithSheet', () => {
       expect(row.querySelectorAll('button')).toHaveLength(1);
       const b = q('[data-hex-equip="coroa:dot"]');
       expect(b.textContent).toBe(equip);
-      expect(b.className).toMatch(/(^| )sm2-kit-btn .*sm2-hex-equip-btn/);
+      expect(b.className).toContain('sm2-hex-equip-btn');
+      expect(b.style.getPropertyValue('--sm2-btn')).toBe('primary');
       expect(b.className).not.toMatch(/cta/i);
       expect(b.getAttribute('data-state')).toBe('idle');
       click(b);
@@ -183,7 +184,7 @@ describe('HexsmithSheet', () => {
       const nome = lang === 'en' ? 'Lingering damage' : 'Dano contínuo';
       expect(u.getAttribute('data-state')).toBe('equipped');
       expect(u.textContent).toBe(unequip);
-      expect(u.className).toMatch(/sm2-kit-btn-outline/);
+      expect(u.style.getPropertyValue('--sm2-btn')).toBe('outline');
       expect(u.getAttribute('aria-label')).toBe(`${unequip}: ${nome}`);
       expect(u.getAttribute('aria-label')).not.toMatch(new RegExp(equipped));
       expect(u.querySelector('.sm2-hex-equip-state')).toBeNull();

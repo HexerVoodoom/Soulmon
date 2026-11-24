@@ -8,6 +8,7 @@
  * O bônus mostrado é HONESTO: o que as peças dão por atributo e o que vale em luta depois do teto único de 5% somado ao talento.
  */
 import { TelaMoldura } from './ui/TelaMoldura';
+import { sm2Button } from './form/FormKit';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { useGameStateOptional } from '../contexts/GameStateContext';
@@ -210,7 +211,7 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
           {/* C4: o Upgrade à direita, na linha do nome; os materiais ficam logo abaixo dele. */}
           {possui && !max && (
             <div data-forge-upgrade={piece.id} style={{ display: 'grid', gap: 4, justifyItems: 'end', flexShrink: 0 }}>
-              <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" disabled={!!recusa} data-forge-upgrade-btn={piece.id}
+              <button type="button" style={sm2Button('outline', !!recusa, 'sm')} disabled={!!recusa} data-forge-upgrade-btn={piece.id}
                 onClick={() => abrir({ mode: 'upgrade', id: piece.id })}
                 aria-label={isPt ? `Upgrade de ${nome} para o nível ${to}, ${upgradeBitsCost(level)} Bits` : `Upgrade ${nome} to level ${to}, ${upgradeBitsCost(level)} Bits`}>
                 {isPt ? 'Aprimorar' : 'Upgrade'} · <BitsAmount value={upgradeBitsCost(level)} size={16} style={{ color: 'inherit' }} />
@@ -231,7 +232,7 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
         )}
         {possui && level >= 2 && (
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-forge-reforge={piece.id}
+            <button type="button" style={sm2Button('quiet', false, 'sm')} data-forge-reforge={piece.id}
               onClick={() => { setAviso(null); setDialog({ mode: 'reforge', id: piece.id }); }}
               aria-label={isPt ? `Reforjar ${nome}` : `Reforge ${nome}`}>
               {isPt ? 'Reforjar' : 'Reforge'}
@@ -264,7 +265,7 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
                 return (
                   <li key={lv} style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                     <span className="sm2-stats-s" style={{ flex: 1 }}>{isPt ? `Nível ${lv}` : `Level ${lv}`}: {attrName(attr)} +{pct(LEVEL_PCT[lv - 1], isPt)}</span>
-                    <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" data-forge-redo={`${piece.id}:${lv}`}
+                    <button type="button" style={sm2Button('outline', false, 'sm')} data-forge-redo={`${piece.id}:${lv}`}
                       onClick={() => abrir({ mode: 'redo', id: piece.id, level: lv })}
                       aria-label={isPt ? `Refazer a escolha do nível ${lv} de ${nome}` : `Redo the level ${lv} choice of ${nome}`}>
                       {isPt ? 'Refazer' : 'Redo'}
@@ -274,7 +275,7 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
               })}
             </ul>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-forge-cancel onClick={() => setDialog(null)}>{isPt ? 'Fechar' : 'Close'}</button>
+              <button type="button" style={sm2Button('quiet', false, 'sm')} data-forge-cancel onClick={() => setDialog(null)}>{isPt ? 'Fechar' : 'Close'}</button>
             </div>
           </div>
         </ForgeDialogShell>
@@ -341,17 +342,17 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
             </p>
           )}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-            <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-forge-cancel onClick={() => setDialog(null)}>{isPt ? 'Cancelar' : 'Cancel'}</button>
+            <button type="button" style={sm2Button('quiet', false, 'sm')} data-forge-cancel onClick={() => setDialog(null)}>{isPt ? 'Cancelar' : 'Cancel'}</button>
             {dialog.mode === 'upgrade' ? (
-              <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-forge-confirm disabled={!!refUp} onClick={() => confirmar()}
+              <button type="button" style={sm2Button('primary', !!refUp, 'sm')} data-forge-confirm disabled={!!refUp} onClick={() => confirmar()}
                 aria-label={isPt ? `Confirmar · ${upgradeBitsCost(alvo - 1)} Bits` : `Confirm · ${upgradeBitsCost(alvo - 1)} Bits`}>{isPt ? 'Confirmar' : 'Confirm'} · <BitsAmount value={upgradeBitsCost(alvo - 1)} size={16} style={{ color: 'inherit' }} /></button>
             ) : (
               <>
-                <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" data-forge-confirm-fragments disabled={!!refFrag} onClick={() => confirmar('fragments')}
+                <button type="button" style={sm2Button('outline', !!refFrag, 'sm')} data-forge-confirm-fragments disabled={!!refFrag} onClick={() => confirmar('fragments')}
                   aria-label={isPt ? `Refazer por ${REDO_FRAGMENTS} fragmentos` : `Redo for ${REDO_FRAGMENTS} fragments`}>
                   <Art nome="fragmento" size={16} /> {REDO_FRAGMENTS}
                 </button>
-                <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-forge-confirm disabled={!!refBits} aria-label={isPt ? `Confirmar · ${precoBits} Bits` : `Confirm · ${precoBits} Bits`} onClick={() => confirmar('bits')}>
+                <button type="button" style={sm2Button('primary', !!refBits, 'sm')} data-forge-confirm disabled={!!refBits} aria-label={isPt ? `Confirmar · ${precoBits} Bits` : `Confirm · ${precoBits} Bits`} onClick={() => confirmar('bits')}>
                   {isPt ? 'Confirmar' : 'Confirm'} · <BitsAmount value={precoBits} size={16} style={{ color: 'inherit' }} />
                 </button>
               </>
@@ -417,7 +418,7 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
               );
             })()}
             {recusa && recusa !== 'no-materials' && <span className="sm2-stats-s" data-forge-why>{forgeRefusalText(recusa, isPt, level)}</span>}
-            <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-forge-upgrade-btn={piece.id} disabled={!!recusa}
+            <button type="button" style={sm2Button('primary', !!recusa, 'sm')} data-forge-upgrade-btn={piece.id} disabled={!!recusa}
               onClick={() => runUpgrade(piece.id, popChoice)}
               aria-label={isPt ? `Aprimorar ${nome} para o nível ${to}, ${upgradeBitsCost(level)} Bits` : `Upgrade ${nome} to level ${to}, ${upgradeBitsCost(level)} Bits`}>
               {isPt ? 'Aprimorar' : 'Upgrade'} · <BitsAmount value={upgradeBitsCost(level)} size={16} style={{ color: 'inherit' }} />
@@ -425,7 +426,7 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
           </>
         )}
         {level >= 2 && (
-          <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-forge-reforge={piece.id}
+          <button type="button" style={sm2Button('quiet', false, 'sm')} data-forge-reforge={piece.id}
             onClick={() => { setAviso(null); setPop(null); setDialog({ mode: 'reforge', id: piece.id }); }}
             aria-label={isPt ? `Reforjar ${nome}` : `Reforge ${nome}`}>
             {isPt ? 'Reforjar' : 'Reforge'}

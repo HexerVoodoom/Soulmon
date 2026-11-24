@@ -105,7 +105,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
               <UiIcon name="star" size={22} fill={on ? 1 : 0} tone={on ? 'gold' : 'inherit'} />
             </button>
           ); })()}
-          <button type="button" data-potion-create={r.id} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" disabled={!r.canCraft} onClick={() => { setSel(r.id); setDone(null); }}>{t.create}</button>
+          <button type="button" data-potion-create={r.id} style={sm2Button('primary', !r.canCraft, 'sm')} disabled={!r.canCraft} onClick={() => { setSel(r.id); setDone(null); }}>{t.create}</button>
         </div>
         <ul className="sm2-pocao-ing">
           {r.id === ELEMENTO_NEUTRO_ID && (() => { const n = neutroProgresso(essences, inventory); return (
@@ -134,7 +134,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
       footer={sel ? (
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           {/* §316c (13/11/2026, dono): folha de poção é modal branco, fica com o botão padrão do app (não o CTA do site). */}
-          <button type="button" data-potion-confirm className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary" style={{ minWidth: 220 }} disabled={confirmDisabled}
+          <button type="button" data-potion-confirm style={{ ...sm2Button('primary', confirmDisabled, 'md'), minWidth: 220 }} disabled={confirmDisabled}
             onClick={() => { const ok = onCraft(sel) !== false; if (ok) { setDone(sel); setResult(sel); } setSel(null); }}>
             <UiIcon name="auto_awesome" size={22} tone="inherit" /><span>{t.confirmBtn}</span><Icon id={sel} size={24} />
           </button>
@@ -155,7 +155,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
                 {list.slice(0, shown).map(row)}
               </ul>
             )}
-            {list.length > shown && <button type="button" data-potion-more className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" onClick={() => setShown(n => n + PAGE)}>{t.more}</button>}
+            {list.length > shown && <button type="button" data-potion-more style={sm2Button('outline', false, 'sm')} onClick={() => setShown(n => n + PAGE)}>{t.more}</button>}
             <p style={sm2Hint}>{t.note}</p>
           </>
         )}
