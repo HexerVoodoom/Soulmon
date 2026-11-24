@@ -27,10 +27,13 @@ export function ElementDex({ defeated, language = 'en-US', isNew }: { defeated: 
   const baseFiltering = selectedBases(bases).length > 0;
   const filtering = baseFiltering || soNovos;
   const { fechados, alternar } = useAcordeaoFechados();
+  const [ultimo, setUltimo] = useState<string | null>(null); // último item visto (fica destacado na grade ao fechar)
   // Trancado nunca revela composição nem selo: com filtro de bases ou "Novo", só destrancados.
   const shown = LIBRARY_ELEMENT_IDS.filter(id =>
     (!soNovos || (unlocked.has(id) && !!isNew?.has(id)))
     && (!baseFiltering || (unlocked.has(id) && compositionHasBases(elementComponents(id) ?? curatedComponents(id) ?? [id], bases))));
+  // Lista navegável do pop-up: ordem de exibição (por categoria), só destrancados e só das seções abertas.
+  const navIds = ELEMENTO_CATEGORIAS.filter(c => !fechados.includes('dex-' + c)).flatMap(c => shown.filter(id => elementoCategoria(id) === c && unlocked.has(id)));
   const count = LIBRARY_ELEMENT_IDS.filter(id => unlocked.has(id)).length;
   return (
     <section data-element-dex aria-label={isPt ? 'Elementos' : 'Elements'}>
@@ -66,7 +69,7 @@ export function ElementDex({ defeated, language = 'en-US', isNew }: { defeated: 
               const nome = dexElementName(id, isPt);
               return (
                 <li key={id} style={{ display: 'flex' }}>
-                  <button type="button" data-element-cell={id} aria-label={nome} onClick={() => setOpenId(id)}
+                  <button type="button" data-element-cell={id} aria-label={nome} data-last={ultimo === id ? '1' : undefined} onClick={() => { setOpenId(id); setUltimo(id); }}
                     style={{ position: 'relative', flex: 1, minWidth: 0, minHeight: 64, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: 4, background: 'none', border: 0, cursor: 'pointer' }}>
                     {isNew?.has(id) && <NewBadge overlay />}
                     {icon && <img src={icon} alt="" aria-hidden="true" width={32} height={32} draggable={false} style={{ width: 32, height: 32, imageRendering: 'pixelated' }} />}
@@ -79,7 +82,7 @@ export function ElementDex({ defeated, language = 'en-US', isNew }: { defeated: 
           </Acordeao>
         );
       })}
-      {openId && <ElementModal id={openId} unlocked={unlocked} isPt={isPt} onClose={() => setOpenId(null)} />}
+      {openId && <ElementModal id={openId} unlocked={unlocked} isPt={isPt} onClose={() => setOpenId(null)} navIds={navIds} onNavigate={setUltimo} />}
     </section>
   );
 }

@@ -2444,6 +2444,9 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 ### `src/components/DriveAcordeao.tsx`
 **Dono de:** o accordion do Drive (extraído do `BestiaryCollection` em 23/11/2026): `Acordeao({ id, titulo, contagem?, aberto, onToggle })` (cabeçalho-botão com `aria-expanded`/`aria-controls`, corpo `hidden`) e `useAcordeaoFechados()` (ids fechados no storage). **Chamado por:** `BestiaryCollection.tsx`, `ElementDex.tsx`. **Régua:** `BestiaryCollection.acordeao.render.test.tsx`, `ElementDex.drive.render.test.tsx`.
 
+### `src/components/DriveNavArrows.tsx`
+**Dono de:** as setas anterior/próximo (alvo 44 px, `disabled`+`aria-disabled` nos extremos, PT/EN) dos pop-ups de detalhe do Drive. **Exports:** `DriveNavArrows({ isPt, hasPrev, hasNext, onPrev, onNext })`. **Chamado por:** `ElementModal.tsx`, `BestiaryCollection.tsx`. **Régua:** `ElementDex.drive.render.test.tsx`, `BestiaryCollection.acordeao.render.test.tsx`.
+
 ### `src/components/ElementDex.tsx`
 **Dono de:** a aba "Elemento" da Biblioteca (27/10/2026): grade dos 20 base + 190 derivados; trancado = "?" sem nome, ícone nem id no DOM; destrancado abre uma `RitualDialog` com ícone grande, nome, composição (derivado) e forte/fraco contra (o que ainda está trancado ali aparece "?"). **Exports:** `ElementDex({ defeated, language })`, `dexElementName`. **Chamado por:** `LibraryPage.tsx`. **Régua:** `LibraryPage.abas.render.test.tsx`.
 
@@ -2729,3 +2732,6 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 **Dono de:** o MODAL DO RANKING (18/11/2026, §485): `ModalFrame` com a moldura própria `ui/ranking/` (ouro envelhecido, faixas vermelhas, medalhas, placa de bronze), corpo rolável SEM borda interna. **Props:** `open`, `onClose`, `language`, `title`, `info?`, `children`. X e "i" são só glifos sobre os discos da arte (alvo ≥ 44 px transparente). **Usado por:** `MinigameModeGate` (Ver ranking) e `RankingPanel` (modal da semana/mês). **Régua:** `RankingModal.render.test.tsx`. Geometria em `index.css` (`.sm2-moldura-modal--ranking`). O botão que o abre é `BotaoEspecial variant="ranking"` (`ui/btn-ranking{,-press,-off}.webp`).
 
 **Sync 24/11/2026 (P5, Drive em popup central):** todo detalhe do Drive abre no MESMO popup central simples (`ModalSheet placement="center"`, título inline, ✕ `.sm2-popup-fechar` só fecha): ficha do elemento (`ElementModal`), detalhe do Selvagem (`BestiaryCollection`), formas do amigo (`LibraryPage`, `[data-pet-forms]`) e ficha do jogador (`PlayerDetailModal`, via `ModalSheet.titleNode`). Saíram o `RitualDialog` com placa nesses quatro. **Régua:** `ElementDex.drive.render.test.tsx`, `BestiaryCollection.acordeao.render.test.tsx`, `PlayerDetailModal.semMetrica.render.test.tsx`.
+
+
+**Sync 24/11/2026 (P5, navegação no pop-up do Drive):** `ElementModal` ganhou `navIds`/`onNavigate` (lista abrível na ordem de exibição, só destrancados das seções abertas) e o popup do Selvagem em `BestiaryCollection` navega pelos vistos visíveis: swipe (`useSwipeNav`) e setas (`DriveNavArrows`) trocam o item SEM fechar, com animação curta (`.sm2-drive-nav-conteudo`). O último item visto fica marcado na grade (`[data-last="1"]`). Navegação só na raiz da pilha do elemento (Voltar interno inalterado).
