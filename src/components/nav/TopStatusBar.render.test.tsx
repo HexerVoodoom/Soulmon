@@ -31,9 +31,9 @@ describe('TopStatusBar: ordem, abreviação e rótulos', () => {
     expect(dir.querySelectorAll('[data-topbar-slot]')).toHaveLength(3);
   });
 
-  it('valores: 99999 → 99k, 1234 → 1,2k (PT), Bits 5.000 inteiro, energia "6/6", corações 12', () => {
+  it('valores: 99999 → 99k, 1234 → 1,2k (PT), Bits 5k, energia "6/6", corações 12', () => {
     const { container } = renderWithCss(<TopStatusBar data={dados} />);
-    expect(slots(container).map(s => s.textContent)).toEqual(['12', '6/6', '99k', '1,2k', '5.000']);
+    expect(slots(container).map(s => s.textContent)).toEqual(['12', '6/6', '99k', '1,2k', '5k']);
   });
 
   it('abreviar: 99999 → 99k, 1234 → 1.2k (EN), 999 intacto, Bits só abreviam a partir de 10 mil', () => {
@@ -41,7 +41,7 @@ describe('TopStatusBar: ordem, abreviação e rótulos', () => {
     expect(abreviar(1234, 'en-US')).toBe('1.2k');
     expect(abreviar(1000, 'en-US')).toBe('1k');
     expect(abreviar(999, 'en-US')).toBe('999');
-    expect(abreviar(5000, 'pt-BR', 10000)).toBe('5.000');
+    expect(abreviar(5000, 'pt-BR', 10000)).toBe('5.000'); // `de` ainda existe, mas a barra abreviar Bits desde 1.000 (slot de 70 px a 14 px)
     expect(abreviar(12000, 'pt-BR', 10000)).toBe('12k');
   });
 
@@ -93,15 +93,15 @@ describe('TopStatusBar: geometria nas larguras 360/375/412 (regras lidas do inde
   const [sm, md, lg] = [token('--sm2-topbar-slot-sm'), token('--sm2-topbar-slot-md'), token('--sm2-topbar-slot-lg')];
   const esq = sm + gap + md;
   const dir = lg * 3 + gap * 2;
-  for (const [vw, folga] of [[360, 22], [375, 37], [412, 74]] as const) {
+  for (const [vw, folga] of [[360, 8], [375, 23], [412, 60]] as const) {
     it(`${vw}px: cabe sem rolagem horizontal, sem sobreposição, folga central >= ${folga}`, () => {
       expect(margem).toBe(8);
       expect(gap).toBe(4);
       expect(margem + esq + gap + dir + margem).toBeLessThanOrEqual(vw); // `gap` = vão mínimo entre os dois grupos
       expect(vw - margem * 2 - esq - dir).toBeGreaterThanOrEqual(folga);
-      // posições da geometria da P6: Bits colado à direita (margem 8), Créditos 140 à esquerda dele
-      expect(vw - margem - lg).toBe({ 360: 286, 375: 301, 412: 338 }[vw]);
-      expect(vw - margem - dir).toBe({ 360: 146, 375: 161, 412: 198 }[vw]);
+      // Bits colado à direita (margem 8); slots 54/58/70 (v2, mais altos que o preview da P6)
+      expect(vw - margem - lg).toBe({ 360: 282, 375: 297, 412: 334 }[vw]);
+      expect(vw - margem - dir).toBe({ 360: 134, 375: 149, 412: 186 }[vw]);
     });
   }
 
@@ -123,6 +123,7 @@ describe('TopStatusBar: geometria nas larguras 360/375/412 (regras lidas do inde
     expect(bloco('.sm2-topbar__in')).toContain("barrinha-slot-bronze.png') 0 20 0 20 fill");
     expect(bloco('.sm2-topbar')).toContain("barrinha-faixa-fundo.png')");
     expect(bloco('.sm2-topbar')).toContain('env(safe-area-inset-top');
+    expect(bloco('.sm2-topbar')).not.toMatch(/background-color/); // a safe-area fica transparente: o fundo só cobre a faixa dos itens
     expect(bloco('.sm2-topbar__val')).toContain('lining-nums tabular-nums');
     for (const s of ['.sm2-topbar', '.sm2-topbar__grupo', '.sm2-topbar__slot', '.sm2-topbar__in', '.sm2-topbar__val']) {
       expect(bloco(s)).not.toMatch(/all:\s*unset|#[0-9a-f]{3,8}\b/i);
@@ -135,7 +136,7 @@ describe('a barrinha no Mapa e nos prédios; as pílulas antigas saíram', () =>
   it('Mapa: a barrinha aparece, com os 5 slots, e não há mais as 3 pílulas do canto inferior direito', () => {
     const { container } = renderWithCss(<MapPage language="pt-BR" onOpenArea={() => {}} bits={5000} emblems={1234} credits={99999} hearts={3} energy={6} maxEnergy={6} />);
     expect(container.querySelector('[data-map-page] [data-topbar]')).not.toBeNull();
-    expect(slots(container).map(s => s.textContent)).toEqual(['3', '6/6', '99k', '1,2k', '5.000']);
+    expect(slots(container).map(s => s.textContent)).toEqual(['3', '6/6', '99k', '1,2k', '5k']);
     expect(container.querySelector('[data-map-currencies]')).toBeNull();
     expect(container.querySelector('.sm2-moeda, .sm2-moeda-hud, [data-map-chip]')).toBeNull();
     expect(css).not.toContain('.sm2-moeda');

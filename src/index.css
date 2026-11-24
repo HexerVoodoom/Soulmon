@@ -3101,16 +3101,16 @@ span.sm2-potion-icon[data-prato-art] { font-size: 120px; } /* emoji do prato sem
   /* Escala FECHADA: 12/14/16/20/24/32. Piso ABSOLUTO de 12px — não existe
      texto menor no app, nem legenda, nem rodapé de card. */
   /* Barrinha do topo (Mapa e prédios): altura 40, margem 8, vão 4; slots 48 (corações) / 60 (energia) / 66 (moedas); bordinha de bronze 10 de tampa; ícone a +5 e valor a +26 da borda; cabem "99k" e "5.000" a 12px. */
-  --sm2-topbar-h: 40px;
+  --sm2-topbar-h: 52px;
   --sm2-topbar-margem: 8px;
   --sm2-topbar-gap: 4px;
-  --sm2-topbar-slot-h: 28px;
-  --sm2-topbar-slot-sm: 48px;
-  --sm2-topbar-slot-md: 60px;
-  --sm2-topbar-slot-lg: 66px;
+  --sm2-topbar-slot-h: 36px;
+  --sm2-topbar-slot-sm: 54px;
+  --sm2-topbar-slot-md: 58px;
+  --sm2-topbar-slot-lg: 70px;
   --sm2-topbar-cap: 10px;
-  --sm2-topbar-icone-x: 5px;
-  --sm2-topbar-icone-gap: 1px;
+  --sm2-topbar-icone-x: 4px;
+  --sm2-topbar-icone-gap: 2px;
   --sm2-topbar-fundo: #1E3A3A;
 
   --sm2-text-xs: 12px;
@@ -7758,7 +7758,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-sheet .sm2-modal-fechar-linha { position: relative; z-index: 4; margin: calc(var(--u) * 3.1) 0 0 calc(var(--u) * 7.2); padding: 0 !important; }
 
 /* BARRINHA DO TOPO (24/11/2026, P2 + arte da P6; `components/nav/TopStatusBar.tsx`): faixa fina FIXA no topo do Mapa e dos prédios. ESQUERDA: Corações | Energia. DIREITA (colada ao canto): Créditos | Honra | Bits.
-   Margem 8, vão 4 (tokens --sm2-topbar-*); a folga central sobra por conta do `space-between`. Cada valor tem a bordinha de bronze em 9-slice HORIZONTAL (arte @2x 132x56: tampas de 20 = 10 CSS px; esticável 66 a 84).
+   Margem 8, vão 4 (tokens --sm2-topbar-*); a folga central sobra por conta do `space-between`. Cada valor tem a bordinha de bronze em 9-slice HORIZONTAL (arte @2x 132x56: tampas de 20 = 10 CSS px; esticável 66 a 84; na vertical a arte de 28 estica para 36).
    O fundo é a faixa de 412x40 (@2x), esticada na largura, com o fio de cobre embaixo; a safe-area do topo entra como padding e a cor de base. Toque: o botão do InfoTip tem 44 de altura (alvo44), a faixa só 40. */
 .sm2-topbar {
   position: fixed;
@@ -7773,11 +7773,11 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   align-items: center;
   justify-content: space-between;
   gap: var(--sm2-topbar-gap);
-  background-color: var(--sm2-topbar-fundo);
-  background-image: url('./assets/soulmon/icones-ui/barrinha-faixa-fundo.png');
+  /* O fundo (a faixa + a cor de base) só cobre a faixa dos itens, de baixo para cima: a área da safe-area/barra de status fica TRANSPARENTE (sem faixa vazia em cima). */
+  background-image: url('./assets/soulmon/icones-ui/barrinha-faixa-fundo.png'), linear-gradient(var(--sm2-topbar-fundo), var(--sm2-topbar-fundo));
   background-repeat: no-repeat;
-  background-position: left bottom;
-  background-size: 100% var(--sm2-topbar-h);
+  background-position: left bottom, left bottom;
+  background-size: 100% var(--sm2-topbar-h), 100% var(--sm2-topbar-h);
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
   pointer-events: none;
   overflow: hidden;
@@ -7796,7 +7796,7 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   flex: 0 1 auto;
   min-width: 0;
   height: var(--sm2-topbar-slot-h);
-  font-size: var(--sm2-text-xs);
+  font-size: var(--sm2-text-sm);
   line-height: var(--sm2-leading-title);
   font-variant-numeric: lining-nums tabular-nums;
   white-space: nowrap;

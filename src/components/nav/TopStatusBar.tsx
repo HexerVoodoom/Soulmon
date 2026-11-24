@@ -92,15 +92,15 @@ export function TopStatusBar({ data, covered = false }: { data?: TopStatusBarDat
       onClick={e => e.stopPropagation()}
     >
       <div className="sm2-topbar__grupo sm2-topbar__grupo--esq">
-        {slot('coracoes', isPt ? `Corações: ${d.hearts}` : `Hearts: ${d.hearts}`, <PixelIcon name="hp" size={20} />, String(d.hearts), tip('hp'), 'sm', 'left')}
-        {slot('energia', isPt ? `Energia: ${d.energy} de ${d.maxEnergy}` : `Energy: ${d.energy} of ${d.maxEnergy}`, <PixelIcon name="energia" size={20} />, formatEnergia(d.energy, d.maxEnergy), tip('energy'), 'md', 'left')}
+        {slot('coracoes', isPt ? `Corações: ${d.hearts}` : `Hearts: ${d.hearts}`, <PixelIcon name="hp" size={24} />, String(d.hearts), tip('hp'), 'sm', 'left')}
+        {slot('energia', isPt ? `Energia: ${d.energy} de ${d.maxEnergy}` : `Energy: ${d.energy} of ${d.maxEnergy}`, <PixelIcon name="energia" size={24} />, formatEnergia(d.energy, d.maxEnergy), tip('energy'), 'md', 'left')}
       </div>
       <div className="sm2-topbar__grupo sm2-topbar__grupo--dir">
-        {slot('credito', isPt ? `${d.credits.toLocaleString(lang)} Créditos — como conseguir` : `${d.credits.toLocaleString(lang)} Credits — how to get`, <CreditIcon size={20} />, abreviar(d.credits, lang),
+        {slot('credito', isPt ? `${d.credits.toLocaleString(lang)} Créditos — como conseguir` : `${d.credits.toLocaleString(lang)} Credits — how to get`, <CreditIcon size={24} />, abreviar(d.credits, lang),
           isPt ? 'Créditos: só por compra com dinheiro real. Servem para pacotes de Bits e para sortear de novo.' : 'Credits: only by purchase with real money. Use them for Bits packs and rerolls.', 'lg', 'right')}
-        {slot('honra', isPt ? `${d.emblems.toLocaleString(lang)} de Honra — como conseguir` : `${d.emblems.toLocaleString(lang)} Honor — how to earn`, <HonorIcon size={20} />, abreviar(d.emblems, lang),
+        {slot('honra', isPt ? `${d.emblems.toLocaleString(lang)} de Honra — como conseguir` : `${d.emblems.toLocaleString(lang)} Honor — how to earn`, <HonorIcon size={24} />, abreviar(d.emblems, lang),
           isPt ? 'Honra: ganhe em combates do Torneio, no treino e em missões da semana. Gaste na aba Honra das lojinhas.' : 'Honor: earn it in Tournament fights, sparring and weekly missions. Spend it in the Honor tab of the shops.', 'lg', 'right')}
-        {slot('bits', `${d.bits.toLocaleString(lang)} Bits — ${isPt ? 'como conseguir' : 'how to earn'}`, <BitsIcon size={20} />, abreviar(d.bits, lang, 10000),
+        {slot('bits', `${d.bits.toLocaleString(lang)} Bits — ${isPt ? 'como conseguir' : 'how to earn'}`, <BitsIcon size={24} />, abreviar(d.bits, lang),
           isPt ? 'Bits: ganhe cumprindo o dia (tarefas e hábitos) e jogando minijogos, a Masmorra e a Arena. Gaste na loja.' : 'Bits: earn them by finishing your day (tasks and habits) and playing minigames, the Dungeon and the Arena. Spend them in the shop.', 'lg', 'right')}
       </div>
     </div>
