@@ -61,6 +61,8 @@ for (const largura of [360, 375, 412]) {
       expect(regra).not.toMatch(/translate\([^)]*%,\s*-?\d/); // sem puxar o palco para cima (cortava a cabeça)
       expect(regra).not.toMatch(/(^|[\s{;])top:\s*0/); // nunca ancorado no topo
       expect(regra).not.toMatch(/(^|[\s{;])width:\s*\d+px/);
+      expect(css).toMatch(/\[data-area-sheet-body\]:has\(\[data-vitra-inline\]\) \{[^}]*padding: 0 !important/); // sem margem: só quando o corpo contém o mapa
+      expect(css).toMatch(/\.sm2-vit-map\[data-vitra-inline\] \{[^}]*margin: 0; padding: 0; border-radius: 0/);
       expect(regra).toMatch(/inline-size: 100%/); // cover pela LARGURA, sem faixas laterais
       expect(regra).toMatch(/aspect-ratio: 1024 \/ 1365/); // proporção da arte: sem esticar
       expect(regra).not.toMatch(/object-fit/);
