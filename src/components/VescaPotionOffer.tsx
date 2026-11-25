@@ -38,7 +38,7 @@ export function VescaPotionOffer({ language, elementId, elementIds, onMake, onDi
   if (made) return <PocaoCriada language={language} elementId={made} onClose={fecharFeita} />;
   const grupo = !!elementIds && elementIds.length > 1;
   return (
-    <ModalSheet open title={vesca} onClose={close} language={language}
+    <ModalSheet open moldura="dono" fundoVazio title={vesca} onClose={close} language={language}
       footer={(
         // §316c (13/11/2026, dono): popup branco pequeno volta ao par padrão do app, em linha (sem o CTA do site).
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
@@ -48,7 +48,7 @@ export function VescaPotionOffer({ language, elementId, elementIds, onMake, onDi
           </button>}
         </div>
       )}>
-      <div data-vesca-offer style={{ display: 'grid', gap: 10, justifyItems: 'center', textAlign: 'center' }}>
+      <div data-vesca-offer className="sm2-nova-corpo" style={{ display: 'grid', gap: 10, justifyItems: 'center', textAlign: 'center' }}>
         {grupo && (
           <>
             <p style={sm2Text}>{isPt ? 'Você já juntou essências para estas poções. Quer fazer alguma agora?' : 'You have gathered enough essence for these potions. Shall I brew any now?'}</p>
