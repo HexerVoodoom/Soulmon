@@ -117,7 +117,12 @@ export type Sm2ButtonSize = 'sm' | 'md' | 'lg';
  * Desativado (qualquer variante): `surface-2` + `muted`, sem borda. O foco
  * visível e o pressed ficam em `.sm2-form-*` no `index.css` (ver cabeçalho).
  */
-export function sm2Button(variant: Sm2ButtonVariant, disabled = false, size: Sm2ButtonSize = 'md'): CSSProperties {
+export function sm2Button(
+  variant: Sm2ButtonVariant,
+  disabled = false,
+  size: Sm2ButtonSize = 'md',
+  opts?: { wide?: boolean },
+): CSSProperties {
   const metric: CSSProperties = size === 'lg'
     ? { minHeight: 56, padding: '0 24px', fontSize: 'var(--sm2-text-md)' }
     : size === 'sm'
@@ -142,7 +147,8 @@ export function sm2Button(variant: Sm2ButtonVariant, disabled = false, size: Sm2
     ['--sm2-btn-kind' as string]: variant,
     ['--sm2-btn-h' as string]: `${metric.minHeight}px`,
     // `sm` = chip inline (bordinha, sem arte de gema): o CSS da arte exclui `--sm2-btn-chip`.
-    ...(size === 'sm' ? { ['--sm2-btn-chip' as string]: '1' } : {}),
+    // `wide: true` = botão de AÇÃO largo (width 100% / flex: 1) em altura `sm`: leva a arte.
+    ...(size === 'sm' && !opts?.wide ? { ['--sm2-btn-chip' as string]: '1' } : {}),
   };
   if (disabled) {
     if (variant === 'ghost' || variant === 'quiet') {

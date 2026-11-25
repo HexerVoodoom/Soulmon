@@ -205,7 +205,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
       {(status === 'error' || (status === 'ready' && !view)) && (
         <>
           <p role="alert" className="sm2-lib-alert" data-plantio-erro>{t('guild.cla.erro')}</p>
-          <button type="button" onClick={() => void recarregar(false)} style={{ ...sm2Button('outline', false, 'sm'), width: '100%' }}><Icon name="refresh" size={20} />{t('guild.erro.tentar')}</button>
+          <button type="button" onClick={() => void recarregar(false)} style={{ ...sm2Button('outline', false, 'sm', { wide: true }), width: '100%' }}><Icon name="refresh" size={20} />{t('guild.erro.tentar')}</button>
         </>
       )}
       {v && (
@@ -237,7 +237,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
             <>
               <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-vazio>{t('guild.plantio.vazio')}</p>
               {v.canPlant && (
-                <button type="button" data-plantio-plantar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={() => void fazer('claPlantar')} style={{ ...sm2Button('primary', ocupado, 'sm'), width: '100%' }}>
+                <button type="button" data-plantio-plantar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={() => void fazer('claPlantar')} style={{ ...sm2Button('primary', ocupado, 'sm', { wide: true }), width: '100%' }}>
                   <Icon name="add" size={20} />{t('guild.plantio.plantar')}
                 </button>
               )}
@@ -270,7 +270,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
                         <NpcSpeech name={language === 'pt-BR' ? 'Lilia' : 'Lilia'} line={tendFalaLilia(language, gate)} speakerKey="hall:grove:tend" />
                       </div>
                     )}
-                    <button type="button" data-plantio-cuidar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={() => { requireAwake('hall.grove', () => { void cuidar(); }); }} style={{ ...sm2Button('outline', ocupado, 'sm'), width: '100%' }}>
+                    <button type="button" data-plantio-cuidar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={() => { requireAwake('hall.grove', () => { void cuidar(); }); }} style={{ ...sm2Button('outline', ocupado, 'sm', { wide: true }), width: '100%' }}>
                       <Icon name="eco" size={20} />{t(v.task === 'water' ? 'guild.plantio.regar' : v.task === 'protect' ? 'guild.plantio.defender' : 'guild.plantio.cuidar')}
                     </button>
                     </>
@@ -279,7 +279,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
                   {!defendendo && !(v.canDraw || v.task) && (
                     <>
                       {aviso && <p role="status" className="sm2-grove-aviso" data-plantio-volte-amanha>{t('guild.plantio.volteAmanha')}</p>}
-                      <button type="button" data-plantio-cuidar-feito aria-disabled="true" onClick={mostrarAviso} style={{ ...sm2Button('outline', true, 'sm'), width: '100%' }}>
+                      <button type="button" data-plantio-cuidar-feito aria-disabled="true" onClick={mostrarAviso} style={{ ...sm2Button('outline', true, 'sm', { wide: true }), width: '100%' }}>
                         <Icon name="eco" size={20} />{t('guild.plantio.cuidar')}
                       </button>
                     </>
@@ -287,7 +287,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
                 </>
               )}
               {v.mature && (v.canHarvest ? (
-                <button type="button" data-plantio-colher disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={() => void fazer('claColher')} style={{ ...sm2Button('primary', ocupado, 'sm'), width: '100%' }}>
+                <button type="button" data-plantio-colher disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={() => void fazer('claColher')} style={{ ...sm2Button('primary', ocupado, 'sm', { wide: true }), width: '100%' }}>
                   <Icon name="task_alt" size={20} />{t('guild.plantio.colher')}
                 </button>
               ) : (
@@ -332,7 +332,7 @@ function Defesa({ t, isPt, estado, evolutionStage, demoCharacterId, skills, petE
         ))}
       </ul>
       {perdeu && <p role="status" className="sm2-lib-s" style={{ margin: 0 }} data-plantio-defesa-perdeu>{t('guild.plantio.defesa.perdeu')}</p>}
-      <button type="button" data-plantio-lutar disabled={ocupado || lutando} aria-disabled={ocupado || lutando ? true : undefined} onClick={() => { requireAwake('hall.grove', () => setLutando(true)); }} style={{ ...sm2Button('primary', ocupado || lutando, 'sm'), width: '100%' }}>
+      <button type="button" data-plantio-lutar disabled={ocupado || lutando} aria-disabled={ocupado || lutando ? true : undefined} onClick={() => { requireAwake('hall.grove', () => setLutando(true)); }} style={{ ...sm2Button('primary', ocupado || lutando, 'sm', { wide: true }), width: '100%' }}>
         <Icon name="swords" size={20} />{t('guild.plantio.defesa.lutar')}
       </button>
       {lutando && (

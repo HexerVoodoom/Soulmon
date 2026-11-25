@@ -1285,7 +1285,7 @@ export function EvolutionPath({
               <button
                 type="button"
                 onClick={() => onRetrySprite(currentStageId)}
-                style={{ ...sm2Button('outline', false, 'sm'), marginTop: 12, width: '100%', maxWidth: 200 }}
+                style={{ ...sm2Button('outline', false, 'sm', { wide: true }), marginTop: 12, width: '100%', maxWidth: 200 }}
               >
                 <Icon name="refresh" size={24} tone="inherit" />
                 {spriteText('retry', language)}
@@ -1311,7 +1311,7 @@ export function EvolutionPath({
           <button
             type="button"
             onClick={() => onTuneVisor(currentStageId)}
-            style={{ ...sm2Button('outline', false, 'sm'), width: '100%', maxWidth: 240 }}
+            style={{ ...sm2Button('outline', false, 'sm', { wide: true }), width: '100%', maxWidth: 240 }}
           >
             <Icon name="tune" size={24} tone="inherit" />
             {spriteText('tune', language)}
@@ -1423,7 +1423,7 @@ export function EvolutionPath({
               type="button"
               data-evo-revert
               onClick={() => onRevertVisor(currentStageId)}
-              style={{ ...sm2Button('outline', false, 'sm'), width: '100%', maxWidth: 240 }}
+              style={{ ...sm2Button('outline', false, 'sm', { wide: true }), width: '100%', maxWidth: 240 }}
             >
               <Icon name="undo" size={24} tone="inherit" />
               {spriteText('revert', language)}

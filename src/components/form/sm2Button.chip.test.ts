@@ -12,6 +12,15 @@ describe('sm2Button — chip inline sem arte', () => {
     expect(marca(sm2Button('outline'))).toBeUndefined();
     expect(marca(sm2Button('primary', false, 'lg'))).toBeUndefined();
   });
+  it("sm com wide:true (ação larga) NÃO marca chip e mantém kind/h", () => {
+    const st = sm2Button('primary', false, 'sm', { wide: true }) as Record<string, string>;
+    expect(st['--sm2-btn-chip']).toBeUndefined();
+    expect(st['--sm2-btn-kind']).toBe('primary');
+    expect(st['--sm2-btn-h']).toBe('44px');
+    expect((sm2Button('outline', false, 'sm', { wide: false }) as Record<string, string>)['--sm2-btn-chip']).toBe('1');
+    expect((sm2Button('outline', false, 'md', { wide: true }) as Record<string, string>)['--sm2-btn-chip']).toBeUndefined();
+    expect((sm2Button('outline', false, 'lg') as Record<string, string>)['--sm2-btn-kind']).toBe('outline');
+  });
   it('o CSS da arte exclui o chip em todas as regras de botão', () => {
     const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf8');
     const i = css.indexOf('/* ── Arte dos botões `sm2Button`');

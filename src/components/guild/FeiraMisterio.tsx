@@ -29,7 +29,7 @@ export function FeiraMisterio({ language, resumo, ocupado, onAbrir, feito = fals
           <div style={{ width: `${Math.round(resumo.bossHpPct)}%`, height: '100%', background: 'var(--sm2-primary-fill)' }} />
         </div>
       )}
-      {desafio && <button type="button" data-feira-misterio-abrir disabled={ocupado} aria-disabled={ocupado ? true : undefined} onClick={onAbrir} style={{ ...sm2Button('primary', ocupado, 'sm'), width: '100%' }}>
+      {desafio && <button type="button" data-feira-misterio-abrir disabled={ocupado} aria-disabled={ocupado ? true : undefined} onClick={onAbrir} style={{ ...sm2Button('primary', ocupado, 'sm', { wide: true }), width: '100%' }}>
         {feiraText(language, resumo.state === 'boss' ? 'room.boss.go' : 'room.challenge')}
       </button>}
     </div>

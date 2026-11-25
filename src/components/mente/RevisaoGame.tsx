@@ -200,11 +200,11 @@ export function RevisaoGame({
                       type="button"
                       data-revisao-delete-confirm
                       onClick={() => { onReviewChange(removeCard(review, c.id)); setConfirmDelete(null); }}
-                      style={{ ...sm2Button('outline', false, 'sm'), flex: 1 }}
+                      style={{ ...sm2Button('outline', false, 'sm', { wide: true }), flex: 1 }}
                     >
                       {isPt ? 'Apagar' : 'Delete'}
                     </button>
-                    <button type="button" onClick={() => setConfirmDelete(null)} style={{ ...sm2Button('quiet', false, 'sm'), flex: 1 }}>
+                    <button type="button" onClick={() => setConfirmDelete(null)} style={{ ...sm2Button('quiet', false, 'sm', { wide: true }), flex: 1 }}>
                       {isPt ? 'Cancelar' : 'Cancel'}
                     </button>
                   </div>
