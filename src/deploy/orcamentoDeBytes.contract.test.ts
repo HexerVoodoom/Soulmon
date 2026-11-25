@@ -251,7 +251,9 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // O corte real segue sendo code-split / partir o `App.tsx`. Teto e folga inalterados.
   // 24/11/2026 (dist em lote 2, re-medição): 220_610 -> 231_756 (+10,9 KB), build limpo da main @ d876934a4. Crescimento JUSTIFICADO pelos pedidos do dono:
   // data-ui / duas interfaces e os modais do dia. O CSS é único, sem split; o corte real segue sendo code-split / partir o `App.tsx`. Teto e folga inalterados.
-  'index.css': 231_756,
+  // 24/11/2026 (dist em lote 3, re-medição): 231_756 -> 241_020 (+9,3 KB), build limpo da main @ f00d16b57. Crescimento JUSTIFICADO pelos pedidos do dono:
+  // escopo data-ui minimal (`html:not([data-ui="minimal"])`) e arte nos botões (#1264/#1266/#1268/#1273). Teto e folga inalterados.
+  'index.css': 241_020,
   // ⚰️ 'intro-parede.mp4' (4,3 MB) saiu em 04/11/2026: a intro virou 9 painéis ilustrados animados em CSS (~2,1 MB em webp).
   // ⚰️ 'bg-forja.webp' saiu em 05/11/2026: o fundo novo da Forja (main) mede 398 KB, dentro do teto.
   // ⚰️ 'evolution-bg.mp4' (3,7 MB) saiu em 31/10/2026: a cerimônia da evolução foi refeita em CSS (o cristal, REGISTRO §208) e o vídeo foi apagado.
