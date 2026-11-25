@@ -5,7 +5,9 @@ import { resolve } from 'node:path';
 
 const css = readFileSync(resolve(process.cwd(), 'src/index.css'), 'utf8');
 const comp = readFileSync(resolve(process.cwd(), 'src/components/ui/BackCircleButton.tsx'), 'utf8');
-const bloco = css.slice(css.indexOf('Grupo B (fase 4)'), css.indexOf('Drop-down de categoria do CreateModal'));
+// O bloco B termina onde começa o bloco C (fechar ✕, `btnArteFechar.contract.test.ts`), que tem as suas próprias `url(`.
+const fimB = css.indexOf('Grupo C (fase 4)') > -1 ? css.indexOf('Grupo C (fase 4)') : css.indexOf('Drop-down de categoria do CreateModal');
+const bloco = css.slice(css.indexOf('Grupo B (fase 4)'), fimB);
 
 describe('arte no voltar', () => {
   it('as variáveis da arte (normal e pressed) ficam num lugar só e as regras só valem para a seta, sob html[data-ui="arte"]', () => {
