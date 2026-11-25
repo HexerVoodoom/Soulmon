@@ -506,7 +506,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
         {semConta && onLogin ? (
           <CtaTextButton onClick={() => void carregar(false)} data-guild-tentar>{t('guild.erro.tentar')}</CtaTextButton>
         ) : (
-          <button type="button" onClick={() => void carregar(false)} data-guild-tentar style={{ ...sm2Button('outline', false, 'sm'), width: '100%' }}>
+          <button type="button" onClick={() => void carregar(false)} data-guild-tentar style={{ ...sm2Button('outline', false, 'sm', { wide: true }), width: '100%' }}>
             <Icon name="refresh" size={20} />
             {t('guild.erro.tentar')}
           </button>
@@ -542,7 +542,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             disabled={semNome}
             aria-disabled={semNome ? true : undefined}
             aria-busy={ocupado ? true : undefined}
-            onClick={() => void agir(() => createGuild(saveId, nome.trim(), tz.current), { depois: () => track('guild_create') })} style={{ ...sm2Button('primary', semNome, 'sm'), width: '100%' }}>
+            onClick={() => void agir(() => createGuild(saveId, nome.trim(), tz.current), { depois: () => track('guild_create') })} style={{ ...sm2Button('primary', semNome, 'sm', { wide: true }), width: '100%' }}>
             <Icon name={ocupado ? 'sync' : 'add'} size={20} className={ocupado ? 'animate-spin' : undefined} />
             {t('guild.criar.botao')}
           </button>
@@ -551,7 +551,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
           {!entrando ? (
             <button
               type="button"
-              onClick={() => setEntrando(true)} style={{ ...sm2Button('outline', false, 'sm'), width: '100%' }}>
+              onClick={() => setEntrando(true)} style={{ ...sm2Button('outline', false, 'sm', { wide: true }), width: '100%' }}>
               <Icon name="arrow_forward" size={20} />
               {t('guild.entrar.botao.abrir')}
             </button>
@@ -581,7 +581,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
                 disabled={semCodigo}
                 aria-disabled={semCodigo ? true : undefined}
                 aria-busy={ocupado ? true : undefined}
-                onClick={() => void agir(() => joinGuild(saveId, codigo, tz.current), { depois: g => { if (g) track('guild_join', { size: Math.min(12, Math.max(2, g.size)) }); } })} style={{ ...sm2Button('outline', semCodigo, 'sm'), width: '100%' }}>
+                onClick={() => void agir(() => joinGuild(saveId, codigo, tz.current), { depois: g => { if (g) track('guild_join', { size: Math.min(12, Math.max(2, g.size)) }); } })} style={{ ...sm2Button('outline', semCodigo, 'sm', { wide: true }), width: '100%' }}>
                 <Icon name={ocupado ? 'sync' : 'arrow_forward'} size={20} className={ocupado ? 'animate-spin' : undefined} />
                 {t('guild.entrar.botao')}
               </button>
@@ -758,14 +758,14 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
                 type="button"
                 disabled={semNovoNome}
                 aria-disabled={semNovoNome ? true : undefined}
-                onClick={() => void agir(() => renameGuild(saveId, novoNome.trim(), tz.current))} style={{ ...sm2Button('outline', semNovoNome, 'sm'), width: '100%' }}>
+                onClick={() => void agir(() => renameGuild(saveId, novoNome.trim(), tz.current))} style={{ ...sm2Button('outline', semNovoNome, 'sm', { wide: true }), width: '100%' }}>
                 {t('guild.ajustes.renomear.salvar')}
               </button>
               <button
                 type="button"
                 disabled={ocupado}
                 aria-disabled={ocupado ? true : undefined}
-                onClick={() => void agir(() => newGuildCode(saveId, tz.current))} style={{ ...sm2Button('outline', ocupado, 'sm'), width: '100%' }}>
+                onClick={() => void agir(() => newGuildCode(saveId, tz.current))} style={{ ...sm2Button('outline', ocupado, 'sm', { wide: true }), width: '100%' }}>
                 {t('guild.ajustes.codigoNovo')}
               </button>
               <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.ajustes.codigoNovo.nota')}</p>
@@ -833,7 +833,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             disabled={g.full}
             aria-disabled={g.full ? true : undefined}
             aria-describedby={g.full ? `${ajustesId}-convidar-cheio` : undefined}
-            onClick={() => setConvidando(true)} style={{ ...sm2Button('primary', g.full, 'sm'), width: '100%' }}>
+            onClick={() => setConvidando(true)} style={{ ...sm2Button('primary', g.full, 'sm', { wide: true }), width: '100%' }}>
             {t('guild.convidar.botao')}
           </button>
           {g.full && <p id={`${ajustesId}-convidar-cheio`} className="sm2-lib-s" style={{ margin: 0 }} data-guild-convidar-cheio>{t('guild.convidar.cheio')}</p>}
@@ -1019,7 +1019,7 @@ function SalaGuerra({ guild, t, language, war, hoje, ocupado, mySprite, reducedM
       ) : pequena ? (
         <p className="sm2-lib-s" style={{ margin: 0 }} data-guerra-pequena>{t('guild.guerra.pequena')}</p>
       ) : (
-        <button type="button" data-guerra-buscar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={onBuscar} style={{ ...sm2Button('primary', ocupado, 'sm'), width: '100%' }}>
+        <button type="button" data-guerra-buscar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={onBuscar} style={{ ...sm2Button('primary', ocupado, 'sm', { wide: true }), width: '100%' }}>
           <Icon name={ocupado ? 'sync' : 'swords'} size={20} className={ocupado ? 'animate-spin' : undefined} />
           {t('guild.guerra.buscar')}
         </button>
@@ -1054,7 +1054,7 @@ function SalaPredios({ t, ids, titulo = 'guild.predios.titulo', aberto, onAbrir,
             data-predio={p.id}
             aria-pressed={aberto === p.id}
             onClick={() => onAbrir(aberto === p.id ? null : p.id)}
-            style={{ ...sm2Button(aberto === p.id ? 'primary' : 'outline', false, 'sm'), flex: '1 1 0' }}
+            style={{ ...sm2Button(aberto === p.id ? 'primary' : 'outline', false, 'sm', { wide: true }), flex: '1 1 0' }}
           >
             <Icon name={p.icone} size={20} fill={aberto === p.id ? 1 : 0} />
             {t(p.titulo)}
@@ -1111,7 +1111,7 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
                   data-casa-doar={d}
                   disabled={ocupado || bits < d}
                   aria-disabled={ocupado || bits < d ? true : undefined}
-                  onClick={() => onDoar(d)} style={{ ...sm2Button('outline', ocupado || bits < d, 'sm'), width: '100%' }}>
+                  onClick={() => onDoar(d)} style={{ ...sm2Button('outline', ocupado || bits < d, 'sm', { wide: true }), width: '100%' }}>
                   {t('guild.casa.doar.botao')}
                   <BitsAmount value={d} size={18} />
                 </button>
@@ -1136,7 +1136,7 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
               {livres.length === 0 ? (
                 <p className="sm2-lib-s" style={{ margin: 0 }} data-casa-sem-itens>{t('guild.casa.slot.nenhum')}</p>
               ) : !lista ? (
-                <button type="button" data-casa-escolher disabled={ocupado} onClick={() => setLista(true)} style={{ ...sm2Button('outline', ocupado, 'sm'), width: '100%' }}>
+                <button type="button" data-casa-escolher disabled={ocupado} onClick={() => setLista(true)} style={{ ...sm2Button('outline', ocupado, 'sm', { wide: true }), width: '100%' }}>
                   <Icon name="inventory_2" size={20} />
                   {t('guild.casa.slot.escolher')}
                 </button>
@@ -1144,7 +1144,7 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
                 <ul className="sm2-grove-list" data-casa-itens>
                   {livres.map(id => (
                     <li key={id}>
-                      <button type="button" data-casa-item={id} disabled={ocupado} onClick={() => { setLista(false); onSlot(id); }} style={{ ...sm2Button('outline', ocupado, 'sm'), width: '100%', justifyContent: 'flex-start' }}>
+                      <button type="button" data-casa-item={id} disabled={ocupado} onClick={() => { setLista(false); onSlot(id); }} style={{ ...sm2Button('outline', ocupado, 'sm', { wide: true }), width: '100%', justifyContent: 'flex-start' }}>
                         {DECOR_ART[id] && <img src={DECOR_ART[id]} alt="" width={24} height={24} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />}
                         {nome(id)}
                       </button>
@@ -1361,7 +1361,7 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           aria-disabled={ocupado || raid.hitToday ? true : undefined}
           aria-busy={ocupado ? true : undefined}
           aria-label={raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.aria.rodada')}
-          onClick={() => { requireAwake('hall.feira', onRodada); }} style={{ ...sm2Button('primary', ocupado || raid.hitToday, 'sm'), width: '100%' }}>
+          onClick={() => { requireAwake('hall.feira', onRodada); }} style={{ ...sm2Button('primary', ocupado || raid.hitToday, 'sm', { wide: true }), width: '100%' }}>
           <Icon name={ocupado ? 'sync' : raid.hitToday ? 'check_circle' : 'arrow_forward'} size={20} className={ocupado ? 'animate-spin' : undefined} />
           {raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.feira.rodada.botao')}
         </button>
@@ -1382,7 +1382,7 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           return (
           <>
           {voltaPendente && missao.onVerAchado && (
-            <button type="button" data-missao-ver-achado onClick={() => { missao.onVerAchado?.(); relerVolta(n => n + 1); }} style={{ ...sm2Button('primary', false, 'sm'), width: '100%' }}>
+            <button type="button" data-missao-ver-achado onClick={() => { missao.onVerAchado?.(); relerVolta(n => n + 1); }} style={{ ...sm2Button('primary', false, 'sm', { wide: true }), width: '100%' }}>
               <Icon name="search" size={20} />
               {t('guild.missao.verAchado')}
             </button>
@@ -1395,7 +1395,7 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
                 data-missao-mandar
                 aria-disabled="true"
                 onClick={() => setVolteAmanha(true)}
-                style={{ ...sm2Button('primary', false, 'sm'), opacity: 0.5, width: '100%' }}
+                style={{ ...sm2Button('primary', false, 'sm', { wide: true }), opacity: 0.5, width: '100%' }}
               >
                 <Icon name="search" size={20} />
                 {t('guild.missao.investigar')}
@@ -1419,7 +1419,7 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
               data-missao-mandar
               disabled={ocupado || !!missao.state}
               aria-disabled={ocupado || missao.state ? true : undefined}
-              onClick={() => { requireAwake('missao', missao.onSend); }} style={{ ...sm2Button('primary', ocupado || !!missao.state, 'sm'), width: '100%' }}>
+              onClick={() => { requireAwake('missao', missao.onSend); }} style={{ ...sm2Button('primary', ocupado || !!missao.state, 'sm', { wide: true }), width: '100%' }}>
               <Icon name="search" size={20} />
               {t('guild.missao.investigar')}
             </button>
@@ -1453,7 +1453,7 @@ function ResgateFeira({ t, pending, colhido, erro, ocupado, onColher }: {
             disabled={ocupado}
             aria-disabled={ocupado ? true : undefined}
             aria-busy={ocupado ? true : undefined}
-            onClick={() => onColher(pending.week)} style={{ ...sm2Button('primary', ocupado, 'sm'), width: '100%' }}>
+            onClick={() => onColher(pending.week)} style={{ ...sm2Button('primary', ocupado, 'sm', { wide: true }), width: '100%' }}>
             <Icon name={ocupado ? 'sync' : 'military_tech'} size={20} fill={ocupado ? 0 : 1} className={ocupado ? 'animate-spin' : undefined} />
             {t('guild.feira.colher.botao')}
           </button>

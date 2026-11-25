@@ -103,7 +103,7 @@ export function ProcurarCla({ saveId, t, tz, onJoined }: {
         <button
           type="button"
           data-guild-procurar-abrir
-          onClick={() => { setAberto(true); void carregar(); }} style={{ ...sm2Button('outline', false, 'sm'), width: '100%' }}>
+          onClick={() => { setAberto(true); void carregar(); }} style={{ ...sm2Button('outline', false, 'sm', { wide: true }), width: '100%' }}>
           <Icon name="search" size={20} />
           {t('guild.procurar.botao.abrir')}
         </button>

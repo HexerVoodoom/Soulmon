@@ -101,7 +101,7 @@ export function GmPanel({ language, gm }: { language: Language; gm: GmActions })
           <p style={{ ...sm2Text, fontWeight: 500, margin: '0 0 4px' }}>{isPt ? 'Somar dias completos' : 'Add complete days'}</p>
           <div style={{ display: 'flex', gap: 8 }}>
             {GM_PERFECT_DAY_STEPS.map(n => (
-              <button key={n} type="button" style={{ ...sm2Button('outline', false, 'sm'), flex: 1 }} onClick={() => gm.onAddPerfectDays(n)}>
+              <button key={n} type="button" style={{ ...sm2Button('outline', false, 'sm', { wide: true }), flex: 1 }} onClick={() => gm.onAddPerfectDays(n)}>
                 +{n}
               </button>
             ))}

@@ -91,7 +91,7 @@ export function FriendTraining({ friend, friendSide, trainer, isPt, onClose }: {
         <p className="sm2-lib-s" data-treino-sem-premio style={{ margin: '0 0 12px' }}>
           {isPt ? 'Sem prêmio e sem custo: não conta para nada.' : 'No prize and no cost: it counts for nothing.'}
         </p>
-        <button type="button" onClick={onClose} style={{ ...sm2Button('outline', false, 'sm'), width: '100%' }}>{isPt ? 'Fechar' : 'Close'}</button>
+        <button type="button" onClick={onClose} style={{ ...sm2Button('outline', false, 'sm', { wide: true }), width: '100%' }}>{isPt ? 'Fechar' : 'Close'}</button>
       </RitualDialog>
     );
   }

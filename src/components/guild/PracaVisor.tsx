@@ -119,7 +119,7 @@ export function SalaPraca({ saveId, language, t, guild, tz, reducedMotion, onRew
       {status === 'error' && (
         <>
           <p role="alert" className="sm2-lib-alert" data-praca-erro>{t('guild.cla.erro')}</p>
-          <button type="button" onClick={() => void recarregar(false)} style={{ ...sm2Button('outline', false, 'sm'), width: '100%' }}><Icon name="refresh" size={20} />{t('guild.erro.tentar')}</button>
+          <button type="button" onClick={() => void recarregar(false)} style={{ ...sm2Button('outline', false, 'sm', { wide: true }), width: '100%' }}><Icon name="refresh" size={20} />{t('guild.erro.tentar')}</button>
         </>
       )}
       {view && (
@@ -154,7 +154,7 @@ export function SalaPraca({ saveId, language, t, guild, tz, reducedMotion, onRew
             <ul className="sm2-grove-list" data-praca-itens>
               {livres.map(id => (
                 <li key={id}>
-                  <button type="button" data-praca-item={id} disabled={ocupado} onClick={() => void poeItem(escolhendo, id)} style={{ ...sm2Button('outline', ocupado, 'sm'), width: '100%', justifyContent: 'flex-start' }}>
+                  <button type="button" data-praca-item={id} disabled={ocupado} onClick={() => void poeItem(escolhendo, id)} style={{ ...sm2Button('outline', ocupado, 'sm', { wide: true }), width: '100%', justifyContent: 'flex-start' }}>
                     {DECOR_ART[id] && <img src={DECOR_ART[id]} alt="" width={24} height={24} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />}
                     {decorName(language, id)}
                   </button>

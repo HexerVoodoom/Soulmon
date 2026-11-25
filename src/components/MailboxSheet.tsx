@@ -129,11 +129,11 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
         footer={(
           <div data-mail-footer style={{ display: 'flex', gap: 8 }}>
             <button type="button" data-mail-delete-read disabled={!temLida || ocupado} onClick={() => void excluirLidas()}
-              style={{ ...sm2Button('outline', !temLida || ocupado, 'sm'), flex: 1 }}>
+              style={{ ...sm2Button('outline', !temLida || ocupado, 'sm', { wide: true }), flex: 1 }}>
               {isPt ? 'Excluir todas lidas' : 'Delete all read'}
             </button>
             <button type="button" data-mail-claim-all disabled={!temItem || ocupado} onClick={() => void resgatarTudo()}
-              style={{ ...sm2Button('primary', !temItem || ocupado, 'sm'), flex: 1 }}>
+              style={{ ...sm2Button('primary', !temItem || ocupado, 'sm', { wide: true }), flex: 1 }}>
               {isPt ? 'Resgatar tudo' : 'Claim all'}
             </button>
           </div>
@@ -185,33 +185,33 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
                     {isFriendInvite(m) && onAnswerInvite && (
                       <div data-mail-invite style={{ display: 'flex', gap: 8 }}>
                         <button type="button" data-mail-invite-accept disabled={ocupado} onClick={() => void responder(m, false)}
-                          style={{ ...sm2Button('primary', ocupado, 'sm'), flex: 1 }}>{isPt ? 'Aceitar' : 'Accept'}</button>
+                          style={{ ...sm2Button('primary', ocupado, 'sm', { wide: true }), flex: 1 }}>{isPt ? 'Aceitar' : 'Accept'}</button>
                         <button type="button" data-mail-invite-decline disabled={ocupado} onClick={() => void responder(m, true)}
-                          style={{ ...sm2Button('outline', ocupado, 'sm'), flex: 1 }}>{isPt ? 'Recusar' : 'Decline'}</button>
+                          style={{ ...sm2Button('outline', ocupado, 'sm', { wide: true }), flex: 1 }}>{isPt ? 'Recusar' : 'Decline'}</button>
                       </div>
                     )}
                     {isGuildWar(m) && onWatchWar && (
                       <button type="button" data-mail-war-watch disabled={ocupado} onClick={onWatchWar}
-                        style={{ ...sm2Button('primary', ocupado, 'sm'), flex: 1 }}>{isPt ? 'Assistir batalha' : 'Watch Battle'}</button>
+                        style={{ ...sm2Button('primary', ocupado, 'sm', { wide: true }), flex: 1 }}>{isPt ? 'Assistir batalha' : 'Watch Battle'}</button>
                     )}
                     {isGuildInvite(m) && onJoinGuild && (
                       <div data-mail-guild-invite style={{ display: 'flex', gap: 8 }}>
                         <button type="button" data-mail-guild-join disabled={ocupado} onClick={() => void entrarNoCla(m)}
-                          style={{ ...sm2Button('primary', ocupado, 'sm'), flex: 1 }}>{isPt ? 'Entrar no clã' : 'Join clan'}</button>
+                          style={{ ...sm2Button('primary', ocupado, 'sm', { wide: true }), flex: 1 }}>{isPt ? 'Entrar no clã' : 'Join clan'}</button>
                         <button type="button" data-mail-guild-decline disabled={ocupado} onClick={() => void recusarCla(m)}
-                          style={{ ...sm2Button('outline', ocupado, 'sm'), flex: 1 }}>{isPt ? 'Recusar' : 'Decline'}</button>
+                          style={{ ...sm2Button('outline', ocupado, 'sm', { wide: true }), flex: 1 }}>{isPt ? 'Recusar' : 'Decline'}</button>
                       </div>
                     )}
                     <div style={{ display: 'flex', gap: 8 }}>
                       {item && (
                         <button type="button" data-mail-claim disabled={ocupado} onClick={() => void resgatar(m)}
-                          style={{ ...sm2Button('primary', ocupado, 'sm'), flex: 1 }}>
+                          style={{ ...sm2Button('primary', ocupado, 'sm', { wide: true }), flex: 1 }}>
                           {isPt ? 'Resgatar' : 'Claim'}
                         </button>
                       )}
                       {!temRecusar && (
                         <button type="button" data-mail-delete disabled={ocupado} onClick={() => void deletar(m)}
-                          style={{ ...sm2Button('outline', ocupado, 'sm'), flex: 1, color: 'var(--sm2-danger-ink)' }}>
+                          style={{ ...sm2Button('outline', ocupado, 'sm', { wide: true }), flex: 1, color: 'var(--sm2-danger-ink)' }}>
                           {isPt ? 'Deletar' : 'Delete'}
                         </button>
                       )}
@@ -232,9 +232,9 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
         footer={confirmar && (
           <div data-mail-confirm style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <button type="button" disabled={ocupado} onClick={() => { const m = confirmar; setConfirmar(null); void resgatar(m); }}
-              style={{ ...sm2Button('primary', ocupado, 'sm'), width: '100%' }}>{isPt ? 'Resgatar' : 'Claim'}</button>
+              style={{ ...sm2Button('primary', ocupado, 'sm', { wide: true }), width: '100%' }}>{isPt ? 'Resgatar' : 'Claim'}</button>
             <button type="button" data-mail-delete-anyway disabled={ocupado} onClick={() => void deletarMesmoAssim(confirmar)}
-              style={{ ...sm2Button('quiet', ocupado, 'sm'), width: '100%', color: 'var(--sm2-danger-ink)' }}>{isPt ? 'Apagar mesmo assim' : 'Delete anyway'}</button>
+              style={{ ...sm2Button('quiet', ocupado, 'sm', { wide: true }), width: '100%', color: 'var(--sm2-danger-ink)' }}>{isPt ? 'Apagar mesmo assim' : 'Delete anyway'}</button>
           </div>
         )}>
         {confirmar && (
@@ -248,7 +248,7 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
 
       {/* O pop-up do "Resgatar tudo": tudo o que saiu, e o total. */}
       <ModalSheet open={resumo !== null} placement="center" title={isPt ? 'Resgatado!' : 'Claimed!'} onClose={() => setResumo(null)} language={language}
-        footer={<button type="button" data-mail-summary-ok onClick={() => setResumo(null)} style={{ ...sm2Button('primary', false, 'sm'), width: '100%' }}>Ok</button>}>
+        footer={<button type="button" data-mail-summary-ok onClick={() => setResumo(null)} style={{ ...sm2Button('primary', false, 'sm', { wide: true }), width: '100%' }}>Ok</button>}>
         {resumo && (
           <div data-mail-summary style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <ul style={{ ...sm2Text, margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>

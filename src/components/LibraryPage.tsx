@@ -724,7 +724,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
             {isPt ? 'Pode ser a sua conexão. Tente de novo em instantes.' : 'It may be your connection. Try again in a moment.'}
           </p>
           {/* Saída com fronteira (`outline`), nunca `ghost` (D-S10). */}
-          <button type="button" onClick={() => setReloadKey(k => k + 1)} style={{ ...sm2Button('outline', false, 'sm'), marginTop: 6, width: '100%', maxWidth: 200 }}>
+          <button type="button" onClick={() => setReloadKey(k => k + 1)} style={{ ...sm2Button('outline', false, 'sm', { wide: true }), marginTop: 6, width: '100%', maxWidth: 200 }}>
             <Icon name="refresh" size={20} />
             {isPt ? 'Tentar de novo' : 'Try again'}
           </button>
@@ -948,7 +948,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
               : (isPt ? 'Para voltar, vocês precisam de um novo convite.' : 'To be friends again you need a new invite.')}
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" onClick={() => setConfirmRemove(null)} style={{ ...sm2Button('outline', false, 'sm'), flex: 1 }}>{isPt ? 'Cancelar' : 'Cancel'}</button>
+            <button type="button" onClick={() => setConfirmRemove(null)} style={{ ...sm2Button('outline', false, 'sm', { wide: true }), flex: 1 }}>{isPt ? 'Cancelar' : 'Cancel'}</button>
             <button
               type="button"
               data-remove-confirm
@@ -958,7 +958,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
                 setConfirmRemove(null);
                 await toggleFriend(alvo);
               }}
-              style={{ ...sm2Button('primary', false, 'sm'), flex: 1 }}
+              style={{ ...sm2Button('primary', false, 'sm', { wide: true }), flex: 1 }}
             >
               {confirmRemove.step === 1 ? (isPt ? 'Continuar' : 'Continue') : (isPt ? 'Remover' : 'Remove')}
             </button>
