@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/** Arte dos botões sm2: a arte dos botões vale no app inteiro sob `html[data-ui="arte"]` (CSS) e o `sm2Button` marca variante e altura no style. */
+/** Arte dos botões sm2: a arte dos botões vale no app inteiro sob `html:not([data-ui="minimal"])` (CSS) e o `sm2Button` marca variante e altura no style. */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { CreateModal } from './CreateModal';
@@ -11,7 +11,7 @@ const mk = () => render(
 );
 
 describe('CreateModal: arte dos botões sm2', () => {
-  it('Cancel/Save trazem os marcadores de variante e altura (a arte vem do escopo global html[data-ui="arte"], sem classe no CreateModal)', () => {
+  it('Cancel/Save trazem os marcadores de variante e altura (a arte vem do escopo global html:not([data-ui="minimal"]), sem classe no CreateModal)', () => {
     mk();
     const cancel = screen.getByRole('button', { name: 'Cancel' });
     const save = screen.getByRole('button', { name: 'Save' });

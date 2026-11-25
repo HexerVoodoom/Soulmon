@@ -25,7 +25,7 @@ describe('sm2Button — chip inline sem arte', () => {
     const css = readFileSync(resolve(__dirname, '../../index.css'), 'utf8');
     const i = css.indexOf('/* ── Arte dos botões `sm2Button`');
     const bloco = css.slice(i, css.indexOf('/* Drop-down de categoria do CreateModal'));
-    const seletores = bloco.match(/html\[data-ui="arte"\] button[^{,]*/g) ?? [];
+    const seletores = bloco.match(/html:not\(\[data-ui="minimal"\]\) button[^{,]*/g) ?? [];
     expect(seletores.length).toBeGreaterThan(10);
     for (const s of seletores) expect(s, s).toContain(':not([style*="--sm2-btn-chip"])');
   });
