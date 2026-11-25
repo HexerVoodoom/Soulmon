@@ -17,7 +17,7 @@ import { mulberry32 } from './combate/rng';
 import { elementIconIds } from './elementIconArt';
 import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { CURATED_ELEMENT_NAMES } from './elementosCurados';
-import { essenceEn } from './soulProfile/essenceLabels';
+import { comboPt, essenceEn } from './soulProfile/essenceLabels';
 import { M3_KINDS, type Rng } from './match3';
 import { M3_MIN_DELTA_E, pickM3Distinct, type M3Limiares } from './match3Cores';
 import { pickEnemy, type RosterEntry } from './enemyRoster';
@@ -62,7 +62,7 @@ export const mixedElementsForSeed = (seed: number): string[] => pickDistinctMixe
 export function tileElementName(id: string, isPt: boolean): string {
   if (isPt) {
     const base = (BASE_ELEMENT_LABELS as Record<string, string>)[id];
-    return base ?? DERIVED_ELEMENT_PAIRS.find(d => d.id === id)?.nome ?? CURATED_ELEMENT_NAMES[id]?.pt ?? id;
+    return base ?? DERIVED_ELEMENT_PAIRS.find(d => d.id === id)?.nome ?? CURATED_ELEMENT_NAMES[id]?.pt ?? comboPt(id) ?? id;
   }
   return essenceEn(id) ?? CURATED_ELEMENT_NAMES[id]?.en ?? id;
 }

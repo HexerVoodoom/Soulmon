@@ -59,6 +59,15 @@ describe('Aventura — os 6 elementos misturados do tabuleiro', () => {
     expect(tileElementName('vapor', true)).toBe('Vapor');
     expect(tileElementName('vapor', false)).toBe('Steam');
     for (const id of mixedElementPool()) { expect(tileElementName(id, true)).toBeTruthy(); expect(tileElementName(id, false)).toBeTruthy(); }
+    // Nunca o id cru: todo elemento do pool tem nome próprio, com maiúscula, nas duas línguas (bug 'reencarnacao' no minigame).
+    for (const id of mixedElementPool()) {
+      for (const pt of [true, false]) {
+        const n = tileElementName(id, pt);
+        expect(n, `${id} ${pt ? 'PT' : 'EN'}`).not.toBe(id);
+        expect(n, `${id} ${pt ? 'PT' : 'EN'}`).toMatch(/^\p{Lu}/u);
+      }
+    }
+    expect(tileElementName('reencarnacao', true)).toBe('Reencarnação');
   });
 
   it('o Normal segue com os 6 fixos (nada mudou)', () => {

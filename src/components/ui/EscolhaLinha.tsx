@@ -39,12 +39,12 @@ export function EscolhaLinha({ lead, title, sub, reward, actionLabel, actionAria
     <div {...rowProps} style={{ ...escolhaCardStyle, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', minHeight: 56 }}>
       {lead}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>{title}</div>
+        <div style={{ ...sm2Text, margin: 0, fontWeight: 500, overflowWrap: 'break-word', hyphens: 'auto', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{title}</div>
         {sub !== undefined && (
           <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</p>
         )}
       </div>
-      {reward}
+      {reward !== undefined && <div style={{ flexShrink: 0 }}>{reward}</div>}
       <button
         type="button"
         {...actionProps}
