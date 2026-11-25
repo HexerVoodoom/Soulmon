@@ -567,6 +567,7 @@ export function ModalSheet({
           {closeSide === 'end' && (
             <button
               type="button"
+              data-fechar
               onClick={onClose}
               aria-label={isPt ? 'Fechar' : 'Close'}
               style={{
