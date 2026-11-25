@@ -52,6 +52,8 @@ export function ProtectProgressModal({ language, reason, onDismiss, onConfirm }:
   return (
     <ModalSheet
       open
+      moldura="dono"
+      fundoVazio
       onClose={onDismiss}
       language={language}
       title={motivo}
@@ -76,6 +78,7 @@ export function ProtectProgressModal({ language, reason, onDismiss, onConfirm }:
         </div>
       }
     >
+      <div className="sm2-nova-corpo">
       <p style={{ ...sm2Text, margin: 0 }}>
         {isPt
           ? 'Seu progresso está só neste aparelho. Deixe um e-mail para não perder o seu Soulmon se trocar de celular.'
@@ -107,6 +110,7 @@ export function ProtectProgressModal({ language, reason, onDismiss, onConfirm }:
             {error}
           </p>
         )}
+      </div>
       </div>
     </ModalSheet>
   );

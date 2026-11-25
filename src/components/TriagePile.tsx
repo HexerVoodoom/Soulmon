@@ -143,7 +143,8 @@ export function TriagePile({ open, tasks, language, onResolve, onClose, petSprit
     : `${doneCount} of ${total} decided`;
 
   return (
-    <ModalSheet open title={isPt ? 'Arrumar a pilha' : 'Tidy the pile'} onClose={onClose} language={language}>
+    <ModalSheet open moldura="dono" fundoVazio title={isPt ? 'Arrumar a pilha' : 'Tidy the pile'} onClose={onClose} language={language}>
+      <div className="sm2-nova-corpo">
       {/* Progresso — barra que só enche. Nada aqui mede o tamanho da culpa. */}
       {total > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -173,6 +174,7 @@ export function TriagePile({ open, tasks, language, onResolve, onClose, petSprit
         ) : (
           <TriageDone isPt={isPt} decided={doneCount} petSprite={petSprite} />
         )}
+      </div>
       </div>
     </ModalSheet>
   );

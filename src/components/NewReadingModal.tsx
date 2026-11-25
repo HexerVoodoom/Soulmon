@@ -60,6 +60,8 @@ export function NewReadingModal({ language, answers, credits, onConfirm, onClose
   return (
     <ModalSheet
       open
+      moldura="dono"
+      fundoVazio
       onClose={onClose}
       language={language}
       title={isPt ? 'Nova Leitura' : 'New Reading'}
@@ -86,6 +88,7 @@ export function NewReadingModal({ language, answers, credits, onConfirm, onClose
         </div>
       }
     >
+      <div className="sm2-nova-corpo">
       {/* A REGRA, antes de qualquer pergunta e antes de qualquer preço. */}
       <p style={{ ...sm2Text, margin: 0 }}>
         {isPt
@@ -135,6 +138,7 @@ export function NewReadingModal({ language, answers, credits, onConfirm, onClose
           ? 'A criatura recomeça em Rookie. Atividades, tarefas, hábitos e Bits continuam exatamente como estão.'
           : 'The creature restarts at Rookie. Activities, tasks, habits and Bits stay exactly as they are.'}
       </p>
+      </div>
     </ModalSheet>
   );
 }

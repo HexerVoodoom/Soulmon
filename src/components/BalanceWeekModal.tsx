@@ -143,7 +143,8 @@ export function BalanceWeekModal({
   const dias = (ds: number[]) => ds.map(d => weekdayShort(d, language)).join(' · ');
 
   return (
-    <ModalSheet open={open} title={t.titulo} onClose={onClose} language={language}>
+    <ModalSheet open={open} moldura="dono" fundoVazio title={t.titulo} onClose={onClose} language={language}>
+      <div className="sm2-nova-corpo">
       {semMudanca ? (
         <>
           <p style={{ ...sm2Hint, fontSize: 'var(--sm2-text-sm)', margin: 0 }}>{t.semMudanca}</p>
@@ -198,6 +199,7 @@ export function BalanceWeekModal({
           </div>
         </>
       )}
+      </div>
     </ModalSheet>
   );
 }

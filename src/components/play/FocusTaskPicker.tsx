@@ -37,11 +37,11 @@ export function FocusTaskPicker({ language, tasks, initialId, busy, onClose, onP
   }, [open.length, lastId]);
 
   return (
-    <ModalSheet open title={isPt ? 'Qual tarefa você vai fazer?' : 'Which task will you do?'} onClose={onClose} language={language}
+    <ModalSheet open moldura="dono" fundoVazio title={isPt ? 'Qual tarefa você vai fazer?' : 'Which task will you do?'} onClose={onClose} language={language}
       footer={<div className="sm2-hex-footer">
         <button type="button" data-focus-pick-go disabled={!chosen || busy} style={{ ...sm2Button('primary', !chosen || !!busy), minHeight: 48 }} onClick={() => chosen && onPick(chosen)}>{isPt ? 'Começar' : 'Start'}</button>
       </div>}>
-      <div data-focus-picker style={{ display: 'grid', gap: 8 }}>
+      <div data-focus-picker className="sm2-nova-corpo" style={{ display: 'grid', gap: 8 }}>
         <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Cada sessão tem uma tarefa. Ela fica na lista durante o foco.' : 'Every session has one task. It stays on the list while you focus.'}</p>
         {open.length === 0 && <p data-focus-picker-empty style={{ ...sm2Text, margin: 0 }}>{isPt ? 'Você não tem tarefas abertas. Crie uma agora.' : "You have no open tasks. Create one now."}</p>}
         {open.length > 0 && <div role="radiogroup" aria-label={isPt ? 'Tarefas' : 'Tasks'} style={{ display: 'grid', gap: 6 }}>
