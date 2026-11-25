@@ -1,4 +1,4 @@
-/** Grupo C (fase 4): os botões de fechar ✕ levam `sm2-fechar` (normal/pressed/disabled) só sob `html[data-ui="arte"]`; ✕ de busca fica de fora; glifo e aria-label seguem no DOM. */
+/** Grupo C (fase 4): os botões de fechar ✕ levam `sm2-fechar` (normal/pressed/disabled) só sob `html:not([data-ui="minimal"])`; ✕ de busca fica de fora; glifo e aria-label seguem no DOM. */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -9,10 +9,10 @@ const ini = css.indexOf('Grupo C (fase 4)');
 const bloco = css.slice(css.indexOf('*/', ini) + 2, css.indexOf('Drop-down de categoria do CreateModal'));
 
 describe('arte no fechar', () => {
-  it('3 variáveis de arte num lugar só; todas as regras sob html[data-ui="arte"]; sem display:none', () => {
+  it('3 variáveis de arte num lugar só; todas as regras sob html:not([data-ui="minimal"]); sem display:none', () => {
     for (const v of ['fechar', 'fechar-press', 'fechar-disabled']) expect(bloco).toContain(`ui/sm2/sm2-${v}.webp`);
     expect(bloco.match(/url\(/g)).toHaveLength(3);
-    for (const l of bloco.split('\n').filter(x => /^[^\s}]/.test(x) && !x.startsWith('/*') && !x.startsWith('   '))) expect(l.startsWith('html[data-ui="arte"]')).toBe(true);
+    for (const l of bloco.split('\n').filter(x => /^[^\s}]/.test(x) && !x.startsWith('/*') && !x.startsWith('   '))) expect(l.startsWith('html:not([data-ui="minimal"])')).toBe(true);
     expect(bloco).not.toMatch(/display: none/);
     expect(bloco).toContain(':disabled');
     expect(bloco).toContain('> *');

@@ -4793,7 +4793,7 @@ button[style*="--sm2-btn: ghost"]:active {
 
 /* ── Arte dos botões `sm2Button` (P6 aprovou 24/11/2026; P7 liga) ───────────
    CHIP (dono 24/11): botão `sm` (inline pequeno, 44px) NÃO leva arte: `sm2Button` marca `--sm2-btn-chip` e o bloco o exclui; fica a bordinha do inline.
-   ESCOPADO por `html[data-ui="arte"]` (fase 4, 24/11/2026): vale no app INTEIRO quando a pele é arte;
+   ESCOPADO por `html:not([data-ui="minimal"])` (fase 4, 24/11/2026): vale no app INTEIRO quando a pele é arte;
    na pele minimalista nada muda nos ~350 botões.
    `sm2Button()` grava `--sm2-btn-kind` (primary|outline|danger|quiet|ghost) e
    `--sm2-btn-h` (44/48/56 px) no style; aqui só primary/outline/danger ganham
@@ -4801,31 +4801,31 @@ button[style*="--sm2-btn: ghost"]:active {
    ocupa ~75 px → `--cap` = altura × 75/169. Estados = 3 arquivos (normal,
    pressed no `:active`, disabled no `:disabled`). Texto claro em qualquer tema
    porque o miolo da arte é escuro/teal nos dois (contraste no PR #P7). */
-html[data-ui="arte"] { --sm2-btn-arte-ink: #FFFFFF; --sm2-btn-slice: 62; --sm2-btn-art-h: 169; /* geometria do 9-slice em UM lugar: arte sem gema (P6, #1261): ponta ~62px de 703x169 */ }
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:primary"],
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: primary"] { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-normal.webp'); }
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:primary"]:active:not(:disabled),
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: primary"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-pressed.webp'); }
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:primary"]:disabled,
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: primary"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-disabled.webp'); }
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:outline"],
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: outline"] { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-normal.webp'); }
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:outline"]:active:not(:disabled),
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: outline"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-pressed.webp'); }
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:outline"]:disabled,
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: outline"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-disabled.webp'); }
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:danger"],
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: danger"] { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-normal.webp'); }
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:danger"]:active:not(:disabled),
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: danger"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-pressed.webp'); }
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:danger"]:disabled,
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: danger"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-disabled.webp'); }
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: primary"],
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:primary"],
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: outline"],
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:outline"],
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: danger"],
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:danger"] {
+html:not([data-ui="minimal"]) { --sm2-btn-arte-ink: #FFFFFF; --sm2-btn-slice: 62; --sm2-btn-art-h: 169; /* geometria do 9-slice em UM lugar: arte sem gema (P6, #1261): ponta ~62px de 703x169 */ }
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:primary"],
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: primary"] { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-normal.webp'); }
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:primary"]:active:not(:disabled),
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: primary"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-pressed.webp'); }
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:primary"]:disabled,
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: primary"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-disabled.webp'); }
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:outline"],
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: outline"] { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-normal.webp'); }
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:outline"]:active:not(:disabled),
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: outline"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-pressed.webp'); }
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:outline"]:disabled,
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: outline"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-disabled.webp'); }
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:danger"],
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: danger"] { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-normal.webp'); }
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:danger"]:active:not(:disabled),
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: danger"]:active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-pressed.webp'); }
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:danger"]:disabled,
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: danger"]:disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-danger-disabled.webp'); }
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: primary"],
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:primary"],
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: outline"],
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:outline"],
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: danger"],
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:danger"] {
   --cap: calc(var(--sm2-btn-h, 48px) * var(--sm2-btn-slice) / var(--sm2-btn-art-h));
   background: none !important;
   border-style: solid !important;
@@ -4844,26 +4844,26 @@ html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kin
 }
 /* Rodapé de 3 botões em 360/375: o miolo útil é ~58–63px; "alterações" (67px a 14px) estourava. Fonte 12,5px nas telas estreitas. */
 @media (max-width: 380px) {
-  html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: primary"],
-  html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:primary"],
-  html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: outline"],
-  html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:outline"],
-  html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: danger"],
-  html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:danger"] { font-size: calc(var(--sm2-text-sm) - 1.5px) !important; }
+  html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: primary"],
+  html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:primary"],
+  html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: outline"],
+  html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:outline"],
+  html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind: danger"],
+  html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind:danger"] { font-size: calc(var(--sm2-text-sm) - 1.5px) !important; }
 }
-html[data-ui="arte"] button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind"]:disabled {
+html:not([data-ui="minimal"]) button:not([style*="--sm2-btn-chip"])[style*="--sm2-btn-kind"]:disabled {
   color: rgb(255 255 255 / .72) !important;
   text-shadow: none;
 }
 /* Grupo A (fase 4): os botões por CLASSE (`.sm2-kit-btn-primary|outline`, md/lg) ganham a MESMA arte 9-slice. `-sm` = chip (bordinha, sem arte); ghost/quiet sem arte. */
-html[data-ui="arte"] .sm2-kit-btn-primary:not(.sm2-kit-btn-sm) { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-normal.webp'); }
-html[data-ui="arte"] .sm2-kit-btn-primary:not(.sm2-kit-btn-sm):active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-pressed.webp'); }
-html[data-ui="arte"] .sm2-kit-btn-primary:not(.sm2-kit-btn-sm):disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-disabled.webp'); }
-html[data-ui="arte"] .sm2-kit-btn-outline:not(.sm2-kit-btn-sm) { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-normal.webp'); }
-html[data-ui="arte"] .sm2-kit-btn-outline:not(.sm2-kit-btn-sm):active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-pressed.webp'); }
-html[data-ui="arte"] .sm2-kit-btn-outline:not(.sm2-kit-btn-sm):disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-disabled.webp'); }
-html[data-ui="arte"] .sm2-kit-btn-primary:not(.sm2-kit-btn-sm),
-html[data-ui="arte"] .sm2-kit-btn-outline:not(.sm2-kit-btn-sm) {
+html:not([data-ui="minimal"]) .sm2-kit-btn-primary:not(.sm2-kit-btn-sm) { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-normal.webp'); }
+html:not([data-ui="minimal"]) .sm2-kit-btn-primary:not(.sm2-kit-btn-sm):active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-pressed.webp'); }
+html:not([data-ui="minimal"]) .sm2-kit-btn-primary:not(.sm2-kit-btn-sm):disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-primary-disabled.webp'); }
+html:not([data-ui="minimal"]) .sm2-kit-btn-outline:not(.sm2-kit-btn-sm) { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-normal.webp'); }
+html:not([data-ui="minimal"]) .sm2-kit-btn-outline:not(.sm2-kit-btn-sm):active:not(:disabled) { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-pressed.webp'); }
+html:not([data-ui="minimal"]) .sm2-kit-btn-outline:not(.sm2-kit-btn-sm):disabled { --arte: url('./assets/soulmon/ui/sm2/sm2-outline-disabled.webp'); }
+html:not([data-ui="minimal"]) .sm2-kit-btn-primary:not(.sm2-kit-btn-sm),
+html:not([data-ui="minimal"]) .sm2-kit-btn-outline:not(.sm2-kit-btn-sm) {
   --sm2-btn-h: 48px;
   --cap: calc(var(--sm2-btn-h) * var(--sm2-btn-slice) / var(--sm2-btn-art-h));
   background: none !important;
@@ -4881,39 +4881,39 @@ html[data-ui="arte"] .sm2-kit-btn-outline:not(.sm2-kit-btn-sm) {
   color: var(--sm2-btn-arte-ink) !important;
   text-shadow: 0 1px 2px rgba(4, 18, 20, .55);
 }
-html[data-ui="arte"] .sm2-kit-btn-lg.sm2-kit-btn-primary:not(.sm2-kit-btn-sm),
-html[data-ui="arte"] .sm2-kit-btn-lg.sm2-kit-btn-outline:not(.sm2-kit-btn-sm) { --sm2-btn-h: 56px; }
-html[data-ui="arte"] .sm2-kit-btn-primary:not(.sm2-kit-btn-sm):disabled,
-html[data-ui="arte"] .sm2-kit-btn-outline:not(.sm2-kit-btn-sm):disabled { color: rgb(255 255 255 / .72) !important; text-shadow: none; }
+html:not([data-ui="minimal"]) .sm2-kit-btn-lg.sm2-kit-btn-primary:not(.sm2-kit-btn-sm),
+html:not([data-ui="minimal"]) .sm2-kit-btn-lg.sm2-kit-btn-outline:not(.sm2-kit-btn-sm) { --sm2-btn-h: 56px; }
+html:not([data-ui="minimal"]) .sm2-kit-btn-primary:not(.sm2-kit-btn-sm):disabled,
+html:not([data-ui="minimal"]) .sm2-kit-btn-outline:not(.sm2-kit-btn-sm):disabled { color: rgb(255 255 255 / .72) !important; text-shadow: none; }
 /* Grupo B (fase 4): o VOLTAR (BackCircleButton, seta) ganha a arte do disco (`sm2-voltar`, aro de cobre liso, que já traz a seta; P6 #1270). A arte mora nestas duas variáveis: trocar
    as duas se a arte mudar. O glifo fica no DOM (aria-label, foco) e só some da vista; o voltar de destino "mapa" não leva a arte. */
-html[data-ui="arte"] { --sm2-voltar-arte: url('./assets/soulmon/ui/sm2/sm2-voltar.webp'); --sm2-voltar-press: url('./assets/soulmon/ui/sm2/sm2-voltar-press.webp'); }
-html[data-ui="arte"] .sm2-area-back[data-back-icon="arrow_back"] {
+html:not([data-ui="minimal"]) { --sm2-voltar-arte: url('./assets/soulmon/ui/sm2/sm2-voltar.webp'); --sm2-voltar-press: url('./assets/soulmon/ui/sm2/sm2-voltar-press.webp'); }
+html:not([data-ui="minimal"]) .sm2-area-back[data-back-icon="arrow_back"] {
   background: var(--sm2-voltar-arte) center / contain no-repeat !important;
   border: 0 !important;
   border-radius: 0 !important;
 }
-html[data-ui="arte"] .sm2-area-back[data-back-icon="arrow_back"]:active:not(:disabled) { background-image: var(--sm2-voltar-press) !important; }
-html[data-ui="arte"] .sm2-area-back[data-back-icon="arrow_back"] > * { opacity: 0; }
+html:not([data-ui="minimal"]) .sm2-area-back[data-back-icon="arrow_back"]:active:not(:disabled) { background-image: var(--sm2-voltar-press) !important; }
+html:not([data-ui="minimal"]) .sm2-area-back[data-back-icon="arrow_back"] > * { opacity: 0; }
 /* Grupo C (fase 4): os botões de FECHAR ✕ (popup cristal/inline `.sm2-popup-fechar`, ✕ do `BackArrow icon="close"` `.sm2-ora-back`, ✕ de canto do ModalSheet/RitualDialog `[data-fechar]`) ganham o disco `sm2-fechar` (a arte já traz o ✕).
    A arte atual mora nestas 3 variáveis: trocar quando a P6 entregar a versão sem gema. O glifo fica no DOM (aria-label) e só some da vista. NÃO vale para o ✕ de busca nem para o medalhão de aço. */
-html[data-ui="arte"] { --sm2-fechar-arte: url('./assets/soulmon/ui/sm2/sm2-fechar.webp'); --sm2-fechar-press: url('./assets/soulmon/ui/sm2/sm2-fechar-press.webp'); --sm2-fechar-off: url('./assets/soulmon/ui/sm2/sm2-fechar-disabled.webp'); }
-html[data-ui="arte"] .sm2-popup-fechar,
-html[data-ui="arte"] .sm2-ora-back,
-html[data-ui="arte"] [data-fechar] {
+html:not([data-ui="minimal"]) { --sm2-fechar-arte: url('./assets/soulmon/ui/sm2/sm2-fechar.webp'); --sm2-fechar-press: url('./assets/soulmon/ui/sm2/sm2-fechar-press.webp'); --sm2-fechar-off: url('./assets/soulmon/ui/sm2/sm2-fechar-disabled.webp'); }
+html:not([data-ui="minimal"]) .sm2-popup-fechar,
+html:not([data-ui="minimal"]) .sm2-ora-back,
+html:not([data-ui="minimal"]) [data-fechar] {
   background: var(--sm2-fechar-arte) center / contain no-repeat !important;
   border: 0 !important;
   border-radius: 0 !important;
 }
-html[data-ui="arte"] .sm2-popup-fechar:active:not(:disabled),
-html[data-ui="arte"] .sm2-ora-back:active:not(:disabled),
-html[data-ui="arte"] [data-fechar]:active:not(:disabled) { background-image: var(--sm2-fechar-press) !important; }
-html[data-ui="arte"] .sm2-popup-fechar:disabled,
-html[data-ui="arte"] .sm2-ora-back:disabled,
-html[data-ui="arte"] [data-fechar]:disabled { background-image: var(--sm2-fechar-off) !important; }
-html[data-ui="arte"] .sm2-popup-fechar > *,
-html[data-ui="arte"] .sm2-ora-back > *,
-html[data-ui="arte"] [data-fechar] > * { opacity: 0; }
+html:not([data-ui="minimal"]) .sm2-popup-fechar:active:not(:disabled),
+html:not([data-ui="minimal"]) .sm2-ora-back:active:not(:disabled),
+html:not([data-ui="minimal"]) [data-fechar]:active:not(:disabled) { background-image: var(--sm2-fechar-press) !important; }
+html:not([data-ui="minimal"]) .sm2-popup-fechar:disabled,
+html:not([data-ui="minimal"]) .sm2-ora-back:disabled,
+html:not([data-ui="minimal"]) [data-fechar]:disabled { background-image: var(--sm2-fechar-off) !important; }
+html:not([data-ui="minimal"]) .sm2-popup-fechar > *,
+html:not([data-ui="minimal"]) .sm2-ora-back > *,
+html:not([data-ui="minimal"]) [data-fechar] > * { opacity: 0; }
 /* Drop-down de categoria do CreateModal (dono, 24/11/2026). Campo + lista em fluxo; selecionado = `primary-fill` sólido com `on-primary`. */
 .sm2-cat-select__campo {
   display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 0 12px; box-sizing: border-box; margin-top: 6px;
@@ -6256,11 +6256,11 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
   background-color: var(--sm2-viewport-bg); color: var(--sm2-viewport-ink);
   --sm2-moldura-pad-x: calc(var(--u) * 8.2); --sm2-moldura-pad-t: calc(var(--u) * 36.5); --sm2-moldura-pad-b: calc(var(--u) * 12.5);
 }
-html[data-ui="arte"] .sm2-moldura-modal--ranking .sm2-moldura-modal__topo { top: calc(var(--u) * -0.83); height: calc(var(--u) * 35); background-image: url('./assets/soulmon/ui/ranking/ranking-topo.webp'); }
-html[data-ui="arte"] .sm2-moldura-modal--ranking .sm2-moldura-modal__base { height: calc(var(--u) * 13.9); background-image: url('./assets/soulmon/ui/ranking/ranking-base.webp'); }
+html:not([data-ui="minimal"]) .sm2-moldura-modal--ranking .sm2-moldura-modal__topo { top: calc(var(--u) * -0.83); height: calc(var(--u) * 35); background-image: url('./assets/soulmon/ui/ranking/ranking-topo.webp'); }
+html:not([data-ui="minimal"]) .sm2-moldura-modal--ranking .sm2-moldura-modal__base { height: calc(var(--u) * 13.9); background-image: url('./assets/soulmon/ui/ranking/ranking-base.webp'); }
 .sm2-moldura-modal--ranking .sm2-moldura-modal__lado { top: calc(var(--u) * 6.5); width: calc(var(--u) * 5.56); } /* começam sob o topo: nenhuma barra acima do ornamento */
-html[data-ui="arte"] .sm2-moldura-modal--ranking .sm2-moldura-modal__lado--e { background-image: url('./assets/soulmon/ui/ranking/ranking-lado-e.webp'); }
-html[data-ui="arte"] .sm2-moldura-modal--ranking .sm2-moldura-modal__lado--d { background-image: url('./assets/soulmon/ui/ranking/ranking-lado-d.webp'); }
+html:not([data-ui="minimal"]) .sm2-moldura-modal--ranking .sm2-moldura-modal__lado--e { background-image: url('./assets/soulmon/ui/ranking/ranking-lado-e.webp'); }
+html:not([data-ui="minimal"]) .sm2-moldura-modal--ranking .sm2-moldura-modal__lado--d { background-image: url('./assets/soulmon/ui/ranking/ranking-lado-d.webp'); }
 /* Título na placa de bronze da arte (centro y 132 = 18,3u). */
 .sm2-moldura-modal--ranking .sm2-moldura-modal__placa { left: calc(var(--u) * 28); width: calc(var(--u) * 44); top: calc(var(--u) * 14.47); height: calc(var(--u) * 8); }
 .sm2-moldura-modal--ranking .sm2-moldura-modal__titulo { font-size: var(--sm2-text-sm); letter-spacing: .06em; text-transform: uppercase; color: #FBF1D2; }
@@ -7740,11 +7740,11 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 .sm2-moldura-card { position: relative; box-sizing: border-box; display: block; isolation: isolate; aspect-ratio: 100 / 126; /* não `min-height` em `--u`: o `cqw` do próprio contêiner resolveria contra o ancestral */ }
 .sm2-moldura-card__lado, .sm2-moldura-card__topo, .sm2-moldura-card__base { position: absolute; pointer-events: none; }
 .sm2-moldura-card__lado { top: 0; bottom: 0; width: calc(var(--u) * 6.7); z-index: 1; background-repeat: repeat-y; background-size: 100% auto; }
-html[data-ui="arte"] .sm2-moldura-card__lado--e { left: 0; background-image: url('./assets/soulmon/ui/moldura/card-lado-e.webp'); }
-html[data-ui="arte"] .sm2-moldura-card__lado--d { right: 0; background-image: url('./assets/soulmon/ui/moldura/card-lado-d.webp'); }
+html:not([data-ui="minimal"]) .sm2-moldura-card__lado--e { left: 0; background-image: url('./assets/soulmon/ui/moldura/card-lado-e.webp'); }
+html:not([data-ui="minimal"]) .sm2-moldura-card__lado--d { right: 0; background-image: url('./assets/soulmon/ui/moldura/card-lado-d.webp'); }
 .sm2-moldura-card__topo, .sm2-moldura-card__base { left: 0; right: 0; z-index: 2; background-repeat: no-repeat; background-size: 100% 100%; }
-html[data-ui="arte"] .sm2-moldura-card__topo { top: 0; height: calc(var(--u) * 38.5); background-image: url('./assets/soulmon/ui/moldura/card-topo.webp'); }
-html[data-ui="arte"] .sm2-moldura-card__base { bottom: 0; height: calc(var(--u) * 61.5); background-image: url('./assets/soulmon/ui/moldura/card-base.webp'); }
+html:not([data-ui="minimal"]) .sm2-moldura-card__topo { top: 0; height: calc(var(--u) * 38.5); background-image: url('./assets/soulmon/ui/moldura/card-topo.webp'); }
+html:not([data-ui="minimal"]) .sm2-moldura-card__base { bottom: 0; height: calc(var(--u) * 61.5); background-image: url('./assets/soulmon/ui/moldura/card-base.webp'); }
 .sm2-moldura-card__arte {
   position: absolute; z-index: 0; left: calc(var(--u) * 6); right: calc(var(--u) * 6); top: calc(var(--u) * 5); bottom: calc(var(--u) * 38.9);
   display: flex; align-items: center; justify-content: center; overflow: hidden; background: #1a2e2c;
@@ -8055,3 +8055,7 @@ html[data-ui="arte"] .sm2-moldura-card__base { bottom: 0; height: calc(var(--u) 
 .sm2-drive-nav-btn:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
 .sm2-drive-nav-btn:disabled { opacity: .3; cursor: default; }
 [data-element-cell][data-last="1"], [data-bestiary-open][data-last="1"] { outline: 2px solid var(--sm2-primary-ink); outline-offset: -2px; border-radius: var(--sm2-radius-sm); }
+
+/* >>> UI MINIMAL */
+/* CSS da pele minimal (`html[data-ui="minimal"]`) mora SÓ aqui, sem arte (url/--arte/border-image). Hoje vazio: a minimal é a base de tokens. */
+/* <<< UI MINIMAL */

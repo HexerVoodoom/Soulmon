@@ -158,6 +158,8 @@ describe('PixelButton', () => {
   });
 
   it('`default` é o outline; `primary` é o fill — e ambos são tokens', () => {
+    // Os tokens são a base da pele MINIMAL; sem `data-ui` a arte (fallback) cobre o botão. Fixa a pele para medir o token.
+    document.documentElement.dataset.ui = 'minimal';
     const { container } = renderWithCss(
       <>
         <PixelButton onClick={() => {}}>Later</PixelButton>
@@ -170,6 +172,7 @@ describe('PixelButton', () => {
     expect(computed(pri, 'background-color')).toBe('var(--sm2-primary-fill)');
     expect(computed(pri, 'color')).toBe('var(--sm2-on-primary)');
     expect(computed(out, 'background-color')).toBe('var(--sm2-surface)');
+    delete document.documentElement.dataset.ui;
   });
 
   it('sm = 44 e lg = 56 de altura, lg ocupa a largura toda', () => {

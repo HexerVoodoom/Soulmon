@@ -1,11 +1,13 @@
 /**
  * Guard das duas interfaces (`data-ui="arte"` | `"minimal"`, ver DESIGN-GUIDE
- * "Duas interfaces"): regra de ARTE só vale sob `html[data-ui="arte"]`.
+ * "Duas interfaces"): regra de ARTE só vale sob `html:not([data-ui="minimal"])`
+ * (ausente/inválido = arte; a minimal é a exceção explícita; mesma
+ * especificidade de `html[data-ui="arte"]`, que também continua aceito).
  *
  * "Regra de arte" = declaração com `url(...)` de um arquivo de
  * `assets/soulmon/ui/` (png/webp) em `src/index.css`. Ela está "no escopo"
  * quando TODO seletor da lista do bloco mais externo começa por
- * `html[data-ui="arte"]`. A base de tokens É a minimalista: sem o escopo, a
+ * `html:not([data-ui="minimal"])`. A base de tokens É a minimalista: sem o escopo, a
  * pele minimalista baixaria a arte só por estar referenciada no CSS.
  *
  * ALLOWLIST CONGELADA: as regras que já existiam antes da chave (fase 1,
@@ -17,7 +19,7 @@
  *  - a lista não pode passar de `TETO` (baixe o número ao remover entradas).
  *
  * COMO MIGRAR UMA REGRA (fase 2): em `src/index.css`, prefixe o seletor com
- * `html[data-ui="arte"] ` (todos os seletores da lista, se houver vírgula) —
+ * `html:not([data-ui="minimal"]) ` (todos os seletores da lista, se houver vírgula) —
  * sem mudar a declaração — e apague a linha correspondente de
  * `FORA_DO_ESCOPO_HOJE` e baixe `TETO`. A chave de cada entrada é
  * `seletor => arquivo` (aninhado: `externo >> interno`).
@@ -28,7 +30,7 @@ import { describe, expect, it } from 'vitest';
 
 const css = readFileSync(resolve(__dirname, '../index.css'), 'utf8');
 
-const ESCOPO = 'html[data-ui="arte"]';
+const ESCOPOS = ['html:not([data-ui="minimal"])', 'html[data-ui="arte"]'];
 const ARTE_URL = /url\(\s*['"]?([^'")]*assets\/soulmon\/ui\/[^'")]+\.(?:png|webp))['"]?\s*\)/g;
 
 /** Percorre o CSS (com blocos aninhados) e devolve cada `url()` de arte com a cadeia de seletores. */
@@ -53,7 +55,7 @@ export function regrasDeArte(fonte: string): { cadeia: string[]; arquivo: string
 }
 
 const noEscopo = (cadeia: string[]) =>
-  cadeia.length > 0 && cadeia[0].split(',').every(s => s.trim().startsWith(ESCOPO));
+  cadeia.length > 0 && cadeia[0].split(',').every(s => ESCOPOS.some(e => s.trim().startsWith(e)));
 
 const chave = (r: { cadeia: string[]; arquivo: string }) => `${r.cadeia.join(' >> ')} => ${r.arquivo}`;
 
@@ -114,11 +116,11 @@ const FORA_DO_ESCOPO_HOJE: readonly string[] = [
 ];
 const TETO = 50;
 
-describe('duas interfaces — arte só sob html[data-ui="arte"]', () => {
+describe('duas interfaces — arte só sob html:not([data-ui="minimal"])', () => {
   it('AUTOVERIFICAÇÃO: o parser enxerga regras de arte e distingue o escopo', () => {
     const amostra = `
       .a { background: url('./assets/soulmon/ui/x.webp'); }
-      html[data-ui="arte"] .b, html[data-ui="arte"] .c { border-image: url("./assets/soulmon/ui/y.png") 1; }
+      html:not([data-ui="minimal"]) .b, html[data-ui="arte"] .c { border-image: url("./assets/soulmon/ui/y.png") 1; }
       html[data-ui="arte"] .d, .e { background: url(./assets/soulmon/ui/z.webp); }
       .f { &:hover { border-image-source: url('./assets/soulmon/ui/w.webp'); } }
       .g { background: url('./assets/soulmon/icones-ui/n.png'); }
@@ -134,7 +136,7 @@ describe('duas interfaces — arte só sob html[data-ui="arte"]', () => {
   it('nenhuma regra de arte NOVA fora do escopo (nem da allowlist)', () => {
     const permitidas = new Set(FORA_DO_ESCOPO_HOJE);
     const novas = violacoes().filter(v => !permitidas.has(v));
-    expect(novas, 'regra de arte fora de html[data-ui="arte"]: prefixe o seletor com o escopo (ver cabeçalho)').toEqual([]);
+    expect(novas, 'regra de arte fora de html:not([data-ui="minimal"]): prefixe o seletor com o escopo (ver cabeçalho)').toEqual([]);
   });
 
   it('a allowlist só encolhe: sem entrada morta, sem duplicata, sem passar do teto', () => {
@@ -143,5 +145,24 @@ describe('duas interfaces — arte só sob html[data-ui="arte"]', () => {
     expect(mortas, 'entrada já migrada/apagada: remova de FORA_DO_ESCOPO_HOJE e baixe TETO').toEqual([]);
     expect(new Set(FORA_DO_ESCOPO_HOJE).size).toBe(FORA_DO_ESCOPO_HOJE.length);
     expect(FORA_DO_ESCOPO_HOJE.length).toBeLessThanOrEqual(TETO);
+  });
+  it('a pele minimal nunca baixa arte: seletor com data-ui="minimal" (fora do :not) não tem url()/--arte/border-image/background-image', () => {
+    const texto = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const regras = [...texto.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => ({ sel: m[1].trim(), corpo: m[2] }));
+    const daMinimal = regras.filter(r => r.sel.replace(/:not\(\[data-ui="minimal"\]\)/g, '').includes('data-ui="minimal"'));
+    for (const r of daMinimal) {
+      expect(r.corpo, r.sel).not.toMatch(/url\(|--arte|border-image|background-image/);
+    }
+  });
+
+  it('CSS da minimal (se houver) fica no bloco delimitado UI MINIMAL', () => {
+    const ini = css.indexOf('/* >>> UI MINIMAL */');
+    const fim = css.indexOf('/* <<< UI MINIMAL */');
+    expect(ini, 'falta a âncora /* >>> UI MINIMAL */ no fim do index.css').toBeGreaterThan(-1);
+    expect(fim).toBeGreaterThan(ini);
+    const fora = css.slice(0, ini) + css.slice(fim);
+    const foraSemComentarios = fora.replace(/\/\*[\s\S]*?\*\//g, '');
+    const soSeletorMinimal = foraSemComentarios.split(/\r?\n/).filter(l => l.includes('data-ui="minimal"') && !l.includes(':not([data-ui="minimal"])'));
+    expect(soSeletorMinimal, 'CSS da pele minimal fora do bloco /* >>> UI MINIMAL */').toEqual([]);
   });
 });

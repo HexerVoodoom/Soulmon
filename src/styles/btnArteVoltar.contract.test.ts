@@ -1,4 +1,4 @@
-/** Grupo B (fase 4): o voltar (BackCircleButton, seta) leva a arte `sm2-voltar` só sob `html[data-ui="arte"]`; o voltar "mapa" fica de fora; o glifo continua no DOM. */
+/** Grupo B (fase 4): o voltar (BackCircleButton, seta) leva a arte `sm2-voltar` só sob `html:not([data-ui="minimal"])`; o voltar "mapa" fica de fora; o glifo continua no DOM. */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -10,11 +10,11 @@ const fimB = css.indexOf('Grupo C (fase 4)') > -1 ? css.indexOf('Grupo C (fase 4
 const bloco = css.slice(css.indexOf('Grupo B (fase 4)'), fimB);
 
 describe('arte no voltar', () => {
-  it('as variáveis da arte (normal e pressed) ficam num lugar só e as regras só valem para a seta, sob html[data-ui="arte"]', () => {
+  it('as variáveis da arte (normal e pressed) ficam num lugar só e as regras só valem para a seta, sob html:not([data-ui="minimal"])', () => {
     expect(bloco).toContain("--sm2-voltar-arte: url('./assets/soulmon/ui/sm2/sm2-voltar.webp')");
     expect(bloco).toContain("--sm2-voltar-press: url('./assets/soulmon/ui/sm2/sm2-voltar-press.webp')");
     expect(bloco.match(/url\(/g)).toHaveLength(2);
-    for (const l of bloco.split('\n').filter(x => /^\S.*\{\s*$|^\S.*\{.*\}\s*$/.test(x) && !x.startsWith('/*') && !x.startsWith('   '))) expect(l.startsWith('html[data-ui="arte"]')).toBe(true);
+    for (const l of bloco.split('\n').filter(x => /^\S.*\{\s*$|^\S.*\{.*\}\s*$/.test(x) && !x.startsWith('/*') && !x.startsWith('   '))) expect(l.startsWith('html:not([data-ui="minimal"])')).toBe(true);
     expect(bloco).toContain('[data-back-icon="arrow_back"]:active:not(:disabled)');
   });
   it('o componente marca o ícone e mantém aria-label e o glifo no DOM (só some da vista)', () => {

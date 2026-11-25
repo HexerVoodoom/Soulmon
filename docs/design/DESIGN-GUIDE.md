@@ -115,7 +115,7 @@ O app tem UM só DOM e DUAS peles por CSS, escolhidas pelo jogador em Configura�
 Regras:
 
 1. O atributo `data-ui` no `<html>` segue o molde do tema: script inline em `index.html` antes da 1ª pintura (padrão `arte`, sem flash), `UiSkinProvider` depois, chave `soulmon-ui-skin`. O tipo é uma união nomeada (`UiSkin`), não um booleano: pode haver uma 3ª pele.
-2. CSS de arte (`url(` de `assets/soulmon/ui`) só vale sob `html[data-ui="arte"]`; a base de tokens É a minimalista. O guard `src/styles/uiSkin.contract.test.ts` congela as regras de arte ainda fora do escopo numa allowlist que só pode encolher (o cabeçalho do teste ensina a migrar uma regra).
+2. CSS de arte (`url(` de `assets/soulmon/ui`) só vale sob `html:not([data-ui="minimal"])`: ausente/inválido = arte; minimal é a exceção explícita (mesma especificidade de `html[data-ui="arte"]`; um `index.html` em cache sem o script do atributo não apaga a arte). CSS da minimal fica só no bloco `/* >>> UI MINIMAL */` do fim do `index.css`, sem `url(`. A base de tokens É a minimalista. O guard `src/styles/uiSkin.contract.test.ts` congela as regras de arte ainda fora do escopo numa allowlist que só pode encolher (o cabeçalho do teste ensina a migrar uma regra).
 3. Medidas que a arte impõe (pads, caps, largura de gema) viram tokens com valor por pele; peças com `<img>` escolhem a peça num único ponto (mapa por pele), nunca `if` espalhado.
 
 ## 8. Changelog
