@@ -599,11 +599,14 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
   return (
     <ModalSheet
       open={isOpen}
+      moldura="dono"
+      fundoVazio
       onClose={onClose}
       language={language}
       title={L('Guia', 'Guide')}
       maxWidth={520}
     >
+      <div className="sm2-nova-corpo">
       <p style={sm2Hint}>
         {L('Toque num assunto. Nada aqui é obrigatório saber para jogar.',
            'Tap a topic. None of this is required knowledge to play.')}
@@ -642,6 +645,7 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
         {L('Nos dias em que não der, seu Soulmon continua aqui.',
            'On the days you can’t, it stays right here.')}
       </p>
+      </div>
     </ModalSheet>
   );
 }

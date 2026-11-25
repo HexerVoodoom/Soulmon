@@ -107,6 +107,8 @@ export function AISettingsModal({
   return (
     <ModalSheet
       open={isOpen}
+      moldura="dono"
+      fundoVazio
       onClose={onClose}
       language={language}
       title={isPt ? 'Personalidade' : 'Personality'}
@@ -127,6 +129,7 @@ export function AISettingsModal({
         </div>
       }
     >
+      <div className="sm2-nova-corpo">
       <ChipGroup label={isPt ? 'Como seu Soulmon fala' : 'How it talks'}>
         {tones.map(o => (
           <Chip key={o.v} selected={s.tone === o.v} onToggle={() => setS({ ...s, tone: o.v })}>
@@ -205,6 +208,7 @@ export function AISettingsModal({
           ? 'Vale para o chat e para as falas do seu Soulmon.'
           : 'Applies to chat and to your Soulmon’s lines.'}
       </p>
+      </div>
     </ModalSheet>
   );
 }
