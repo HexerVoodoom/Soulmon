@@ -81,7 +81,22 @@ const DERIVED_EN: Record<string, string> = {
 const COMBO_EN: Record<string, string> = {
   sinfonia: 'Symphony', furacao: 'Hurricane', selva: 'Jungle', nucleo: 'Core',
   juizo_final: 'Last Judgment',
+  // Lote 5 e afins (ids com ícone de peça que não são par derivado nem curado):
+  abominacao: 'Abomination', ascensao: 'Ascension', avatar_de_guerra: 'War Avatar', big_bang: 'Big Bang',
+  chama_demoniaca: 'Demonic Flame', ciclo: 'Cycle', eclipse: 'Eclipse', nulo: 'Void', paradoxo: 'Paradox',
+  primordial: 'Primordial', reencarnacao: 'Reincarnation', sobrecarga: 'Overload',
 };
+
+/** Nome PT (com acento) dos mesmos combos/lote 5 de `COMBO_EN`. */
+const COMBO_PT: Record<string, string> = {
+  sinfonia: 'Sinfonia', furacao: 'Furacão', selva: 'Selva', nucleo: 'Núcleo', juizo_final: 'Juízo Final',
+  abominacao: 'Abominação', ascensao: 'Ascensão', avatar_de_guerra: 'Avatar de Guerra', big_bang: 'Big Bang',
+  chama_demoniaca: 'Chama Demoníaca', ciclo: 'Ciclo', eclipse: 'Eclipse', nulo: 'Nulo', paradoxo: 'Paradoxo',
+  primordial: 'Primordial', reencarnacao: 'Reencarnação', sobrecarga: 'Sobrecarga',
+};
+
+/** Nome PT de um combo/lote 5 por id; `undefined` se não houver. */
+export const comboPt = (id: string): string | undefined => COMBO_PT[id];
 
 /** Nome EN de uma essência por id (base, derivada ou combo); `undefined` se não houver. */
 export function essenceEn(id: string): string | undefined {

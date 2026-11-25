@@ -38,6 +38,19 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('Match3Escolha — Aventura', () => {
+  it('nome do elemento por extenso e com acento, e o título/recompensa não se encostam (quebra o título, recompensa não encolhe)', () => {
+    render(<Match3Escolha language="pt-BR" mode="adventure" playerLevel={10} onFight={vi.fn()} />);
+    for (const l of linhas()) {
+      const el = l.getAttribute('data-m3-escolha-elemento')!;
+      const nome = l.children[1].firstElementChild as HTMLElement;
+      expect(nome.textContent).not.toBe(el);
+      expect(nome.textContent).toMatch(/^\p{Lu}/u);
+      expect(nome.style.overflowWrap).toBe('break-word');
+      expect((l.children[2] as HTMLElement).style.flexShrink).toBe('0');
+      expect(parseInt(l.style.gap, 10)).toBeGreaterThanOrEqual(8);
+    }
+  });
+
   it('3 linhas de ELEMENTO (ícone + nome + Jogar), nenhum inimigo revelado; Jogar devolve a escolha', () => {
     const onFight = vi.fn();
     render(<Match3Escolha language="pt-BR" mode="adventure" playerLevel={10} onFight={onFight} />);
