@@ -152,10 +152,11 @@ export function ShopItemSheet({
 
   return (
     <>
-      <ModalSheet open={open} title={name} onClose={onClose} language={language} maxWidth={420}>
+      <ModalSheet open={open} moldura="dono" fundoVazio title={name} onClose={onClose} language={language} maxWidth={420}>
         {item && (
           <div
             data-item-sheet={item.id}
+            className="sm2-nova-corpo"
             style={FRAME}
           >
             {/* Mesmo banner para cenário, item e decoração (feedback do dono, 18/11/2026): a arte DENTRO da folha, num botão que abre o zoom. */}

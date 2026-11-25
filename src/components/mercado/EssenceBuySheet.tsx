@@ -39,9 +39,9 @@ export function EssenceBuySheet({ id, language, credits, owned, busy, onCancel, 
     ? (isPt ? 'Estoque cheio' : 'Stock full')
     : (isPt ? 'Créditos insuficientes' : 'Not enough Credits');
   return (
-    <ModalSheet open={!!id} title={isPt ? 'Confirmar compra' : 'Confirm purchase'} onClose={onCancel} language={language} maxWidth={420}>
+    <ModalSheet open={!!id} moldura="dono" fundoVazio title={isPt ? 'Confirmar compra' : 'Confirm purchase'} onClose={onCancel} language={language} maxWidth={420}>
       {id && (
-        <div data-essence-buy-sheet style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div data-essence-buy-sheet className="sm2-nova-corpo" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <BackArrow onClick={onCancel} language={language} style={{ margin: '-8px 0 -4px -10px' }} />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             <span data-essence-art style={{ display: 'inline-flex' }}><ElementIcon id={id} size={96} /></span>

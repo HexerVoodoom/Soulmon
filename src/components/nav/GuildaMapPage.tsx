@@ -111,8 +111,8 @@ export function GuildaMapPage({ language, onClose, hoje, dayKey, bb = false, onA
       {blocked}
       {aviso && <LockNotice text={isPt ? 'Só dá para pegar uma missão por dia, de um dos três.' : 'You can take only one mission a day, from one of the three.'} />}
       {npc && aberto && (
-        <ModalSheet open onClose={() => setNpc(null)} language={language} maxWidth={440} title={isPt ? aberto.pt : aberto.en}>
-          <div data-guilda-npc={npc} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <ModalSheet open moldura="dono" fundoVazio onClose={() => setNpc(null)} language={language} maxWidth={440} title={isPt ? aberto.pt : aberto.en}>
+          <div data-guilda-npc={npc} className="sm2-nova-corpo" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
             <img src={arteOnboarding(aberto.retrato)} alt="" aria-hidden="true" style={{ width: 160, height: 160, objectFit: 'contain' }} />
             <p style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{isPt ? aberto.falaPt : aberto.falaEn}</p>
             {npc === 'desfeitos' && GLITCHTAMA_TESTE_ON && glitchtama && (

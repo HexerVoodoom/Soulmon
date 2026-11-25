@@ -552,8 +552,8 @@ export function PurchaseConfirmSheet({ open, language, question, balance, cost, 
   const unit = unitName(currency, isPt);
   const row: CSSProperties = { ...sm2Text, margin: 0, display: 'flex', justifyContent: 'space-between', gap: 12 };
   return (
-    <ModalSheet open={open} title={isPt ? 'Confirmar compra' : 'Confirm purchase'} onClose={onCancel} language={language} maxWidth={420}>
-      <div data-purchase-confirm style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <ModalSheet open={open} moldura="dono" fundoVazio title={isPt ? 'Confirmar compra' : 'Confirm purchase'} onClose={onCancel} language={language} maxWidth={420}>
+      <div data-purchase-confirm className="sm2-nova-corpo" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <BackArrow onClick={onCancel} language={language} style={{ margin: '-8px 0 -4px -10px' }} />
         <p data-purchase-question style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>{question}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -625,8 +625,8 @@ export function HowToEarnSheet({ item, currency, language, onClose }: {
         },
       ];
   return (
-    <ModalSheet open={!!item} title={title} onClose={onClose} language={language} maxWidth={480}>
-      <div data-how-to-earn={currency} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <ModalSheet open={!!item} moldura="dono" fundoVazio title={title} onClose={onClose} language={language} maxWidth={480}>
+      <div data-how-to-earn={currency} className="sm2-nova-corpo" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <p style={{ ...sm2Text, margin: 0 }}>
           {isEmblem
             ? (isPt ? `${name} custa ${item?.price ?? 0} de Honra.` : `${name} costs ${item?.price ?? 0} Honor.`)
