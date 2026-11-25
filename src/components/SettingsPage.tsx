@@ -395,8 +395,10 @@ export function SettingsPage({
             ))}
           </div>
           {profile.widgetFrames && (
-            <ModalSheet open={widgetFramesOpen} title={isPt ? 'Moldura do widget' : 'Widget frame'} onClose={() => setWidgetFramesOpen(false)} language={language}>
-              <WidgetFramePicker language={language} data={{ petSrc: petImg, ...profile.widgetFrames }} />
+            <ModalSheet open={widgetFramesOpen} moldura="dono" fundoVazio title={isPt ? 'Moldura do widget' : 'Widget frame'} onClose={() => setWidgetFramesOpen(false)} language={language}>
+              <div className="sm2-nova-corpo">
+                <WidgetFramePicker language={language} data={{ petSrc: petImg, ...profile.widgetFrames }} />
+              </div>
             </ModalSheet>
           )}
           {profile.editHome && editHomeOpen && (

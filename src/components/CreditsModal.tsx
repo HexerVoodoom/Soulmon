@@ -154,6 +154,8 @@ export function CreditsModal({
   return (
     <ModalSheet
       open
+      moldura="dono"
+      fundoVazio
       title={isPt ? 'Créditos' : 'Credits'}
       onClose={onClose}
       language={language}
@@ -165,6 +167,7 @@ export function CreditsModal({
         </div>
       }
     >
+      <div className="sm2-nova-corpo">
       {/* Estado da última ação — sempre no DOM, para o leitor de tela anunciar. */}
       <p
         role="status"
@@ -261,6 +264,7 @@ export function CreditsModal({
             : `Reroll is exclusive to unlocked accounts — unlock for ${precoLabel}.`}
         </p>
       )}
+      </div>
     </ModalSheet>
   );
 }

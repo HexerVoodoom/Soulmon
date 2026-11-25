@@ -276,11 +276,14 @@ export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
   return (
     <ModalSheet
       open={isOpen}
+      moldura="dono"
+      fundoVazio
       onClose={onClose}
       language={language}
       title={isPt ? 'Glossário' : 'Glossary'}
       maxWidth={520}
     >
+      <div className="sm2-nova-corpo">
       {/* Copy §6 (L10, §16): é aqui que "o universo é descrito como universo".
           A 2ª oração bloqueia a inferência de tipologia ("então eu sou
           akasha") que a mera ADJACÊNCIA entre ficha da criatura e respostas
@@ -302,6 +305,7 @@ export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
           </div>
         ))}
       </dl>
+      </div>
     </ModalSheet>
   );
 }

@@ -96,8 +96,8 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
   const groups = ['all', ...Array.from(new Set(AVATAR_CATALOG.filter(e => e.g !== 'founder' || !!fundadorPremios?.includes(e.id)).map(e => e.g)))];
   const sec = { margin: '16px 0 8px', fontSize: 'var(--sm2-text-sm)', fontWeight: 600, color: 'var(--sm2-ink)' } as const;
   return (
-    <ModalSheet open={open} onClose={onClose} language={language} title={isPt ? 'Editar perfil' : 'Edit profile'}>
-      <div data-profile-editor style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+    <ModalSheet open={open} moldura="dono" fundoVazio onClose={onClose} language={language} title={isPt ? 'Editar perfil' : 'Edit profile'}>
+      <div className="sm2-nova-corpo" data-profile-editor style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'center', padding: 16 }}>
           <UserAvatar avatarId={avatarId} frameId={frame.id} seed={saveId} size={72} alt={isPt ? 'Sua foto de perfil' : 'Your profile picture'} />
         </div>

@@ -60,6 +60,8 @@ export function FeedbackModal({
   return (
     <ModalSheet
       open={open}
+      moldura="dono"
+      fundoVazio
       title={sent ? t.sentTitle : t.title}
       onClose={onClose}
       language={language}
@@ -79,6 +81,7 @@ export function FeedbackModal({
         </button>
       )}
     >
+      <div className="sm2-nova-corpo">
       {sent ? (
         <p style={{ ...sm2Text, margin: 0 }} data-feedback-sent>{t.sentBody}</p>
       ) : (
@@ -114,6 +117,7 @@ export function FeedbackModal({
           <p style={sm2Hint}>{t.privacy}</p>
         </div>
       )}
+      </div>
     </ModalSheet>
   );
 }

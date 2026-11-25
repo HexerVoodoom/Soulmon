@@ -178,7 +178,8 @@ export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equipp
         </button>
       </div>
 
-      <ModalSheet open={pickingBg} title={isPt ? 'Cenário' : 'Scene'} onClose={() => setPickingBg(false)} language={language} sobreTelas>
+      <ModalSheet open={pickingBg} moldura="dono" fundoVazio title={isPt ? 'Cenário' : 'Scene'} onClose={() => setPickingBg(false)} language={language} sobreTelas>
+        <div className="sm2-nova-corpo">
         <ul data-edit-bg-options style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {bgOptions.map(id => {
             const b = PET_BACKGROUNDS[id];
@@ -199,9 +200,11 @@ export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equipp
             );
           })}
         </ul>
+        </div>
       </ModalSheet>
 
-      <ModalSheet open={picking !== null} title={picking ? slotName(picking) : ''} onClose={() => setPicking(null)} language={language} sobreTelas>
+      <ModalSheet open={picking !== null} moldura="dono" fundoVazio title={picking ? slotName(picking) : ''} onClose={() => setPicking(null)} language={language} sobreTelas>
+        <div className="sm2-nova-corpo">
         {picking && (
           <ul data-edit-options style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
             <li>
@@ -240,6 +243,7 @@ export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equipp
             )}
           </ul>
         )}
+        </div>
       </ModalSheet>
     </div>,
     document.body,
