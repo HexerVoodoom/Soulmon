@@ -33,7 +33,7 @@ export function MinigameModeGate<C = unknown>({ language, gameName, rankings, sa
   pveVsPvp?: boolean;
   /**
    * ESCOLHA DE 3 (§488, Elemental Fusion = Torneio): com isto os dois botões de modo viram SELETOR (rádio, como Ranqueada | Treino) e
-   * a lista do modo escolhido aparece embaixo; "Lutar" numa linha chama `pick(escolha)` → `onPick(modo, escolha)`.
+   * a lista do modo escolhido aparece embaixo; "Jogar" numa linha chama `pick(escolha)` → `onPick(modo, escolha)`.
    */
   renderChoices?: (level: 1 | 2, pick: (choice: C) => void) => ReactNode;
   onPick: (level?: 1 | 2, choice?: C) => void;

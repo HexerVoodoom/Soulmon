@@ -30,3 +30,14 @@ describe('sm2Button — chip inline sem arte', () => {
     for (const s of seletores) expect(s, s).toContain(':not([style*="--sm2-btn-chip"])');
   });
 });
+
+describe('EscolhaLinha — botão de ação leva a arte', () => {
+  it('o botão de ação não marca chip e é primary (arte sm2-primary-*)', async () => {
+    const { renderToStaticMarkup } = await import('react-dom/server');
+    const { createElement } = await import('react');
+    const { EscolhaLinha } = await import('../ui/EscolhaLinha');
+    const html = renderToStaticMarkup(createElement(EscolhaLinha, { lead: null, title: 'x', actionLabel: 'Lutar', actionAriaLabel: 'Lutar — x', onAction: () => {} }));
+    expect(html).not.toContain('--sm2-btn-chip');
+    expect(html).toContain('--sm2-btn-kind:primary');
+  });
+});

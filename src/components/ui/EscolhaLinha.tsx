@@ -7,7 +7,7 @@ import { Icon } from './Icon';
  * a recompensa ("até N …") e o botão de lutar à direita. Dono único do formato: Torneio (Ranqueada e Treino), Arena aberta (`DueloSheet`) e Elemental Fusion
  * (Aventura e PvP) usam ESTA linha, para as tabelinhas serem iguais. Sem CSS novo: estilos inline com os tokens do kit.
  *
- * a11y: o botão tem alvo de 44 px (`sm2Button` 'sm' + `minWidth` 88) e o rótulo visível ("Lutar"/"Fight") fica CONTIDO no nome
+ * a11y: o botão tem alvo de 44 px (`sm2Button` 'sm' + `wide: true`, que leva a arte do botão, + `minWidth` 96) e o rótulo visível ("Lutar"/"Fight" nos duelos, "Jogar"/"Play" no minigame) fica CONTIDO no nome
  * acessível (WCAG 2.5.3), que ainda nomeia a opção.
  */
 export const escolhaCardStyle: CSSProperties = {
@@ -51,7 +51,7 @@ export function EscolhaLinha({ lead, title, sub, reward, actionLabel, actionAria
         disabled={disabled || busy}
         onClick={onAction}
         aria-label={actionAriaLabel}
-        style={{ ...sm2Button('primary', disabled || busy, 'sm'), flexShrink: 0, minWidth: 88 }}
+        style={{ ...sm2Button('primary', disabled || busy, 'sm', { wide: true }), flexShrink: 0, minWidth: 96 }}
       >
         {busy && <Icon name="sync" size={20} className="animate-spin" />}
         {actionLabel}

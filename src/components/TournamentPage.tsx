@@ -1009,7 +1009,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                 type="button"
                 onClick={() => { requireAwake('arena.torneio', () => startTraining(n)); }}
                 aria-label={isPt ? `Desafiar ${n.namePt} (treino, sem prêmio)` : `Fight — challenge ${n.nameEn} (training, no reward)`}
-                style={{ ...sm2Button('primary', false, 'sm'), flexShrink: 0, minWidth: 88 }}
+                style={{ ...sm2Button('primary', false, 'sm', { wide: true }), flexShrink: 0, minWidth: 96 }}
               >
                 {isPt ? 'Desafiar' : 'Fight'}
               </button>
@@ -1027,7 +1027,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                 <p style={{ ...sm2Text, margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{wildFoeLabel(stray.stage, isPt)}</p>
                 <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{isPt ? 'Treino' : 'Training'} · {getStageLevel(petStage)}</p>
               </div>
-              <button type="button" onClick={() => { requireAwake('arena.torneio', () => startTraining(undefined, stray)); }} aria-label={isPt ? 'Desafiar o Soulmon desgarrado (treino, sem prêmio)' : 'Fight — challenge the Stray Soulmon (training, no reward)'} style={{ ...sm2Button('primary', false, 'sm'), flexShrink: 0, minWidth: 88 }}>
+              <button type="button" onClick={() => { requireAwake('arena.torneio', () => startTraining(undefined, stray)); }} aria-label={isPt ? 'Desafiar o Soulmon desgarrado (treino, sem prêmio)' : 'Fight — challenge the Stray Soulmon (training, no reward)'} style={{ ...sm2Button('primary', false, 'sm', { wide: true }), flexShrink: 0, minWidth: 96 }}>
                 {isPt ? 'Desafiar' : 'Fight'}
               </button>
             </div>

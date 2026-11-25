@@ -38,7 +38,7 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe('Match3Escolha — Aventura', () => {
-  it('3 linhas de ELEMENTO (ícone + nome + Lutar), nenhum inimigo revelado; Lutar devolve a escolha', () => {
+  it('3 linhas de ELEMENTO (ícone + nome + Jogar), nenhum inimigo revelado; Jogar devolve a escolha', () => {
     const onFight = vi.fn();
     render(<Match3Escolha language="pt-BR" mode="adventure" playerLevel={10} onFight={onFight} />);
     const ls = linhas();
@@ -47,7 +47,12 @@ describe('Match3Escolha — Aventura', () => {
       expect(adventureElementPool()).toContain(l.getAttribute('data-m3-escolha-elemento'));
       expect(l.querySelector('img')!.getAttribute('src')).toBeTruthy();
       expect(l.textContent).toContain('Time de 4 da fenda');
-      expect(l.textContent).toContain('Lutar');
+      expect(l.textContent).toContain('Jogar');
+      expect(l.textContent).not.toContain('Lutar');
+      // O botão de ação leva a ARTE do botão (sem o marcador de chip) e é o primary.
+      const b = l.querySelector('button')!;
+      expect(b.getAttribute('style')).not.toContain('--sm2-btn-chip');
+      expect(b.getAttribute('style')).toMatch(/--sm2-btn-kind:\s*primary/);
     }
     expect(document.querySelector('[data-m3-enemy]')).toBeNull();
     fireEvent.click(document.querySelector('[data-m3-escolha-lutar="1"]')!);
@@ -73,7 +78,7 @@ describe('Match3Escolha — PvP', () => {
     expect(isBossMatch(Math.floor(0.5 * 2 ** 31))).toBe(false);
   });
 
-  it('só JOGADORES da rota (sem demo), sem nome de pessoa, com Bits + Honra; Lutar devolve o jogador', async () => {
+  it('só JOGADORES da rota (sem demo), sem nome de pessoa, com Bits + Honra; Jogar devolve o jogador', async () => {
     getOpponents.mockResolvedValue({ opponents: OPPS, matchesLeft: 5 });
     const onFight = vi.fn();
     render(<Match3Escolha language="en-US" mode="pvp" saveId="abc" playerLevel={10} onFight={onFight} />);
