@@ -62,7 +62,7 @@ export function Match3Escolha({ language, mode, saveId, playerLevel = 1, onFight
   const loading = pvp && !bossFirst && !!saveId && opps === null;
   const canRedraw = redraws < M3_REDRAWS_PER_VISIT && !loading && !failed;
   const redraw = () => { if (!canRedraw) return; setRedraws(n => n + 1); setScreenSeed(freshSeed()); };
-  const fightLabel = isPt ? 'Lutar' : 'Fight';
+  const fightLabel = isPt ? 'Jogar' : 'Play';
 
   const glass = (src: string | undefined, px: number) => (
     <MiniGlass size={64}>
@@ -83,7 +83,7 @@ export function Match3Escolha({ language, mode, saveId, playerLevel = 1, onFight
           reward={<RewardPreview mode="before" language={lang} size={14} items={[{ kind: 'bits', max: M3_MAX_BITS }]} />}
           onAction={() => onFight(c)}
           actionLabel={fightLabel}
-          actionAriaLabel={isPt ? `Lutar contra o time de ${nome}` : `Fight — ${nome} team`}
+          actionAriaLabel={isPt ? `Jogar contra o time de ${nome}` : `Play — ${nome} team`}
           actionProps={{ 'data-m3-escolha-lutar': i }}
         />
       );
@@ -100,7 +100,7 @@ export function Match3Escolha({ language, mode, saveId, playerLevel = 1, onFight
       sub={isPt ? 'Vencer rende 1 Fragmento de Boss' : 'A win gives 1 Boss Shard'}
       onAction={() => onFight(c)}
       actionLabel={fightLabel}
-      actionAriaLabel={isPt ? 'Lutar contra o Boss' : 'Fight — the Boss'}
+      actionAriaLabel={isPt ? 'Jogar contra o Boss' : 'Play — the Boss'}
       actionProps={{ 'data-m3-escolha-lutar': i }}
     />
   );
@@ -120,7 +120,7 @@ export function Match3Escolha({ language, mode, saveId, playerLevel = 1, onFight
         reward={<RewardPreview mode="before" language={lang} size={14} items={[{ kind: 'bits', max: r.bits }, { kind: 'honor', max: r.honor }]} />}
         onAction={() => onFight(c)}
         actionLabel={fightLabel}
-        actionAriaLabel={isPt ? `Lutar contra ${titulo}` : `Fight — ${titulo}`}
+        actionAriaLabel={isPt ? `Jogar contra ${titulo}` : `Play — ${titulo}`}
         actionProps={{ 'data-m3-escolha-lutar': i }}
       />
     );
