@@ -17484,7 +17484,6 @@ __name(onRequest5, "onRequest");
 
 // api/_essenceShop.js
 var ESSENCE_MAX_PER_ELEMENT = 1e6;
-var ESSENCE_PACK_DISCOUNT = 0.1;
 var BASE_ELEMENTS = [
   "fogo",
   "agua",
@@ -17521,18 +17520,74 @@ for (const tok of CURATED_RAW.split(" ")) {
 }
 var isKnownEssenceElement = /* @__PURE__ */ __name((id) => typeof id === "string" && COMPOSITION.has(id), "isKnownEssenceElement");
 var essenceBaseCount = /* @__PURE__ */ __name((id) => COMPOSITION.get(id)?.length ?? 0, "essenceBaseCount");
+var UNIT_BY_BASES = { 1: 8, 2: 30, 3: 61 };
+var PACK5_BY_BASES = { 1: 38, 2: 151, 3: 303 };
 function essenceUnitPrice(id) {
   const n = essenceBaseCount(id);
-  return n <= 0 ? 0 : Math.min(3, n);
+  return n <= 0 ? 0 : UNIT_BY_BASES[Math.min(3, n)];
 }
 __name(essenceUnitPrice, "essenceUnitPrice");
 function essencePackPrice(id, qty) {
   const unit = essenceUnitPrice(id);
   if (!unit || !Number.isSafeInteger(qty) || qty < 1 || qty > ESSENCE_MAX_PER_ELEMENT) return 0;
   const packs = Math.floor(qty / 5);
-  return packs * Math.floor(5 * unit * (1 - ESSENCE_PACK_DISCOUNT)) + (qty - packs * 5) * unit;
+  return packs * PACK5_BY_BASES[Math.min(3, essenceBaseCount(id))] + (qty - packs * 5) * unit;
 }
 __name(essencePackPrice, "essencePackPrice");
+
+// api/_recoveryShop.js
+var RECOVERY_ITEMS = {
+  energy: { credits: 150, weeklyCap: 5, restores: 5 },
+  life: { credits: 150, weeklyCap: 1, restores: 1 }
+};
+var OP_ID = /^[A-Za-z0-9_-]{8,64}$/;
+var OPS_MAX = 20;
+function recoveryKind(kind) {
+  return kind === "energy" || kind === "life" ? kind : null;
+}
+__name(recoveryKind, "recoveryKind");
+function recoveryBoughtThisWeek(ent, kind, nowMs = Date.now()) {
+  const r = ent?.recov;
+  if (!r || typeof r !== "object" || r.w !== semanaDe(new Date(nowMs))) return 0;
+  const n = Number(r[kind]);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+__name(recoveryBoughtThisWeek, "recoveryBoughtThisWeek");
+async function buyRecovery(env, saveId, kindIn, opId, opts = {}) {
+  const admin = opts.admin === true;
+  const nowMs = typeof opts.nowMs === "number" ? opts.nowMs : Date.now();
+  if (typeof opId !== "string" || !OP_ID.test(opId)) return { ok: false, status: 400, reason: "bad-op" };
+  const kind = recoveryKind(kindIn);
+  if (!kind) return { ok: false, status: 400, reason: "unknown-item" };
+  const item = RECOVERY_ITEMS[kind];
+  const lock = await tomarTravaDoEnt(env, saveId, { nowMs, esperaMs: 0 });
+  if (!lock.ok) return { ok: false, status: 409, reason: "busy" };
+  try {
+    const ent = await readEntitlement(env, saveId);
+    const ops = Array.isArray(ent.recovOps) ? ent.recovOps.filter((o) => o && typeof o === "object") : [];
+    const feito = ops.find((o) => o.op === opId);
+    if (feito) {
+      const k = recoveryKind(feito.kind) ?? kind;
+      const it = RECOVERY_ITEMS[k];
+      return { ok: true, status: 200, kind: k, restores: it.restores, price: it.credits, leftThisWeek: Math.max(0, it.weeklyCap - recoveryBoughtThisWeek(ent, k, nowMs)), ent, replay: true };
+    }
+    const ja = recoveryBoughtThisWeek(ent, kind, nowMs);
+    if (!admin && ja >= item.weeklyCap) return { ok: false, status: 409, reason: "weekly-cap" };
+    if (!admin) {
+      if (!(Number(ent.credits) >= item.credits)) return { ok: false, status: 402, reason: "insufficient" };
+      ent.credits -= item.credits;
+      const semana = semanaDe(new Date(nowMs));
+      const base = ent.recov && ent.recov.w === semana ? ent.recov : { w: semana, energy: 0, life: 0 };
+      ent.recov = { ...base, w: semana, [kind]: ja + 1 };
+      ent.recovOps = [...ops, { op: opId, kind }].slice(-OPS_MAX);
+      await writeEntitlement(env, saveId, ent);
+    }
+    return { ok: true, status: 200, kind, restores: item.restores, price: admin ? 0 : item.credits, leftThisWeek: admin ? item.weeklyCap : item.weeklyCap - (ja + 1), ent };
+  } finally {
+    await lock.release();
+  }
+}
+__name(buyRecovery, "buyRecovery");
 
 // api/_bitsPacks.js
 var BITS_PACKS = [
@@ -17541,8 +17596,8 @@ var BITS_PACKS = [
   { id: "bits-1000", bits: 1e3, credits: 800 }
 ];
 var BITS_PACK_DAILY_CAP = 1e3;
-var OPS_MAX = 20;
-var OP_ID = /^[A-Za-z0-9_-]{8,64}$/;
+var OPS_MAX2 = 20;
+var OP_ID2 = /^[A-Za-z0-9_-]{8,64}$/;
 var isoDayUtc = /* @__PURE__ */ __name((ms = Date.now()) => new Date(ms).toISOString().slice(0, 10), "isoDayUtc");
 function bitsPackById(id) {
   return BITS_PACKS.find((p) => p.id === id);
@@ -17625,7 +17680,7 @@ async function buyBitsPack(env, saveId, packId, opId, opts = {}) {
   const admin = opts.admin === true;
   const nowMs = typeof opts.nowMs === "number" ? opts.nowMs : Date.now();
   const replayOnly = opts.replayOnly === true;
-  if (typeof opId !== "string" || !OP_ID.test(opId)) return { ok: false, status: 400, reason: "bad-op" };
+  if (typeof opId !== "string" || !OP_ID2.test(opId)) return { ok: false, status: 400, reason: "bad-op" };
   const pack = bitsPackById(packId);
   if (!pack && !replayOnly) return { ok: false, status: 400, reason: "unknown-pack" };
   const lock = await tomarTravaDoEnt(env, saveId, { nowMs, esperaMs: 0 });
@@ -17648,7 +17703,7 @@ async function buyBitsPack(env, saveId, packId, opId, opts = {}) {
       ent.credits -= pack.credits;
       ent.bitsBuy = { day: playerDayOf(nowMs, anchor), bits: bitsBoughtToday(ent, nowMs, anchor) + pack.bits, at: nowMs };
       if (gravar5) ent.bitsTz = { ...anchor, at: nowMs };
-      ent.bitsBuyOps = [...ops, { op: opId, pack: pack.id }].slice(-OPS_MAX);
+      ent.bitsBuyOps = [...ops, { op: opId, pack: pack.id }].slice(-OPS_MAX2);
       await writeEntitlement(env, saveId, ent);
     }
     return { ok: true, status: 200, pack: pack.id, bits: pack.bits, price: admin ? 0 : pack.credits, leftToday: admin ? left : left - pack.bits, resetAt, ent };
@@ -17802,6 +17857,16 @@ async function onRequestPostBruto3({ request, env }) {
     if (!admin) await store?.put(replayKey, JSON.stringify(out), { expirationTtl: 24 * 60 * 60 });
     log2("essence-buy", saveId, { element, qty, price, admin });
     return json5(out);
+  }
+  if (action === "buy-recovery") {
+    const r = await buyRecovery(env, saveId, body?.kind, body?.opId, { admin });
+    if (!r.ok) {
+      log2("recovery-buy.refused", saveId, { reason: r.reason });
+      return json5({ ok: false, reason: r.reason }, r.status);
+    }
+    if (admin) logAdminSession("buy-recovery");
+    log2("recovery-buy", saveId, { kind: r.kind, price: r.price, admin });
+    return json5({ ok: true, kind: r.kind, restores: r.restores, price: r.price, leftThisWeek: r.leftThisWeek, ...r.replay ? { replay: true } : {}, ...view(r.ent) });
   }
   if (action === "buy-bits") {
     const r = await buyBitsPack(env, saveId, body?.pack, body?.opId, { admin, replayOnly: body?.replayOnly === true, tz: tzDe(body?.zone, body?.off) });
@@ -22594,7 +22659,7 @@ async function onRequest10({ request, env }) {
 }
 __name(onRequest10, "onRequest");
 
-// ../.wrangler/tmp/pages-axUHYu/functionsRoutes-0.8197467975120608.mjs
+// ../.wrangler/tmp/pages-uTuFlT/functionsRoutes-0.9768223883618681.mjs
 var routes = [
   {
     routePath: "/api/account",
