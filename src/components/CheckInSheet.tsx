@@ -29,7 +29,8 @@ export function CheckInSheet({ open, language, windows, onClaim, onClose }: {
 }) {
   const isPt = language === 'pt-BR';
   return (
-    <ModalSheet open={open} title={isPt ? 'Check-ins do dia' : 'Daily check-ins'} onClose={onClose} language={language}>
+    <ModalSheet open={open} moldura="dono" fundoVazio title={isPt ? 'Check-ins do dia' : 'Daily check-ins'} onClose={onClose} language={language}>
+      <div className="sm2-nova-corpo">
       <ul data-checkin-sheet style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
         {windows.map(w => (
           <li
@@ -58,6 +59,7 @@ export function CheckInSheet({ open, language, windows, onClaim, onClose }: {
           </li>
         ))}
       </ul>
+      </div>
     </ModalSheet>
   );
 }

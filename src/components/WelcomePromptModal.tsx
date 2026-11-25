@@ -158,6 +158,8 @@ export function WelcomePromptModal({
   return (
     <ModalSheet
       open
+      moldura="dono"
+      fundoVazio
       onClose={content.onSecondary}
       language={language}
       title={content.title}
@@ -174,11 +176,13 @@ export function WelcomePromptModal({
         </div>
       }
     >
+      <div className="sm2-nova-corpo">
       {/* Ícone pelado, sem placa nem moldura (regra do dono). */}
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <Icon name={content.icon} size={48} tone="primary" />
       </div>
       <p style={{ ...sm2Text, textAlign: 'center', margin: 0 }}>{content.desc}</p>
+      </div>
     </ModalSheet>
   );
 }

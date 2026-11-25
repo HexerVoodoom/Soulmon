@@ -17,8 +17,8 @@ export function AvisosSheet({ open, language, items, onClose }: {
   const vazio = items.length === 0;
   useEffect(() => { if (open && vazio) onClose(); }, [open, vazio, onClose]);
   return (
-    <ModalSheet open={open && !vazio} title={language === 'pt-BR' ? 'Avisos' : 'Notices'} onClose={onClose} language={language}>
-      <div data-avisos-sheet style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <ModalSheet open={open && !vazio} moldura="dono" fundoVazio title={language === 'pt-BR' ? 'Avisos' : 'Notices'} onClose={onClose} language={language}>
+      <div data-avisos-sheet className="sm2-nova-corpo" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {items.map(a => <div key={a.key} data-aviso={a.key}>{a.node}</div>)}
       </div>
     </ModalSheet>

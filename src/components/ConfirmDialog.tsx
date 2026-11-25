@@ -38,7 +38,7 @@ export function ConfirmDialog({
   const confirmStyle = sm2Button(destructive ? 'outline' : 'primary');
 
   return (
-    <ModalSheet open={isOpen} onClose={onClose} language={lang} title={title} maxWidth={420} dismissOnBackdrop={!destructive}
+    <ModalSheet open={isOpen} moldura="dono" fundoVazio onClose={onClose} language={lang} title={title} maxWidth={420} dismissOnBackdrop={!destructive}
       footer={
         /* "Cancel" `outline` + "Redo" `primary`, lado a lado, MESMA largura
            (canvas Conta `RefazerRitual`): cancelar é saída, nunca `quiet`. */
@@ -52,7 +52,9 @@ export function ConfirmDialog({
         </div>
       }
     >
-      <p style={{ ...sm2Text, margin: 0 }}>{message}</p>
+      <div className="sm2-nova-corpo">
+        <p style={{ ...sm2Text, margin: 0 }}>{message}</p>
+      </div>
     </ModalSheet>
   );
 }

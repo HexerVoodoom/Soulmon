@@ -76,13 +76,15 @@ export function ReviewSoulmonRow({ language, review }: { language: Language; rev
       </p>
       <ModalSheet
         open={escolhendo}
+        moldura="dono"
+        fundoVazio
         title={t.motivoTitle}
         onClose={() => setEscolhendo(false)}
         language={language}
         sobreTelas
         footer={<button type="button" onClick={() => setEscolhendo(false)} style={{ ...sm2Button('outline'), width: '100%' }}>{t.cancel}</button>}
       >
-        <div style={{ display: 'grid', gap: 12 }}>
+        <div className="sm2-nova-corpo" style={{ display: 'grid', gap: 12 }}>
           {(['estilo', 'recorte'] as const).map(m => (
             <button key={m} type="button" data-review-motivo={m} style={{ ...sm2Button('primary'), width: '100%' }}
               onClick={() => { setEscolhendo(false); review.onRequest(m); }}>
@@ -106,13 +108,17 @@ export function ReviewResultModal({ language, message, onClose }: { language: La
   return (
     <ModalSheet
       open={message !== null}
+      moldura="dono"
+      fundoVazio
       title={t.doneTitle}
       onClose={onClose}
       language={language}
       sobreTelas
       footer={<button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }} data-review-ok>{t.ok}</button>}
     >
-      <p style={{ ...sm2Text, margin: 0 }} data-review-result>{message}</p>
+      <div className="sm2-nova-corpo">
+        <p style={{ ...sm2Text, margin: 0 }} data-review-result>{message}</p>
+      </div>
     </ModalSheet>
   );
 }

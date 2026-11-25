@@ -70,12 +70,12 @@ export function IceSheet({ language, name, initial, onClose, onSave }: {
   const isPt = language === 'pt-BR';
   const [ice, setIce] = useState<Ice>(initial ?? START);
   const score = formatIceScore(iceScore(ice), isPt);
-  return <ModalSheet open title={isPt ? 'Prioridades' : 'Priorities'} onClose={onClose} language={language}
+  return <ModalSheet open moldura="dono" fundoVazio title={isPt ? 'Prioridades' : 'Priorities'} onClose={onClose} language={language}
     footer={<div className="sm2-hex-footer" style={{ display: 'grid', gap: 8 }}>
       <button type="button" data-ice-save onClick={() => onSave(ice)} style={{ ...sm2Button('primary'), minHeight: 48 }}>{isPt ? 'Salvar' : 'Save'}</button>
       {initial && <button type="button" data-ice-clear onClick={() => onSave(null)} style={{ ...sm2Button('quiet'), minHeight: 44 }}>{isPt ? 'Tirar a classificação' : 'Clear rating'}</button>}
     </div>}>
-    <div data-ice-sheet style={{ display: 'grid', gap: 14 }}>
+    <div data-ice-sheet className="sm2-nova-corpo" style={{ display: 'grid', gap: 14 }}>
       <p style={{ ...sm2Text, margin: 0, overflowWrap: 'anywhere', fontWeight: 600 }}>{name}</p>
       {ICE_FIELDS.map(f => {
         const c = ICE_COPY[f];

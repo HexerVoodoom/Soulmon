@@ -95,11 +95,14 @@ export function PostponeNudgeSheet({
   return (
     <ModalSheet
       open
+      moldura="dono"
+      fundoVazio
       onClose={onClose}
       language={language}
       title={isPt ? 'Essa aí tá difícil?' : 'Is this one stuck?'}
       maxWidth={480}
     >
+      <div className="sm2-nova-corpo">
       <p style={{ ...sm2Text, margin: 0 }}>
         {isPt
           ? `"${task.name}" já foi adiada ${task.postponedCount ?? 0} vezes. Isso é um dado, não uma bronca — e dado tem botão. Escolha uma saída, ou feche: nada acontece se você fechar.`
@@ -246,6 +249,7 @@ export function PostponeNudgeSheet({
             : 'Leaves the list without being completed and without being deleted. It stays tucked away, and you can bring it back any time.'}
         </span>
       </button>
+      </div>
     </ModalSheet>
   );
 }

@@ -131,6 +131,8 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
   return (
     <ModalSheet
       open
+      moldura="dono"
+      fundoVazio
       dismissOnBackdrop={false} /* formulário de conta com texto digitado */
       onClose={onClose}
       language={language}
@@ -178,6 +180,7 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
         </div>
       }
     >
+      <div className="sm2-nova-corpo">
       <p style={{ ...sm2Text, margin: 0 }}>
         {reason === 'ovo'
           ? (isPt
@@ -244,6 +247,7 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
       {/* A recusa/cancelamento da compra: `role=alert` em ÂMBAR (D-K7 —
           filete 3px + `gold-ink`), sem caixa; o modal fica. */}
       {message && <AlertLine>{message}</AlertLine>}
+      </div>
     </ModalSheet>
   );
 }
